@@ -1,0 +1,23 @@
+{
+  "name": "react-chemin",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "dependencies": {},
+  "devDependencies": {
+    "typescript": "^4.0.2"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/VincentQuillien/react-chemin.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/VincentQuillien/react-chemin/issues"
+  },
+  "homepage": "https://github.com/VincentQuillien/react-chemin#readme"
+}

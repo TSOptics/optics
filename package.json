@@ -5,6 +5,7 @@
   "main": "index.js",
   "dependencies": {},
   "devDependencies": {
+    "ts-essentials": "^7.0.0",
     "typescript": "^4.0.2"
   },
   "scripts": {

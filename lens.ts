@@ -1,5 +1,47 @@
 import {DeepNonNullable} from 'ts-essentials'
 
+type Test = { a?: { b?: { c?: { d?: { e: { f: { g: { h: { i: number } } } } } } } } }
+
+function generateTypeConstraint(n: number) {
+    if (n === 1) {
+        return 'K'
+    }
+    return generateTypeConstraint(n - 1) + `, K${n}`
+}
+
+function generateTypeParams(n: number) {
+    if (n === 1) {
+        return 'K extends Helper<T>'
+    }
+    return generateTypeParams(n - 1) + `, K${n} extends Helper<Prop${n - 1}<T, ${generateTypeConstraint(n)}>>`
+}
+
+function generateReturnType(n: number) {
+    if (n === 1) {
+        return `T`
+    }
+    return generateReturnType(n - 1) + `, K${n === 1 ? '' : n}`
+}
+
+function generatePropType(n: number) {
+    if (n === 1) {
+        return [`type Prop1<T, K extends Helper<T>> = NonNullable<T>[K]`]
+    }
+    return [...generatePropType(n - 1), `type Prop${n}<T${generateTypeParams(n)}> = NonNullable<Prop${n - 1}<${generateReturnType(n)}>>[K${n}]`]
+}
+
+type Helper<T> = keyof NonNullable<T>
+
+type Prop1<T, K extends Helper<T>> = NonNullable<T>[K]
+type Prop2<T, K extends Helper<T>, K2 extends Helper<Prop1<T, K>>> = NonNullable<Prop1<T, K>>[K2]
+type Prop3<T, K extends Helper<T>, K2 extends Helper<Prop1<T, K>>, K3 extends Helper<Prop2<T, K, K2>>> = NonNullable<Prop2<T, K, K2>>[K3]
+type Prop4<T, K extends Helper<T>, K2 extends Helper<Prop1<T, K>>, K3 extends Helper<Prop2<T, K, K2>>, K4 extends Helper<Prop3<T, K, K2, K3>>> = NonNullable<Prop3<T, K, K2, K3>>[K4]
+type Prop5<T, K extends Helper<T>, K2 extends Helper<Prop1<T, K>>, K3 extends Helper<Prop2<T, K, K2>>, K4 extends Helper<Prop3<T, K, K2, K3>>, K5 extends Helper<Prop4<T, K, K2, K3, K4>>> = NonNullable<Prop4<T, K, K2, K3, K4>>[K5]
+type Prop6<T, K extends Helper<T>, K2 extends Helper<Prop1<T, K>>, K3 extends Helper<Prop2<T, K, K2>>, K4 extends Helper<Prop3<T, K, K2, K3>>, K5 extends Helper<Prop4<T, K, K2, K3, K4>>, K6 extends Helper<Prop5<T, K, K2, K3, K4, K5>>> = NonNullable<Prop5<T, K, K2, K3, K4, K5>>[K6]
+type Prop7<T, K extends Helper<T>, K2 extends Helper<Prop1<T, K>>, K3 extends Helper<Prop2<T, K, K2>>, K4 extends Helper<Prop3<T, K, K2, K3>>, K5 extends Helper<Prop4<T, K, K2, K3, K4>>, K6 extends Helper<Prop5<T, K, K2, K3, K4, K5>>, K7 extends Helper<Prop6<T, K, K2, K3, K4, K5, K6>>> = NonNullable<Prop6<T, K, K2, K3, K4, K5, K6>>[K7]
+type Prop8<T, K extends Helper<T>, K2 extends Helper<Prop1<T, K>>, K3 extends Helper<Prop2<T, K, K2>>, K4 extends Helper<Prop3<T, K, K2, K3>>, K5 extends Helper<Prop4<T, K, K2, K3, K4>>, K6 extends Helper<Prop5<T, K, K2, K3, K4, K5>>, K7 extends Helper<Prop6<T, K, K2, K3, K4, K5, K6>>, K8 extends Helper<Prop7<T, K, K2, K3, K4, K5, K6, K7>>> = NonNullable<Prop7<T, K, K2, K3, K4, K5, K6, K7>>[K8]
+type Prop9<T, K extends Helper<T>, K2 extends Helper<Prop1<T, K>>, K3 extends Helper<Prop2<T, K, K2>>, K4 extends Helper<Prop3<T, K, K2, K3>>, K5 extends Helper<Prop4<T, K, K2, K3, K4>>, K6 extends Helper<Prop5<T, K, K2, K3, K4, K5>>, K7 extends Helper<Prop6<T, K, K2, K3, K4, K5, K6>>, K8 extends Helper<Prop7<T, K, K2, K3, K4, K5, K6, K7>>, K9 extends Helper<Prop8<T, K, K2, K3, K4, K5, K6, K7, K8>>> = NonNullable<Prop8<T, K, K2, K3, K4, K5, K6, K7, K8>>[K9]
+
 type Path<T, R> = string[]
 
 function get<T extends { [key: string]: any }, R>(path: Path<T, R>, root: T): R {
@@ -33,17 +75,3 @@ function path(a: Path<any, any>, ...props: string[]) {
 function compose<T, U, R>(path1: Path<T, U>, path2: Path<U, R>): Path<T, R> {
     return [...path1, ...path2];
 }
-
-type Test = { a?: { b?: { c?: number; e: string, f: {g: {h: {i: number}}} } }, j?: boolean }
-
-const example: Test = { a: { b: { c: 42, e: 'yolo', f: {g: {h: {i: 1798}}} } } }
-
-
-const pathToA = path(root<Test>(), 'a')
-const pathToB = path(pathToA, 'b')
-
-type TailType<T, U> = undefined | null extends T ? undefined | null | U : undefined extends T ? undefined | U : null extends T ? null | U : T;
-
-type Res = TailType<string | null | undefined, object>
-  
-type T = NonNullable<Test['j']>

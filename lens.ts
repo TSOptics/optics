@@ -1,34 +1,12 @@
-import {DeepNonNullable} from 'ts-essentials'
+export type Lens<S, A> = {
+    get: (s: S) => A;
+    set: (a: A, s: S) => S;
+};
 
-type Test = { a?: { b?: { c?: { d?: { e: { f: { g: { h: { i: number } } } } } } } } }
-
-function generateTypeConstraint(n: number) {
-    if (n === 1) {
-        return 'K'
-    }
-    return generateTypeConstraint(n - 1) + `, K${n}`
-}
-
-function generateTypeParams(n: number) {
-    if (n === 1) {
-        return 'K extends Helper<T>'
-    }
-    return generateTypeParams(n - 1) + `, K${n} extends Helper<Prop${n - 1}<T, ${generateTypeConstraint(n)}>>`
-}
-
-function generateReturnType(n: number) {
-    if (n === 1) {
-        return `T`
-    }
-    return generateReturnType(n - 1) + `, K${n === 1 ? '' : n}`
-}
-
-function generatePropType(n: number) {
-    if (n === 1) {
-        return [`type Prop1<T, K extends Helper<T>> = NonNullable<T>[K]`]
-    }
-    return [...generatePropType(n - 1), `type Prop${n}<T${generateTypeParams(n)}> = NonNullable<Prop${n - 1}<${generateReturnType(n)}>>[K${n}]`]
-}
+export type Optional<S, A> = {
+    getOption: (s: S) => A | undefined;
+    set: (a: A, s: S) => S;
+};
 
 type Helper<T> = keyof NonNullable<T>
 
@@ -72,6 +50,4 @@ function path(a: Path<any, any>, ...props: string[]) {
     return [...a,...props]
 }
 
-function compose<T, U, R>(path1: Path<T, U>, path2: Path<U, R>): Path<T, R> {
-    return [...path1, ...path2];
-}
+type Test = { a?: { b?: { c?: { d?: { e: { f: { g: { h: { i: number } } } } } } } } }

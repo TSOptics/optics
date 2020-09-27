@@ -8,17 +8,6 @@ export type Optional<S, A> = {
     set: (a: A, s: S) => S;
 };
 
-type Helper<T> = keyof NonNullable<T>
-
-type Prop1<T, K extends Helper<T>> = NonNullable<T>[K]
-type Prop2<T, K extends Helper<T>, K2 extends Helper<Prop1<T, K>>> = NonNullable<Prop1<T, K>>[K2]
-type Prop3<T, K extends Helper<T>, K2 extends Helper<Prop1<T, K>>, K3 extends Helper<Prop2<T, K, K2>>> = NonNullable<Prop2<T, K, K2>>[K3]
-type Prop4<T, K extends Helper<T>, K2 extends Helper<Prop1<T, K>>, K3 extends Helper<Prop2<T, K, K2>>, K4 extends Helper<Prop3<T, K, K2, K3>>> = NonNullable<Prop3<T, K, K2, K3>>[K4]
-type Prop5<T, K extends Helper<T>, K2 extends Helper<Prop1<T, K>>, K3 extends Helper<Prop2<T, K, K2>>, K4 extends Helper<Prop3<T, K, K2, K3>>, K5 extends Helper<Prop4<T, K, K2, K3, K4>>> = NonNullable<Prop4<T, K, K2, K3, K4>>[K5]
-type Prop6<T, K extends Helper<T>, K2 extends Helper<Prop1<T, K>>, K3 extends Helper<Prop2<T, K, K2>>, K4 extends Helper<Prop3<T, K, K2, K3>>, K5 extends Helper<Prop4<T, K, K2, K3, K4>>, K6 extends Helper<Prop5<T, K, K2, K3, K4, K5>>> = NonNullable<Prop5<T, K, K2, K3, K4, K5>>[K6]
-type Prop7<T, K extends Helper<T>, K2 extends Helper<Prop1<T, K>>, K3 extends Helper<Prop2<T, K, K2>>, K4 extends Helper<Prop3<T, K, K2, K3>>, K5 extends Helper<Prop4<T, K, K2, K3, K4>>, K6 extends Helper<Prop5<T, K, K2, K3, K4, K5>>, K7 extends Helper<Prop6<T, K, K2, K3, K4, K5, K6>>> = NonNullable<Prop6<T, K, K2, K3, K4, K5, K6>>[K7]
-type Prop8<T, K extends Helper<T>, K2 extends Helper<Prop1<T, K>>, K3 extends Helper<Prop2<T, K, K2>>, K4 extends Helper<Prop3<T, K, K2, K3>>, K5 extends Helper<Prop4<T, K, K2, K3, K4>>, K6 extends Helper<Prop5<T, K, K2, K3, K4, K5>>, K7 extends Helper<Prop6<T, K, K2, K3, K4, K5, K6>>, K8 extends Helper<Prop7<T, K, K2, K3, K4, K5, K6, K7>>> = NonNullable<Prop7<T, K, K2, K3, K4, K5, K6, K7>>[K8]
-type Prop9<T, K extends Helper<T>, K2 extends Helper<Prop1<T, K>>, K3 extends Helper<Prop2<T, K, K2>>, K4 extends Helper<Prop3<T, K, K2, K3>>, K5 extends Helper<Prop4<T, K, K2, K3, K4>>, K6 extends Helper<Prop5<T, K, K2, K3, K4, K5>>, K7 extends Helper<Prop6<T, K, K2, K3, K4, K5, K6>>, K8 extends Helper<Prop7<T, K, K2, K3, K4, K5, K6, K7>>, K9 extends Helper<Prop8<T, K, K2, K3, K4, K5, K6, K7, K8>>> = NonNullable<Prop8<T, K, K2, K3, K4, K5, K6, K7, K8>>[K9]
 
 type Path<T, R> = string[]
 
@@ -41,13 +30,13 @@ function set<T extends { [key: string]: any }, R>(path: Path<T, R>, root: T, val
 
 function root<T>(): Path<T, T> { return [] }
 
-function path<TRoot, A, B extends keyof NonNullable<A>>(root: Path<TRoot, A>, prop: B): Path<TRoot, NonNullable<A>[B]>;
-function path<TRoot, A, B extends keyof NonNullable<A>, C extends keyof NonNullable<NonNullable<A>[B]>>(root: Path<TRoot, A>, b: B, c: C): Path<TRoot, NonNullable<NonNullable<A>[B]>[C]>;
-function path<TRoot, A, B extends keyof A, C extends keyof A[B], D extends keyof A[B][C]>(root: Path<TRoot, A>, b: B, c: C, d: D): Path<TRoot, A[B][C][D]>;
-function path<TRoot, A, B extends keyof A, C extends keyof A[B], D extends keyof A[B][C], E extends keyof A[B][C][D]>(root: Path<TRoot, A>, b: B, c: C, d: D, e: E): Path<TRoot, A[B][C][D][E]>;
+type Key<T> = keyof NonNullable<T> | Lens<NonNullable<T>, any>
 
-function path(a: Path<any, any>, ...props: string[]) {
-    return [...a,...props]
+type Type<Root, T> = T extends Lens<NonNullable<Root>, infer R> ? R : T extends keyof NonNullable<Root> ? NonNullable<Root>[T] : never;
+
+type Return<T, R> = undefined extends T ? R | undefined : null extends T ? R | undefined : R;
+
+function path<Root, A extends Key<Root>, AT extends Type<Root, A>, B extends Key<AT>, BT extends Type<AT, B>, C extends Key<BT>, CT extends Type<BT, C>>(r: Path<Root, Root>, a: A, b: B, c: C): Return<Root | AT | BT, CT> {
 }
 
 type Test = { a?: { b?: { c?: { d?: { e: { f: { g: { h: { i: number } } } } } } } } }

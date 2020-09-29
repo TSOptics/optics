@@ -1,13 +1,13 @@
-import { Optional } from "./lens";
+import { Lens } from './lens';
 
-export function findFirst<T>(predicate: (t: T) => boolean): Optional<T[], T> {
-    const getOption = (root: T[]) => root.find(predicate);
-    
-    const set = (x: T, root: T[]) => {
+export function findFirst<T>(predicate: (t: T) => boolean): Lens<T[], T | undefined> {
+    const get = (root: T[]) => root.find(predicate);
+
+    const set = (x: T | undefined, root: T[]) => {
         const index = root.findIndex(predicate);
-        if (index === -1) return root;
-        return [...root.slice(0, index), x, ...root.slice(index + 1)]
-    }
+        if (index === -1 || x === undefined) return root;
+        return [...root.slice(0, index), x, ...root.slice(index + 1)];
+    };
 
-    return {getOption, set}
+    return { get, set };
 }

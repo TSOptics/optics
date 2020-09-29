@@ -1,11 +1,10 @@
-import { Lens } from "./lens";
+import { Lens } from './lens';
 
 function combineLenses<T, U, R>(l1: Lens<T, U>, l2: Lens<U, R>): Lens<T, R> {
     return {
         get: (root) => l2.get(l1.get(root)),
-        set: (x, root) => 
-            l1.set(l2.set(x, l1.get(root)), root)
-    }
+        set: (x, root) => l1.set(l2.set(x, l1.get(root)), root),
+    };
 }
 
 function modify<T, R>(lens: Lens<T, R>, f: (r: R) => R, root: T) {
@@ -23,7 +22,7 @@ function stabilize<T extends any[], R>(f: (...args: T) => R) {
         lastArgs = args;
         lastResult = f(...args);
         return lastResult;
-    }
+    };
 }
 
 const f = stabilize((a: string, b: number) => a);

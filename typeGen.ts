@@ -1,30 +1,23 @@
-function generateTypeConstraint(n: number): string {
-    if (n === 1) {
-        return 'K';
-    }
-    return generateTypeConstraint(n - 1) + `, K${n}`;
+const generateParams = (n: number): string => `${n > 1 ? generateParams(n - 1) + ', ' : ''}k${n}: Key${n}`;
+
+function generateTypeParam(n: number): string {
+    return `NonNullable<${n > 1 ? generateTypeParam(n - 1) + `[Key${n - 1}]` : 'A'}>`;
 }
 
 function generateTypeParams(n: number): string {
-    if (n === 1) {
-        return 'K extends Helper<T>';
-    }
-    return generateTypeParams(n - 1) + `, K${n} extends Helper<Prop${n - 1}<T, ${generateTypeConstraint(n)}>>`;
+    return `${n > 1 ? generateTypeParams(n - 1) + ', ' : ''}Key${n} extends keyof ${generateTypeParam(n)}`;
 }
 
-function generateReturnType(n: number): string {
-    if (n === 1) {
-        return `T`;
-    }
-    return generateReturnType(n - 1) + `, K${n === 1 ? '' : n}`;
+function generateType(n: number): string {
+    return n > 1 ? `NonNullable<${generateType(n - 1)}>[Key${n - 1}]` : 'A';
 }
 
-function generatePropType(n: number): string[] {
-    if (n === 1) {
-        return [`type Prop1<T, K extends Helper<T>> = NonNullable<T>[K]`];
-    }
-    return [
-        ...generatePropType(n - 1),
-        `type Prop${n}<T${generateTypeParams(n)}> = NonNullable<Prop${n - 1}<${generateReturnType(n)}>>[K${n}]`,
-    ];
+function generateTypesUnion(n: number): string {
+    return n > 1 ? `${generateTypesUnion(n - 1)} | ${generateType(n)}` : 'A';
+}
+
+function generatePathMethod(n: number) {
+    return `path<${generateTypeParams(n)}>(${generateParams(n)}): Return<S, ${generateTypesUnion(n)}, ${generateType(
+        n + 1,
+    )}, Optional>;`;
 }

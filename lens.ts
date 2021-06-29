@@ -1,60 +1,26 @@
-type Key<T> = keyof NonNullable<T>;
+export interface _Partial {
+    partial: 'partial';
+}
+export interface _Total extends _Partial {
+    total: 'total';
+}
 
-type Type<Root, T extends keyof NonNullable<Root>> = NonNullable<Root>[T];
-
-type Return<Root, Types, LastType, Optional extends boolean> = Optional extends true
-    ? Path<Root, LastType, true>
-    : undefined extends Types
-    ? Path<Root, LastType, true>
-    : null extends Types
-    ? Path<Root, LastType, true>
-    : Path<Root, LastType, false>;
-
-type Failure = 'failure';
-
-interface Lens {
+export interface Lens {
     key: string;
     get: (s: any) => any;
     set: (a: any, s: any) => any;
 }
 
-function createCombinator<S, A, Return, Args extends any[]>(
-    f: (
-        ...args: Args
-    ) => {
-        key: string;
-        get: (s: S) => Return;
-        set: (a: A, s: S) => S;
-    },
-): (...args: Args) => Path<S, A, Failure extends Return ? true : false> {
-    return (...args) => new Path([f(...args)]);
-}
-
-const testCombinator = createCombinator((index: number) => ({
-    key: `at index ${index}`,
-    get: (s: number[]) => s[index] || 'failure',
-    set: (a: number, s: number[]) => [...s.slice(0, index), a, ...s.slice(index + 1)],
-}));
-
-const findFirst = createCombinator(<T>(predicate: (x: T) => boolean) => ({
-    key: 'findFirst',
-    get: (s: T[]) => {
-        const elem = s.find(predicate);
-        if (elem !== undefined) return elem;
-        return 'failure';
-    },
-    set: (a: T, s: T[]) => s,
-}));
-
-class Path<S, A, Optional extends boolean> {
+export class Optix<A, TLensType extends _Partial = _Total, S = any> {
     constructor(readonly lenses: Lens[]) {}
+    #type: TLensType = {} as any;
 
-    get(s: S): Optional extends true ? A | undefined : A {
+    get(s: S): TLensType extends _Total ? A : A | undefined {
         let accumulator: any = s;
-        for (const [index, lens] of this.lenses.entries()) {
-            const slice = lens.get(s);
-            if (slice === 'failure' && index < this.lenses.length - 1) {
-                return undefined as any;
+        for (const lens of this.lenses) {
+            const slice = lens.get(accumulator);
+            if (slice === undefined || slice === null) {
+                return slice;
             }
             accumulator = slice;
         }
@@ -66,50 +32,81 @@ class Path<S, A, Optional extends boolean> {
             const [hd, ...tl] = lenses;
             if (!hd) return a as any;
             const slice = hd.get(s);
-            if (tl.length > 0 && (slice === undefined || slice === null || slice === 'failure')) return s;
-            return hd.set(aux(a, slice, tl), s);
+            if (tl.length > 0 && (slice === undefined || slice === null)) return s;
+            const newSlice = aux(a, slice, tl);
+            if (slice === newSlice) return s;
+            return hd.set(newSlice, s);
         };
         return aux(a, s);
     }
+
+    focus: Focus<A, TLensType, S> = (...props: any[]): any => {
+        const lenses: Lens[] = props.map((prop) => ({
+            key: 'focus ' + prop,
+            get: (s) => s[prop],
+            set: (a, s) => (Array.isArray(s) ? [...s.slice(0, prop), a, ...s.slice(prop + 1)] : { ...s, [prop]: a }),
+        }));
+        return new Optix([...this.lenses, ...lenses]);
+    };
 
     getKeys() {
         return this.lenses.map((l) => l.key);
     }
 
-    compose<B, OptionalB extends boolean>(
-        path: Path<A, B, OptionalB>,
-    ): Path<S, B, OptionalB extends true ? true : Optional extends true ? true : false> {
-        return new Path([...this.lenses, ...path.lenses]);
+    compose<B, TLensTypeB extends _Partial>(
+        other: Optix<B, TLensTypeB, A>,
+    ): Return<S, A, B, TLensTypeB extends _Total ? (TLensType extends _Total ? _Total : _Partial) : _Partial> {
+        return new Optix([...this.lenses, ...other.lenses]) as any;
     }
+}
+export type Return<Root, Types, LastType, TLensType extends _Partial> = TLensType extends _Total
+    ? undefined extends Types
+        ? Optix<LastType, _Partial, Root>
+        : null extends Types
+        ? Optix<LastType, _Partial, Root>
+        : Optix<LastType, _Total, Root>
+    : Optix<LastType, _Partial, Root>;
 
-    path<Key1 extends Key<A>, Type1 extends Type<A, Key1>>(k1: Key1): Return<S, A, Type1, Optional>;
-
-    path<Key1 extends keyof NonNullable<A>, Key2 extends keyof NonNullable<NonNullable<A>[Key1]>>(
+export interface Focus<A, TLensType extends _Partial, S> {
+    <Key1 extends keyof NonNullable<A>>(k1: Key1): Return<S, A, NonNullable<A>[Key1], TLensType>;
+    <Key1 extends keyof NonNullable<A>, Key2 extends keyof NonNullable<NonNullable<A>[Key1]>>(
         k1: Key1,
         k2: Key2,
-    ): Return<S, A | NonNullable<A>[Key1], NonNullable<NonNullable<A>[Key1]>[Key2], Optional>;
-
-    path<
-        Key1 extends Key<A>,
-        Type1 extends Type<A, Key1>,
-        Key2 extends Key<Type1>,
-        Type2 extends Type<Type1, Key2>,
-        Key3 extends Key<Type2>,
-        Type3 extends Type<Type2, Key3>
-    >(k1: Key1, k2: Key2, k3: Key3): Return<S, A | Type1 | Type2, Type3, Optional>;
-
-    path<
-        Key1 extends Key<A>,
-        Type1 extends Type<A, Key1>,
-        Key2 extends Key<Type1>,
-        Type2 extends Type<Type1, Key2>,
-        Key3 extends Key<Type2>,
-        Type3 extends Type<Type2, Key3>,
-        Key4 extends Key<Type3>,
-        Type4 extends Type<Type3, Key4>
-    >(k1: Key1, k2: Key2, k3: Key3, k4: Key4): Return<S, A | Type1 | Type2 | Type3, Type4, Optional>;
-
-    path<
+    ): Return<S, A | NonNullable<A>[Key1], NonNullable<NonNullable<A>[Key1]>[Key2], TLensType>;
+    <
+        Key1 extends keyof NonNullable<A>,
+        Key2 extends keyof NonNullable<NonNullable<A>[Key1]>,
+        Key3 extends keyof NonNullable<NonNullable<NonNullable<A>[Key1]>[Key2]>
+    >(
+        k1: Key1,
+        k2: Key2,
+        k3: Key3,
+    ): Return<
+        S,
+        A | NonNullable<A>[Key1] | NonNullable<NonNullable<A>[Key1]>[Key2],
+        NonNullable<NonNullable<NonNullable<A>[Key1]>[Key2]>[Key3],
+        TLensType
+    >;
+    <
+        Key1 extends keyof NonNullable<A>,
+        Key2 extends keyof NonNullable<NonNullable<A>[Key1]>,
+        Key3 extends keyof NonNullable<NonNullable<NonNullable<A>[Key1]>[Key2]>,
+        Key4 extends keyof NonNullable<NonNullable<NonNullable<NonNullable<A>[Key1]>[Key2]>[Key3]>
+    >(
+        k1: Key1,
+        k2: Key2,
+        k3: Key3,
+        k4: Key4,
+    ): Return<
+        S,
+        | A
+        | NonNullable<A>[Key1]
+        | NonNullable<NonNullable<A>[Key1]>[Key2]
+        | NonNullable<NonNullable<NonNullable<A>[Key1]>[Key2]>[Key3],
+        NonNullable<NonNullable<NonNullable<NonNullable<A>[Key1]>[Key2]>[Key3]>[Key4],
+        TLensType
+    >;
+    <
         Key1 extends keyof NonNullable<A>,
         Key2 extends keyof NonNullable<NonNullable<A>[Key1]>,
         Key3 extends keyof NonNullable<NonNullable<NonNullable<A>[Key1]>[Key2]>,
@@ -129,9 +126,207 @@ class Path<S, A, Optional extends boolean> {
         | NonNullable<NonNullable<NonNullable<A>[Key1]>[Key2]>[Key3]
         | NonNullable<NonNullable<NonNullable<NonNullable<A>[Key1]>[Key2]>[Key3]>[Key4],
         NonNullable<NonNullable<NonNullable<NonNullable<NonNullable<A>[Key1]>[Key2]>[Key3]>[Key4]>[Key5],
-        Optional
+        TLensType
     >;
-    path<
+    <
+        Key1 extends keyof NonNullable<A>,
+        Key2 extends keyof NonNullable<NonNullable<A>[Key1]>,
+        Key3 extends keyof NonNullable<NonNullable<NonNullable<A>[Key1]>[Key2]>,
+        Key4 extends keyof NonNullable<NonNullable<NonNullable<NonNullable<A>[Key1]>[Key2]>[Key3]>,
+        Key5 extends keyof NonNullable<NonNullable<NonNullable<NonNullable<NonNullable<A>[Key1]>[Key2]>[Key3]>[Key4]>,
+        Key6 extends keyof NonNullable<
+            NonNullable<NonNullable<NonNullable<NonNullable<NonNullable<A>[Key1]>[Key2]>[Key3]>[Key4]>[Key5]
+        >
+    >(
+        k1: Key1,
+        k2: Key2,
+        k3: Key3,
+        k4: Key4,
+        k5: Key5,
+        k6: Key6,
+    ): Return<
+        S,
+        | A
+        | NonNullable<A>[Key1]
+        | NonNullable<NonNullable<A>[Key1]>[Key2]
+        | NonNullable<NonNullable<NonNullable<A>[Key1]>[Key2]>[Key3]
+        | NonNullable<NonNullable<NonNullable<NonNullable<A>[Key1]>[Key2]>[Key3]>[Key4]
+        | NonNullable<NonNullable<NonNullable<NonNullable<NonNullable<A>[Key1]>[Key2]>[Key3]>[Key4]>[Key5],
+        NonNullable<
+            NonNullable<NonNullable<NonNullable<NonNullable<NonNullable<A>[Key1]>[Key2]>[Key3]>[Key4]>[Key5]
+        >[Key6],
+        TLensType
+    >;
+    <
+        Key1 extends keyof NonNullable<A>,
+        Key2 extends keyof NonNullable<NonNullable<A>[Key1]>,
+        Key3 extends keyof NonNullable<NonNullable<NonNullable<A>[Key1]>[Key2]>,
+        Key4 extends keyof NonNullable<NonNullable<NonNullable<NonNullable<A>[Key1]>[Key2]>[Key3]>,
+        Key5 extends keyof NonNullable<NonNullable<NonNullable<NonNullable<NonNullable<A>[Key1]>[Key2]>[Key3]>[Key4]>,
+        Key6 extends keyof NonNullable<
+            NonNullable<NonNullable<NonNullable<NonNullable<NonNullable<A>[Key1]>[Key2]>[Key3]>[Key4]>[Key5]
+        >,
+        Key7 extends keyof NonNullable<
+            NonNullable<
+                NonNullable<NonNullable<NonNullable<NonNullable<NonNullable<A>[Key1]>[Key2]>[Key3]>[Key4]>[Key5]
+            >[Key6]
+        >
+    >(
+        k1: Key1,
+        k2: Key2,
+        k3: Key3,
+        k4: Key4,
+        k5: Key5,
+        k6: Key6,
+        k7: Key7,
+    ): Return<
+        S,
+        | A
+        | NonNullable<A>[Key1]
+        | NonNullable<NonNullable<A>[Key1]>[Key2]
+        | NonNullable<NonNullable<NonNullable<A>[Key1]>[Key2]>[Key3]
+        | NonNullable<NonNullable<NonNullable<NonNullable<A>[Key1]>[Key2]>[Key3]>[Key4]
+        | NonNullable<NonNullable<NonNullable<NonNullable<NonNullable<A>[Key1]>[Key2]>[Key3]>[Key4]>[Key5]
+        | NonNullable<
+              NonNullable<NonNullable<NonNullable<NonNullable<NonNullable<A>[Key1]>[Key2]>[Key3]>[Key4]>[Key5]
+          >[Key6],
+        NonNullable<
+            NonNullable<
+                NonNullable<NonNullable<NonNullable<NonNullable<NonNullable<A>[Key1]>[Key2]>[Key3]>[Key4]>[Key5]
+            >[Key6]
+        >[Key7],
+        TLensType
+    >;
+    <
+        Key1 extends keyof NonNullable<A>,
+        Key2 extends keyof NonNullable<NonNullable<A>[Key1]>,
+        Key3 extends keyof NonNullable<NonNullable<NonNullable<A>[Key1]>[Key2]>,
+        Key4 extends keyof NonNullable<NonNullable<NonNullable<NonNullable<A>[Key1]>[Key2]>[Key3]>,
+        Key5 extends keyof NonNullable<NonNullable<NonNullable<NonNullable<NonNullable<A>[Key1]>[Key2]>[Key3]>[Key4]>,
+        Key6 extends keyof NonNullable<
+            NonNullable<NonNullable<NonNullable<NonNullable<NonNullable<A>[Key1]>[Key2]>[Key3]>[Key4]>[Key5]
+        >,
+        Key7 extends keyof NonNullable<
+            NonNullable<
+                NonNullable<NonNullable<NonNullable<NonNullable<NonNullable<A>[Key1]>[Key2]>[Key3]>[Key4]>[Key5]
+            >[Key6]
+        >,
+        Key8 extends keyof NonNullable<
+            NonNullable<
+                NonNullable<
+                    NonNullable<NonNullable<NonNullable<NonNullable<NonNullable<A>[Key1]>[Key2]>[Key3]>[Key4]>[Key5]
+                >[Key6]
+            >[Key7]
+        >
+    >(
+        k1: Key1,
+        k2: Key2,
+        k3: Key3,
+        k4: Key4,
+        k5: Key5,
+        k6: Key6,
+        k7: Key7,
+        k8: Key8,
+    ): Return<
+        S,
+        | A
+        | NonNullable<A>[Key1]
+        | NonNullable<NonNullable<A>[Key1]>[Key2]
+        | NonNullable<NonNullable<NonNullable<A>[Key1]>[Key2]>[Key3]
+        | NonNullable<NonNullable<NonNullable<NonNullable<A>[Key1]>[Key2]>[Key3]>[Key4]
+        | NonNullable<NonNullable<NonNullable<NonNullable<NonNullable<A>[Key1]>[Key2]>[Key3]>[Key4]>[Key5]
+        | NonNullable<
+              NonNullable<NonNullable<NonNullable<NonNullable<NonNullable<A>[Key1]>[Key2]>[Key3]>[Key4]>[Key5]
+          >[Key6]
+        | NonNullable<
+              NonNullable<
+                  NonNullable<NonNullable<NonNullable<NonNullable<NonNullable<A>[Key1]>[Key2]>[Key3]>[Key4]>[Key5]
+              >[Key6]
+          >[Key7],
+        NonNullable<
+            NonNullable<
+                NonNullable<
+                    NonNullable<NonNullable<NonNullable<NonNullable<NonNullable<A>[Key1]>[Key2]>[Key3]>[Key4]>[Key5]
+                >[Key6]
+            >[Key7]
+        >[Key8],
+        TLensType
+    >;
+    <
+        Key1 extends keyof NonNullable<A>,
+        Key2 extends keyof NonNullable<NonNullable<A>[Key1]>,
+        Key3 extends keyof NonNullable<NonNullable<NonNullable<A>[Key1]>[Key2]>,
+        Key4 extends keyof NonNullable<NonNullable<NonNullable<NonNullable<A>[Key1]>[Key2]>[Key3]>,
+        Key5 extends keyof NonNullable<NonNullable<NonNullable<NonNullable<NonNullable<A>[Key1]>[Key2]>[Key3]>[Key4]>,
+        Key6 extends keyof NonNullable<
+            NonNullable<NonNullable<NonNullable<NonNullable<NonNullable<A>[Key1]>[Key2]>[Key3]>[Key4]>[Key5]
+        >,
+        Key7 extends keyof NonNullable<
+            NonNullable<
+                NonNullable<NonNullable<NonNullable<NonNullable<NonNullable<A>[Key1]>[Key2]>[Key3]>[Key4]>[Key5]
+            >[Key6]
+        >,
+        Key8 extends keyof NonNullable<
+            NonNullable<
+                NonNullable<
+                    NonNullable<NonNullable<NonNullable<NonNullable<NonNullable<A>[Key1]>[Key2]>[Key3]>[Key4]>[Key5]
+                >[Key6]
+            >[Key7]
+        >,
+        Key9 extends keyof NonNullable<
+            NonNullable<
+                NonNullable<
+                    NonNullable<
+                        NonNullable<NonNullable<NonNullable<NonNullable<NonNullable<A>[Key1]>[Key2]>[Key3]>[Key4]>[Key5]
+                    >[Key6]
+                >[Key7]
+            >[Key8]
+        >
+    >(
+        k1: Key1,
+        k2: Key2,
+        k3: Key3,
+        k4: Key4,
+        k5: Key5,
+        k6: Key6,
+        k7: Key7,
+        k8: Key8,
+        k9: Key9,
+    ): Return<
+        S,
+        | A
+        | NonNullable<A>[Key1]
+        | NonNullable<NonNullable<A>[Key1]>[Key2]
+        | NonNullable<NonNullable<NonNullable<A>[Key1]>[Key2]>[Key3]
+        | NonNullable<NonNullable<NonNullable<NonNullable<A>[Key1]>[Key2]>[Key3]>[Key4]
+        | NonNullable<NonNullable<NonNullable<NonNullable<NonNullable<A>[Key1]>[Key2]>[Key3]>[Key4]>[Key5]
+        | NonNullable<
+              NonNullable<NonNullable<NonNullable<NonNullable<NonNullable<A>[Key1]>[Key2]>[Key3]>[Key4]>[Key5]
+          >[Key6]
+        | NonNullable<
+              NonNullable<
+                  NonNullable<NonNullable<NonNullable<NonNullable<NonNullable<A>[Key1]>[Key2]>[Key3]>[Key4]>[Key5]
+              >[Key6]
+          >[Key7]
+        | NonNullable<
+              NonNullable<
+                  NonNullable<
+                      NonNullable<NonNullable<NonNullable<NonNullable<NonNullable<A>[Key1]>[Key2]>[Key3]>[Key4]>[Key5]
+                  >[Key6]
+              >[Key7]
+          >[Key8],
+        NonNullable<
+            NonNullable<
+                NonNullable<
+                    NonNullable<
+                        NonNullable<NonNullable<NonNullable<NonNullable<NonNullable<A>[Key1]>[Key2]>[Key3]>[Key4]>[Key5]
+                    >[Key6]
+                >[Key7]
+            >[Key8]
+        >[Key9],
+        TLensType
+    >;
+    <
         Key1 extends keyof NonNullable<A>,
         Key2 extends keyof NonNullable<NonNullable<A>[Key1]>,
         Key3 extends keyof NonNullable<NonNullable<NonNullable<A>[Key1]>[Key2]>,
@@ -232,25 +427,6 @@ class Path<S, A, Optional extends boolean> {
                 >[Key8]
             >[Key9]
         >[Key10],
-        Optional
+        TLensType
     >;
-    path(args: string[]): Path<S, any, boolean> {
-        return {} as any;
-    }
 }
-
-function root<T>(key = 'root'): Path<T, T, false> {
-    return new Path([{ key, get: (s) => s, set: (a, _) => a }]);
-}
-
-const p1 = {} as Path<
-    string,
-    {
-        a: { a1: { a2: { a3: { a4: { a5: { a6?: { a7: { a8: number } } } } } } }[] };
-        b: number[];
-        c: boolean;
-        d?: () => void;
-    },
-    false
->;
-const p2 = p1.path('a', 'a1', 0, 'a2', 'a3', 'a4', 'a5', 'a6', 'a7', 'a8');

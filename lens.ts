@@ -49,7 +49,7 @@ export class Optix<A, TLensType extends _Partial = _Total, S = any> {
         return new Optix([...this.lenses, ...lenses]);
     };
 
-    getKeys() {
+    getKeys(): string[] {
         return this.lenses.map((l) => l.key);
     }
 
@@ -58,7 +58,15 @@ export class Optix<A, TLensType extends _Partial = _Total, S = any> {
     ): Return<S, A, B, TLensTypeB extends _Total ? (TLensType extends _Total ? _Total : _Partial) : _Partial> {
         return new Optix([...this.lenses, ...other.lenses]) as any;
     }
+
+    refine<B>(refiner: (a: A) => B | false): B extends false ? never : Optix<B, _Partial, S> {
+        return new Optix([
+            ...this.lenses,
+            { get: (s) => (refiner(s) === false ? undefined : s), set: (a) => a, key: 'refine' },
+        ]) as any;
+    }
 }
+
 export type Return<Root, Types, LastType, TLensType extends _Partial> = TLensType extends _Total
     ? undefined extends Types
         ? Optix<LastType, _Partial, Root>

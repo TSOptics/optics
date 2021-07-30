@@ -1,4 +1,4 @@
-import { optix } from '../combinators';
+import { optix } from '../src/combinators';
 
 describe('Focus method', () => {
     const obj = { a: { as: [1, 2, 3] } };

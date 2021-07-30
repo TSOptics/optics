@@ -1,4 +1,4 @@
-import { optix } from '../combinators';
+import { optix } from '../src/combinators';
 
 describe('lens', () => {
     const obj = { a: { as: [1, 2, 3] } };
@@ -40,5 +40,31 @@ describe('refine', () => {
 
         const updated = onBar.set(42, foo);
         expect(updated).toBe(foo);
+    });
+});
+describe('convert', () => {
+    const onTuple = optix<[string, number]>().convert(
+        ([name, age]) => ({ name, age }),
+        ({ name, age }) => [name, age],
+    );
+
+    it('should convert from tuple to object', () => {
+        expect(onTuple.get(['Jean', 42])).toStrictEqual({ name: 'Jean', age: 42 });
+        expect(onTuple.set({ name: 'Albert', age: 65 }, ['Jean', 34])).toStrictEqual(['Albert', 65]);
+    });
+    it('should convert from celcius to fahrenheit', () => {
+        const onTemp = optix<number>().convert(
+            (celcius) => celcius * (9 / 5) + 32,
+            (fahrenheit) => (fahrenheit - 32) * (5 / 9),
+        );
+
+        expect(onTemp.get(0)).toBe(32);
+        expect(onTemp.get(100)).toBe(212);
+        expect(onTemp.set(212, 0)).toBe(100);
+    });
+    it('should be referentially stable', () => {
+        const tuple: [string, number] = ['Jean', 42];
+        expect(onTuple.get(tuple)).toBe(onTuple.get(tuple));
+        expect(onTuple.set(onTuple.get(tuple), tuple)).toBe(tuple);
     });
 });

@@ -1,3 +1,5 @@
+import { memoize } from './utils';
+
 export interface _Partial {
     partial: 'partial';
 }
@@ -64,6 +66,10 @@ export class Optix<A, TLensType extends _Partial = _Total, S = any> {
             ...this.lenses,
             { get: (s) => (refiner(s) === false ? undefined : s), set: (a) => a, key: 'refine' },
         ]) as any;
+    }
+
+    convert<B>(get: (a: A) => B, reverseGet: (b: B) => A): Optix<B, TLensType, S> {
+        return new Optix([...this.lenses, { get: memoize(get), set: reverseGet, key: 'convert' }]);
     }
 }
 

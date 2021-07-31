@@ -64,7 +64,11 @@ export class Optix<A, TLensType extends _Partial = _Total, S = any> {
     refine<B>(refiner: (a: A) => B | false): B extends false ? never : Optix<B, _Partial, S> {
         return new Optix([
             ...this.lenses,
-            { get: (s) => (refiner(s) === false ? undefined : s), set: (a) => a, key: 'refine' },
+            {
+                get: (s) => (refiner(s) === false ? undefined : s),
+                set: (a, s) => (refiner(s) === false ? s : a),
+                key: 'refine',
+            },
         ]) as any;
     }
 
@@ -76,7 +80,7 @@ export class Optix<A, TLensType extends _Partial = _Total, S = any> {
         return new Optix([
             ...this.lenses,
             {
-                get: (a) => (predicate(a) === true ? a : undefined),
+                get: (s) => (predicate(s) === true ? s : undefined),
                 set: (a, s) => (predicate(s) === true ? a : s),
                 key: 'filter',
             },

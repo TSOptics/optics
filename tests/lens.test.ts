@@ -24,22 +24,16 @@ describe('refine', () => {
     type FooBar = { type: 'foo'; foo: string } | { type: 'bar'; bar: number };
     const foo: FooBar = { type: 'foo', foo: 'test' };
     it('should focus on a part of the union', () => {
-        const onFoo = optix<FooBar>()
-            .refine((a) => a.type === 'foo' && a)
-            .focus('foo');
-        expect(onFoo.get(foo)).toBe('test');
+        const onFoo = optix<FooBar>().refine((a) => a.type === 'foo' && a);
+        expect(onFoo.get(foo)?.foo).toBe('test');
 
-        const updated = onFoo.set('newFoo', foo);
-        expect(onFoo.get(updated)).toBe('newFoo');
+        const updated = onFoo.set({ type: 'foo', foo: 'newFoo' }, foo);
+        expect(onFoo.get(updated)?.foo).toBe('newFoo');
     });
     it('should handle the type narrowing failing', () => {
-        const onBar = optix<FooBar>()
-            .refine((a) => a.type === 'bar' && a)
-            .focus('bar');
+        const onBar = optix<FooBar>().refine((a) => a.type === 'bar' && a);
         expect(onBar.get(foo)).toBeUndefined();
-
-        const updated = onBar.set(42, foo);
-        expect(updated).toBe(foo);
+        expect(onBar.set({ type: 'bar', bar: 99 }, foo)).toBe(foo);
     });
 });
 describe('convert', () => {

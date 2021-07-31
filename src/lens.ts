@@ -71,6 +71,17 @@ export class Optix<A, TLensType extends _Partial = _Total, S = any> {
     convert<B>(get: (a: A) => B, reverseGet: (b: B) => A): Optix<B, TLensType, S> {
         return new Optix([...this.lenses, { get: memoize(get), set: reverseGet, key: 'convert' }]);
     }
+
+    filter(predicate: (a: A) => boolean): Optix<A, _Partial, S> {
+        return new Optix([
+            ...this.lenses,
+            {
+                get: (a) => (predicate(a) === true ? a : undefined),
+                set: (a, s) => (predicate(s) === true ? a : s),
+                key: 'filter',
+            },
+        ]);
+    }
 }
 
 export type Return<Root, Types, LastType, TLensType extends _Partial> = TLensType extends _Total

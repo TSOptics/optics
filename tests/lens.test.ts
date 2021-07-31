@@ -68,3 +68,26 @@ describe('convert', () => {
         expect(onTuple.set(onTuple.get(tuple), tuple)).toBe(tuple);
     });
 });
+describe('filter', () => {
+    const onEvenNumber = optix<number>().filter((n) => n % 2 === 0);
+
+    const onMajorName = optix<{ age: number; name: string }>()
+        .filter(({ age }) => age >= 18)
+        .focus('name');
+    const major = { age: 42, name: 'Louis' };
+    const minor = { age: 15, name: 'Killian' };
+    it('should get result with predicate true', () => {
+        expect(onEvenNumber.get(2)).toBe(2);
+        expect(onEvenNumber.set(4, 2)).toBe(4);
+
+        expect(onMajorName.get(major)).toBe('Louis');
+        expect(onMajorName.set('François', major)).toStrictEqual({ name: 'François', age: 42 });
+    });
+    it('should return undefined with predicate false', () => {
+        expect(onEvenNumber.get(3)).toBeUndefined();
+        expect(onEvenNumber.set(2, 3)).toBe(3);
+
+        expect(onMajorName.get(minor)).toBeUndefined();
+        expect(onMajorName.set('Titouan', minor)).toBe(minor);
+    });
+});

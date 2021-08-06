@@ -1,4 +1,4 @@
-import { Optix, _Partial, _Total } from './lens';
+import { Optix, partial, total } from './lens';
 
 function createCombinator<S, A, Args extends any[]>(
     f: (
@@ -8,7 +8,7 @@ function createCombinator<S, A, Args extends any[]>(
         getOption: (s: S) => A | undefined;
         set: (a: A, s: S) => S;
     },
-): (...args: Args) => Optix<A, _Partial, S>;
+): (...args: Args) => Optix<A, partial, S>;
 function createCombinator<S, A, Args extends any[]>(
     f: (
         ...args: Args
@@ -17,7 +17,7 @@ function createCombinator<S, A, Args extends any[]>(
         get: (s: S) => A;
         set: (a: A, s: S) => S;
     },
-): (...args: Args) => Optix<A, _Total, S>;
+): (...args: Args) => Optix<A, total, S>;
 function createCombinator<Args extends any[]>(f: (...args: Args) => any) {
     return (...args: Args) => {
         const { set, key, get: _get, getOption } = f(...args);
@@ -35,6 +35,6 @@ export const atIndex = createCombinator(<T>(index: number) => ({
     },
 }));
 
-export function optix<T>(key = 'root'): Optix<T, _Total, T> {
+export function optix<T>(key = 'root'): Optix<T, total, T> {
     return new Optix([{ key, get: (s) => s, set: (a) => a }]);
 }

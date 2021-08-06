@@ -1,9 +1,9 @@
 import { memoize } from './utils';
 
-export interface _Partial {
+export interface partial {
     partial: 'partial';
 }
-export interface _Total extends _Partial {
+export interface total extends partial {
     total: 'total';
 }
 
@@ -13,11 +13,11 @@ export interface Lens {
     set: (a: any, s: any) => any;
 }
 
-export class Optix<A, TLensType extends _Partial = _Total, S = any> {
+export class Optix<A, TLensType extends partial = total, S = any> {
     constructor(readonly lenses: Lens[]) {}
     #type: TLensType = {} as any;
 
-    get(s: S): TLensType extends _Total ? A : A | undefined {
+    get(s: S): TLensType extends total ? A : A | undefined {
         let accumulator: any = s;
         for (const lens of this.lenses) {
             const slice = lens.get(accumulator);
@@ -55,13 +55,13 @@ export class Optix<A, TLensType extends _Partial = _Total, S = any> {
         return this.lenses.map((l) => l.key);
     }
 
-    compose<B, TLensTypeB extends _Partial>(
+    compose<B, TLensTypeB extends partial>(
         other: Optix<B, TLensTypeB, A>,
-    ): Return<S, A, B, TLensTypeB extends _Total ? (TLensType extends _Total ? _Total : _Partial) : _Partial> {
+    ): Return<S, A, B, TLensTypeB extends total ? (TLensType extends total ? total : partial) : partial> {
         return new Optix([...this.lenses, ...other.lenses]) as any;
     }
 
-    refine<B>(refiner: (a: A) => B | false): B extends false ? never : Optix<B, _Partial, S> {
+    refine<B>(refiner: (a: A) => B | false): B extends false ? never : Optix<B, partial, S> {
         return new Optix([
             ...this.lenses,
             {
@@ -76,7 +76,7 @@ export class Optix<A, TLensType extends _Partial = _Total, S = any> {
         return new Optix([...this.lenses, { get: memoize(get), set: reverseGet, key: 'convert' }]);
     }
 
-    filter(predicate: (a: A) => boolean): Optix<A, _Partial, S> {
+    filter(predicate: (a: A) => boolean): Optix<A, partial, S> {
         return new Optix([
             ...this.lenses,
             {
@@ -87,7 +87,7 @@ export class Optix<A, TLensType extends _Partial = _Total, S = any> {
         ]);
     }
 
-    findFirst: A extends Array<infer R> ? (predicate: (r: R) => boolean) => Optix<R, _Partial, S> : never = ((
+    findFirst: A extends Array<infer R> ? (predicate: (r: R) => boolean) => Optix<R, partial, S> : never = ((
         predicate: (value: unknown) => boolean,
     ) => {
         return new Optix([
@@ -104,7 +104,7 @@ export class Optix<A, TLensType extends _Partial = _Total, S = any> {
         ]);
     }) as any;
 
-    key: A extends Record<string, infer R> ? (key: string) => Optix<R, _Partial, S> : never = ((key: string) => {
+    key: A extends Record<string, infer R> ? (key: string) => Optix<R, partial, S> : never = ((key: string) => {
         return new Optix([
             ...this.lenses,
             {
@@ -116,15 +116,15 @@ export class Optix<A, TLensType extends _Partial = _Total, S = any> {
     }) as any;
 }
 
-export type Return<Root, Types, LastType, TLensType extends _Partial> = TLensType extends _Total
+export type Return<Root, Types, LastType, TLensType extends partial> = TLensType extends total
     ? undefined extends Types
-        ? Optix<LastType, _Partial, Root>
+        ? Optix<LastType, partial, Root>
         : null extends Types
-        ? Optix<LastType, _Partial, Root>
-        : Optix<LastType, _Total, Root>
-    : Optix<LastType, _Partial, Root>;
+        ? Optix<LastType, partial, Root>
+        : Optix<LastType, total, Root>
+    : Optix<LastType, partial, Root>;
 
-export interface Focus<A, TLensType extends _Partial, S> {
+export interface Focus<A, TLensType extends partial, S> {
     <Key1 extends keyof NonNullable<A>>(k1: Key1): Return<S, A, NonNullable<A>[Key1], TLensType>;
     <Key1 extends keyof NonNullable<A>, Key2 extends keyof NonNullable<NonNullable<A>[Key1]>>(
         k1: Key1,
@@ -487,7 +487,3 @@ export interface Focus<A, TLensType extends _Partial, S> {
         TLensType
     >;
 }
-
-type Test = Required;
-
-type Test2 = Require;

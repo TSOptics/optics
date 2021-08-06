@@ -103,3 +103,18 @@ describe('findFirst', () => {
         expect(onOver100.set(1000, arr)).toBe(arr);
     });
 });
+describe('key', () => {
+    const countryCodes: Record<string, number> = { france: 33, germany: 49, italy: 39 };
+    const onCountryCodes = optix<typeof countryCodes>();
+
+    it('should focus on the value paired to the key', () => {
+        const onFrance = onCountryCodes.key('france');
+        expect(onFrance.get(countryCodes)).toBe(33);
+        expect(onFrance.set(-1, countryCodes)).toStrictEqual({ france: -1, germany: 49, italy: 39 });
+    });
+    it('should find no key and return undefined', () => {
+        const onSpain = onCountryCodes.key('spain');
+        expect(onSpain.get(countryCodes)).toBeUndefined();
+        expect(onSpain.set(-1, countryCodes)).toBe(countryCodes);
+    });
+});

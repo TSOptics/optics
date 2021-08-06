@@ -103,6 +103,17 @@ export class Optix<A, TLensType extends _Partial = _Total, S = any> {
             },
         ]);
     }) as any;
+
+    key: A extends Record<string, infer R> ? (key: string) => Optix<R, _Partial, S> : never = ((key: string) => {
+        return new Optix([
+            ...this.lenses,
+            {
+                get: (s) => s[key],
+                set: (a, s) => (s[key] !== undefined ? { ...s, [key]: a } : s),
+                key: `record key: ${key}`,
+            },
+        ]);
+    }) as any;
 }
 
 export type Return<Root, Types, LastType, TLensType extends _Partial> = TLensType extends _Total
@@ -476,3 +487,7 @@ export interface Focus<A, TLensType extends _Partial, S> {
         TLensType
     >;
 }
+
+type Test = Required;
+
+type Test2 = Require;

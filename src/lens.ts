@@ -86,6 +86,23 @@ export class Optix<A, TLensType extends _Partial = _Total, S = any> {
             },
         ]);
     }
+
+    findFirst: A extends Array<infer R> ? (predicate: (r: R) => boolean) => Optix<R, _Partial, S> : never = ((
+        predicate: (value: unknown) => boolean,
+    ) => {
+        return new Optix([
+            ...this.lenses,
+            {
+                get: (s: unknown[]) => s.find(predicate),
+                set: (a: unknown, s: unknown[]) => {
+                    const i = s.findIndex(predicate);
+                    if (i === -1) return s;
+                    return [...s.slice(0, i), a, ...s.slice(i + 1)];
+                },
+                key: 'findFirst',
+            },
+        ]);
+    }) as any;
 }
 
 export type Return<Root, Types, LastType, TLensType extends _Partial> = TLensType extends _Total

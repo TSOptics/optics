@@ -85,3 +85,21 @@ describe('filter', () => {
         expect(onMajorName.set('Titouan', minor)).toBe(minor);
     });
 });
+describe('findFirst', () => {
+    const arr = [42, 78, 23];
+    const onArr = optix<number[]>();
+
+    it('should find the element and focus on it', () => {
+        const onOdd = onArr.findFirst((x) => x % 2 !== 0);
+        expect(onOdd.get(arr)).toBe(23);
+
+        const newArr = onOdd.set(2, arr);
+        expect(newArr).toStrictEqual([42, 78, 2]);
+        expect(onOdd.get(newArr)).toBeUndefined();
+    });
+    it('should find no element and return undefined', () => {
+        const onOver100 = onArr.findFirst((x) => x > 100);
+        expect(onOver100.get(arr)).toBeUndefined();
+        expect(onOver100.set(1000, arr)).toBe(arr);
+    });
+});

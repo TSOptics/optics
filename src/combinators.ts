@@ -35,18 +35,6 @@ export const atIndex = createCombinator(<T>(index: number) => ({
     },
 }));
 
-export const findFirst = createCombinator(<T>(predicate: (x: T) => boolean) => ({
-    key: 'findFirst',
-    getOption: (s: T[]) => {
-        return s.find(predicate);
-    },
-    set: (a: T, s: T[]) => {
-        const i = s.findIndex(predicate);
-        if (i === -1) return s;
-        return [...s.slice(0, i), a, ...s.slice(i + 1)];
-    },
-}));
-
 export function optix<T>(key = 'root'): Optix<T, _Total, T> {
     return new Optix([{ key, get: (s) => s, set: (a) => a }]);
 }

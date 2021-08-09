@@ -114,6 +114,8 @@ export class Optix<A, TLensType extends partial = total, S = any> {
             },
         ]);
     }) as any;
+
+    toPartial: () => Optix<NonNullable<A>, partial, S> = () => new Optix([...this.lenses]);
 }
 
 export type Return<Root, Types, LastType, TLensType extends partial> = TLensType extends total

@@ -57,7 +57,6 @@ expectNot<Optix<any, total>>(composed4);
 /**
  * composing a lens with a lens shoud return a lens
  * */
-
 const composed5 = optix<{ yolo: string }>()
     .focus('yolo')
     .compose({} as Optix<boolean>);
@@ -66,11 +65,15 @@ expect<Optix<any, total>>(composed5);
 describe('lens', () => {
     it('shoud be a subtype of optional', () => {
         const lens: Optix<any, total> = new Optix([]);
-        const optional: Optix<any, partial> = lens;
+        expect<Optix<any, partial>>(lens);
     });
     it("should't be a supertype of optional", () => {
         const optional: Optix<any, partial> = new Optix([]);
         // @ts-expect-error optional isn't assignable to lens
-        const lens: Optix<any, total> = optional;
+        expectNot<Optix<any, total>>(optional);
+    });
+    it('toPartial should return a partial focusing on the nonnullable type', () => {
+        const onNullable = optix<{ a: string | null | undefined }>().focus('a');
+        expect<Optix<string, partial, any>>(onNullable.toPartial());
     });
 });

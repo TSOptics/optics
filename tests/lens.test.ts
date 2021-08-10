@@ -118,3 +118,20 @@ describe('key', () => {
         expect(onSpain.set(-1, countryCodes)).toBe(countryCodes);
     });
 });
+describe('focusWithDefault', () => {
+    type Test = { a?: { b?: number } };
+    const onB = optix<Test>()
+        .focus('a')
+        .focusWithDefault('b', () => 42);
+
+    it('should use fallback', () => {
+        const test: Test = { a: { b: undefined } };
+        expect(onB.get(test)).toBe(42);
+        expect(onB.set(90, test)).toStrictEqual({ a: { b: 90 } });
+    });
+    it('should be referentially stable', () => {
+        const onA = optix<Test>().focusWithDefault('a', () => ({ b: 42 }));
+        const emptyA: Test = { a: undefined };
+        expect(onA.get(emptyA)).toBe(onA.get(emptyA));
+    });
+});

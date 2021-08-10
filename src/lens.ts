@@ -116,6 +116,23 @@ export class Optix<A, TLensType extends partial = total, S = any> {
     }) as any;
 
     toPartial: () => Optix<NonNullable<A>, partial, S> = () => new Optix([...this.lenses]);
+
+    focusWithDefault: <Prop extends keyof NonNullable<A>>(
+        prop: Prop,
+        fallback: (parent: A) => NonNullable<NonNullable<A>[Prop]>,
+    ) => Return<S, A, NonNullable<NonNullable<A>[Prop]>, TLensType> = (key, fallback) => {
+        return new Optix([
+            ...this.lenses,
+            {
+                get: memoize((s) => {
+                    const slice = s[key];
+                    return slice !== undefined && slice !== null ? slice : fallback(s);
+                }),
+                set: (a, s) => ({ ...s, [key]: a }),
+                key: `focus ${key} with default`,
+            },
+        ]) as any;
+    };
 }
 
 export type Return<Root, Types, LastType, TLensType extends partial> = TLensType extends total

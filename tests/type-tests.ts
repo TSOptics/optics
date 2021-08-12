@@ -1,5 +1,4 @@
-import { optix } from '../src/combinators';
-import { Optix, partial, total } from '../src/lens';
+import { optix, Optix, partial, total } from '../src/lens';
 
 const expect = <T>(t: T) => {
     // type level test

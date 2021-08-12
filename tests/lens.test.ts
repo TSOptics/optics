@@ -1,4 +1,4 @@
-import { optix } from '../src/combinators';
+import { optix, optixPartial } from '../src/lens';
 
 describe('lens', () => {
     const obj = { a: { as: [1, 2, 3] } };
@@ -133,5 +133,52 @@ describe('focusWithDefault', () => {
         const onA = optix<Test>().focusWithDefault('a', () => ({ b: 42 }));
         const emptyA: Test = { a: undefined };
         expect(onA.get(emptyA)).toBe(onA.get(emptyA));
+    });
+});
+describe('custom optix', () => {
+    const onEvenNums = optix({ get: (s: number[]) => s.filter((n) => n % 2 === 0), set: (a) => a, key: 'onEven' });
+    const nums = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+    it('should work', () => {
+        expect(onEvenNums.get(nums)).toStrictEqual([0, 2, 4, 6, 8]);
+        expect(onEvenNums.set([42, 84], nums)).toStrictEqual([42, 84]);
+    });
+    it('should be referentially stable', () => {
+        expect(onEvenNums.get(nums)).toBe(onEvenNums.get(nums));
+    });
+});
+describe('custom partial optix', () => {
+    const countryInfos: Record<string, { capital: string }> = {
+        france: { capital: 'Paris' },
+        germany: { capital: 'Berlin' },
+    };
+    it('should work', () => {
+        const onCountry = (country: string) =>
+            optixPartial({
+                get: (s: typeof countryInfos) => s[country],
+                set: (a, s) => (s[country] !== undefined ? { ...s, [country]: a } : s),
+                key: 'onCountry ' + country,
+            });
+        const onFrance = onCountry('france');
+        const onSpain = onCountry('spain');
+
+        expect(onFrance.get(countryInfos)?.capital).toBe('Paris');
+        expect(onSpain.get(countryInfos)?.capital).toBeUndefined();
+        expect(onFrance.set({ capital: 'Marseille' }, countryInfos)['france']).toStrictEqual({ capital: 'Marseille' });
+        expect(onSpain.set({ capital: 'Barcelona' }, countryInfos)).toBe(countryInfos);
+    });
+    it('should be referentially stable', () => {
+        const onEntriesNoEmpty = optixPartial({
+            get: (s: typeof countryInfos) => {
+                const values = Object.values(s);
+                return values.length > 0 ? values : undefined;
+            },
+            set: (a, s) => {
+                const values = Object.values(s);
+                return values.length > 0 ? Object.fromEntries(Object.keys(s).map((k, i) => [k, a[i]])) : s;
+            },
+            key: 'onEntriesNoEmpty',
+        });
+
+        expect(onEntriesNoEmpty.get(countryInfos)).toBe(onEntriesNoEmpty.get(countryInfos));
     });
 });

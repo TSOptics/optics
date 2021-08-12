@@ -135,6 +135,37 @@ export class Optix<A, TLensType extends partial = total, S = any> {
     };
 }
 
+export function optix<A, S>(lens: { get: (s: S) => A; set: (a: A, s: S) => S; key: string }): Optix<A, total, S>;
+export function optix<S>(key?: string): Optix<S, total, S>;
+export function optix<A, S>(
+    param?: { get: (s: S) => A; set: (a: A, s: S) => S; key: string } | string,
+): Optix<A, total, S> {
+    if (typeof param === 'object') {
+        return new Optix([{ ...param, get: memoize(param.get) }]);
+    }
+    return new Optix([{ get: (s) => s, set: (a) => a, key: param || 'root' }]);
+}
+
+export function optixPartial<A, S>(lens: {
+    get: (s: S) => A | undefined;
+    set: (a: A, s: S) => S;
+    key: string;
+}): Optix<A, partial, S>;
+export function optixPartial<S>(key?: string): Optix<S, partial, S>;
+export function optixPartial<A, S>(
+    param?:
+        | {
+              get: (s: S) => A | undefined;
+              set: (a: A, s: S) => S;
+              key: string;
+          }
+        | string,
+): Optix<A, partial, S> {
+    if (typeof param === 'object') {
+        return new Optix([{ ...param, get: memoize(param.get) }]);
+    }
+    return new Optix([{ get: (s) => s, set: (a) => a, key: param || 'root' }]);
+}
 export type Return<Root, Types, LastType, TLensType extends partial> = TLensType extends total
     ? undefined extends Types
         ? Optix<LastType, partial, Root>

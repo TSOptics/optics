@@ -14,7 +14,10 @@ export interface Lens {
 }
 
 export class Optix<A, TLensType extends partial = total, S = any> {
-    constructor(readonly lenses: Lens[]) {}
+    private lenses: Lens[];
+    constructor(lenses: Lens[]) {
+        this.lenses = lenses;
+    }
     #type: TLensType = {} as any;
 
     get(s: S): TLensType extends total ? A : A | undefined {
@@ -183,7 +186,7 @@ export interface Focus<A, TLensType extends partial, S> {
     <
         Key1 extends keyof NonNullable<A>,
         Key2 extends keyof NonNullable<NonNullable<A>[Key1]>,
-        Key3 extends keyof NonNullable<NonNullable<NonNullable<A>[Key1]>[Key2]>
+        Key3 extends keyof NonNullable<NonNullable<NonNullable<A>[Key1]>[Key2]>,
     >(
         k1: Key1,
         k2: Key2,
@@ -198,7 +201,7 @@ export interface Focus<A, TLensType extends partial, S> {
         Key1 extends keyof NonNullable<A>,
         Key2 extends keyof NonNullable<NonNullable<A>[Key1]>,
         Key3 extends keyof NonNullable<NonNullable<NonNullable<A>[Key1]>[Key2]>,
-        Key4 extends keyof NonNullable<NonNullable<NonNullable<NonNullable<A>[Key1]>[Key2]>[Key3]>
+        Key4 extends keyof NonNullable<NonNullable<NonNullable<NonNullable<A>[Key1]>[Key2]>[Key3]>,
     >(
         k1: Key1,
         k2: Key2,
@@ -218,7 +221,7 @@ export interface Focus<A, TLensType extends partial, S> {
         Key2 extends keyof NonNullable<NonNullable<A>[Key1]>,
         Key3 extends keyof NonNullable<NonNullable<NonNullable<A>[Key1]>[Key2]>,
         Key4 extends keyof NonNullable<NonNullable<NonNullable<NonNullable<A>[Key1]>[Key2]>[Key3]>,
-        Key5 extends keyof NonNullable<NonNullable<NonNullable<NonNullable<NonNullable<A>[Key1]>[Key2]>[Key3]>[Key4]>
+        Key5 extends keyof NonNullable<NonNullable<NonNullable<NonNullable<NonNullable<A>[Key1]>[Key2]>[Key3]>[Key4]>,
     >(
         k1: Key1,
         k2: Key2,
@@ -243,7 +246,7 @@ export interface Focus<A, TLensType extends partial, S> {
         Key5 extends keyof NonNullable<NonNullable<NonNullable<NonNullable<NonNullable<A>[Key1]>[Key2]>[Key3]>[Key4]>,
         Key6 extends keyof NonNullable<
             NonNullable<NonNullable<NonNullable<NonNullable<NonNullable<A>[Key1]>[Key2]>[Key3]>[Key4]>[Key5]
-        >
+        >,
     >(
         k1: Key1,
         k2: Key2,
@@ -277,7 +280,7 @@ export interface Focus<A, TLensType extends partial, S> {
             NonNullable<
                 NonNullable<NonNullable<NonNullable<NonNullable<NonNullable<A>[Key1]>[Key2]>[Key3]>[Key4]>[Key5]
             >[Key6]
-        >
+        >,
     >(
         k1: Key1,
         k2: Key2,
@@ -324,7 +327,7 @@ export interface Focus<A, TLensType extends partial, S> {
                     NonNullable<NonNullable<NonNullable<NonNullable<NonNullable<A>[Key1]>[Key2]>[Key3]>[Key4]>[Key5]
                 >[Key6]
             >[Key7]
-        >
+        >,
     >(
         k1: Key1,
         k2: Key2,
@@ -388,7 +391,7 @@ export interface Focus<A, TLensType extends partial, S> {
                     >[Key6]
                 >[Key7]
             >[Key8]
-        >
+        >,
     >(
         k1: Key1,
         k2: Key2,
@@ -475,7 +478,7 @@ export interface Focus<A, TLensType extends partial, S> {
                     >[Key7]
                 >[Key8]
             >[Key9]
-        >
+        >,
     >(
         k1: Key1,
         k2: Key2,

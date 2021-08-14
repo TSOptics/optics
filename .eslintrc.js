@@ -15,6 +15,7 @@ module.exports = {
         },
     },
 
+    plugins: ['react-hooks'],
     extends: [
         'plugin:react/recommended',
         'plugin:@typescript-eslint/recommended', // Uses the recommended rules from the @typescript-eslint/eslint-plugin
@@ -24,5 +25,7 @@ module.exports = {
 
     rules: {
         '@typescript-eslint/explicit-module-boundary-types': 'off',
+        'react-hooks/rules-of-hooks': 'error', // Checks rules of Hooks
+        'react-hooks/exhaustive-deps': 'warn', // Checks effect dependencies
     },
 };

@@ -6,7 +6,9 @@
     "devDependencies": {
         "@babel/core": "^7.14.5",
         "@babel/preset-env": "^7.14.5",
+        "@babel/preset-react": "^7.14.5",
         "@babel/preset-typescript": "^7.14.5",
+        "@testing-library/react-hooks": "^7.0.1",
         "@types/jest": "^26.0.23",
         "@types/react": "^17.0.17",
         "@typescript-eslint/eslint-plugin": "^4.29.1",
@@ -20,11 +22,13 @@
         "jest": "^27.0.4",
         "prettier": "^2.3.2",
         "react": "^17.0.2",
+        "react-test-renderer": "^17.0.2",
         "ts-essentials": "^7.0.0",
         "typescript": "^4.3.5"
     },
     "scripts": {
-        "test": "jest"
+        "test": "jest",
+        "tsc": "tsc --skipLibCheck --noEmit"
     },
     "repository": {
         "type": "git",

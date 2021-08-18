@@ -1,6 +1,6 @@
 {
     "name": "react-optix",
-    "version": "1.0.0",
+    "version": "0.1.0",
     "description": "",
     "main": "index.js",
     "devDependencies": {
@@ -32,12 +32,12 @@
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/VincentQuillien/react-chemin.git"
+        "url": "git+https://github.com/OptixJs/Optix.git"
     },
     "author": "",
     "license": "ISC",
     "bugs": {
-        "url": "https://github.com/VincentQuillien/react-chemin/issues"
+        "url": "https://github.com/OptixJs/Optix/issues"
     },
-    "homepage": "https://github.com/VincentQuillien/react-chemin#readme"
+    "homepage": "https://github.com/OptixJs/Optix#readme"
 }

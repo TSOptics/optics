@@ -54,6 +54,26 @@ export class Optix<A, TLensType extends partial = total, S = any> {
         return new Optix([...this.lenses, ...lenses]);
     };
 
+    focusMany: <Keys extends keyof NonNullable<A>, Prefix extends string | undefined>(
+        props: Keys[],
+        prefix?: Prefix,
+    ) => {
+        [Key in Keys as `${undefined extends Prefix ? 'on' : Prefix}${Key extends number
+            ? Key
+            : Capitalize<Key & string>}`]-?: Optix<
+            NonNullable<A>[Key],
+            undefined extends A ? partial : null extends A ? partial : TLensType,
+            S
+        >;
+    } = (props, prefix) => {
+        return props.reduce((acc, prop) => {
+            const propName = prop.toString();
+            const firstLetter = prefix !== '' ? propName.charAt(0).toUpperCase() : propName.charAt(0);
+            acc[(prefix ?? 'on') + firstLetter + propName.slice(1)] = this.focus(prop);
+            return acc;
+        }, {} as any);
+    };
+
     getKeys(): string[] {
         return this.lenses.map((l) => l.key);
     }

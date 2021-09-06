@@ -1,4 +1,7 @@
-import { optix, optixPartial } from '../src/lens';
+import { Optix, optix, optixPartial, total } from '../src/lens';
+
+const expectType = <T>(t: T) => {};
+const expectNotType = <T>(t: T) => {};
 
 describe('lens', () => {
     const obj = { a: { as: [1, 2, 3] } };
@@ -107,7 +110,7 @@ describe('key', () => {
     const countryCodes: Record<string, number> = { france: 33, germany: 49, italy: 39 };
     const onCountryCodes = optix<typeof countryCodes>();
 
-    it('should focus on the value paired to the key', () => {
+    it('should focus on the value indexed by the key', () => {
         const onFrance = onCountryCodes.key('france');
         expect(onFrance.get(countryCodes)).toBe(33);
         expect(onFrance.set(-1, countryCodes)).toStrictEqual({ france: -1, germany: 49, italy: 39 });
@@ -180,5 +183,35 @@ describe('custom partial optix', () => {
         });
 
         expect(onEntriesNoEmpty.get(countryInfos)).toBe(onEntriesNoEmpty.get(countryInfos));
+    });
+});
+describe('focusMany', () => {
+    const onObj = optix<{ a: string[]; b: boolean }>();
+    it('should return optix with capitalized names', () => {
+        expect(onObj.focusMany(['a', 'b'])).toStrictEqual({
+            onA: expect.any(Optix),
+            onB: expect.any(Optix),
+        });
+        expect(optix<number[]>().focusMany([0, 1])).toStrictEqual({ on0: expect.any(Optix), on1: expect.any(Optix) });
+    });
+    it('should allow custom prefix', () => {
+        expect(onObj.focusMany(['a', 'b'], 'test')).toStrictEqual({
+            testA: expect.any(Optix),
+            testB: expect.any(Optix),
+        });
+    });
+    it('should allow no prefix', () => {
+        expect(onObj.focusMany(['a', 'b'], '')).toStrictEqual({
+            a: expect.any(Optix),
+            b: expect.any(Optix),
+        });
+        expect(optix<number[]>().focusMany([0, 1], '')).toStrictEqual({ 0: expect.any(Optix), 1: expect.any(Optix) });
+    });
+    it('should yield partial optix when parent optix focus on nullable', () => {
+        const { onB, onC } = optix<{ a?: { b: boolean; c: number } }>().focus('a').focusMany(['b', 'c']);
+        // @ts-expect-error
+        expectNotType<Optix<any, total>>(onB);
+        // @ts-expect-error
+        expectNotType<Optix<any, total>>(onC);
     });
 });

@@ -3,6 +3,7 @@ import { renderHook } from '@testing-library/react-hooks';
 import createStore, { Provider } from '../src/react/createStore';
 import useOptix from '../src/react/useOptix';
 import { act } from 'react-test-renderer';
+import { Optix } from '../src/lens';
 
 describe('createStore', () => {
     it('should create an optix for each property', () => {
@@ -14,8 +15,8 @@ describe('createStore', () => {
         expect(createStore(42)).toStrictEqual({
             store: expect.anything(),
             provideStore: expect.anything(),
-            onRoot: expect.anything(),
-            setRoot: expect.anything(),
+            onRoot: expect.any(Optix),
+            setRoot: expect.any(Function),
         });
     });
 });

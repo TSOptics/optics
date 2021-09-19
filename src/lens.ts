@@ -7,10 +7,16 @@ export interface total extends partial {
     total: 'total';
 }
 
-export interface Lens {
+export interface Lens<A = any, S = any> {
     key: string;
-    get: (s: any) => any;
-    set: (a: any, s: any) => any;
+    get: (s: S) => A;
+    set: (a: A, s: S) => S;
+}
+
+interface PartialLens<A = any, S = any> {
+    key: string;
+    get: (s: S) => A | undefined;
+    set: (a: A, s: S) => S;
 }
 
 export class Optix<A, TLensType extends partial = total, S = any> {
@@ -156,34 +162,27 @@ export class Optix<A, TLensType extends partial = total, S = any> {
             },
         ]) as any;
     };
+
+    toString() {
+        return this.getKeys().toString();
+    }
+    __unsafeReplaceLast = (newLast: Lens<A>) => {
+        this.lenses[this.lenses.length - 1] = newLast;
+    };
 }
 
-export function optix<A, S>(lens: { get: (s: S) => A; set: (a: A, s: S) => S; key: string }): Optix<A, total, S>;
+export function optix<A, S>(lens: Lens<A, S>): Optix<A, total, S>;
 export function optix<S>(key?: string): Optix<S, total, S>;
-export function optix<A, S>(
-    param?: { get: (s: S) => A; set: (a: A, s: S) => S; key: string } | string,
-): Optix<A, total, S> {
+export function optix<A, S>(param?: Lens<A, S> | string): Optix<A, total, S> {
     if (typeof param === 'object') {
         return new Optix([{ ...param, get: memoize(param.get) }]);
     }
     return new Optix([{ get: (s) => s, set: (a) => a, key: param || 'root' }]);
 }
 
-export function optixPartial<A, S>(lens: {
-    get: (s: S) => A | undefined;
-    set: (a: A, s: S) => S;
-    key: string;
-}): Optix<A, partial, S>;
+export function optixPartial<A, S>(lens: PartialLens<A, S>): Optix<A, partial, S>;
 export function optixPartial<S>(key?: string): Optix<S, partial, S>;
-export function optixPartial<A, S>(
-    param?:
-        | {
-              get: (s: S) => A | undefined;
-              set: (a: A, s: S) => S;
-              key: string;
-          }
-        | string,
-): Optix<A, partial, S> {
+export function optixPartial<A, S>(param?: PartialLens<A, S> | string): Optix<A, partial, S> {
     if (typeof param === 'object') {
         return new Optix([{ ...param, get: memoize(param.get) }]);
     }

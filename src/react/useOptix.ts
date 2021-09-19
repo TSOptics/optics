@@ -1,29 +1,40 @@
-import { useCallback, useContext, useEffect, useState } from 'react';
-import { Optix, partial, total } from '../lens';
+import { useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { Optix, partial } from '../lens';
 import { StoreContext } from './createStore';
 
-type Focus<T, TLensType extends partial> = TLensType extends total ? T : T | undefined;
-type EqualityFn<T, TLensType extends partial> = (
-    oldValue: Focus<T, TLensType>,
-    newValue: Focus<T, TLensType>,
-) => boolean;
-
-const useOptix = <T, TLensType extends partial>(optix: Optix<T, TLensType>, equalityFn?: EqualityFn<T, TLensType>) => {
+const useOptix = <T, TLensType extends partial>(optix: Optix<T, TLensType>) => {
     const { root, setRoot, subscriptions } = useContext(StoreContext);
 
     const [slice, setSlice] = useState(optix.get(root.ref));
 
-    useEffect(() => {
-        const subscription = (newRoot: any) =>
-            setSlice((oldSlice) => {
-                const newSlice = optix.get(newRoot);
-                return !equalityFn || !equalityFn(oldSlice, newSlice) ? newSlice : oldSlice;
-            });
-        subscriptions.add(subscription);
-        return () => {
-            subscriptions.delete(subscription);
-        };
-    }, [optix, subscriptions, equalityFn]);
+    const subscription = useCallback(
+        (newRoot: any) => {
+            setSlice(optix.get(newRoot));
+        },
+        [optix],
+    );
+
+    const subRef = useRef(subscription);
+
+    // synchronize local state with the subscription
+    if (subscription !== subRef.current) {
+        subscription(root.ref);
+        subRef.current = subscription;
+    }
+
+    // register subscription on mount (parent first)
+    const mounted = useRef(false);
+    if (!mounted.current) {
+        subscriptions.add(subRef);
+        mounted.current = true;
+    }
+    // unregister subscription on unmount (children first)
+    useEffect(
+        () => () => {
+            subscriptions.delete(subRef);
+        },
+        [subscriptions],
+    );
 
     const setter = useCallback(
         (value: T | ((prevState: typeof slice) => T)) => {

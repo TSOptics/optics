@@ -1,40 +1,40 @@
 import React, { memo, useCallback, useRef } from 'react';
 import { renderHook } from '@testing-library/react-hooks';
 import createStore from '../src/react/createStore';
-import useOptix from '../src/react/useOptix';
+import useOptic from '../src/react/useOptic';
 import { act } from 'react-test-renderer';
-import { Optix } from '../src/lens';
-import useKeyedOptix from '../src/react/useKeyedOptix';
+import { Optic } from '../src/lens';
+import useArrayOptic from '../src/react/useArrayOptic';
 import { render, fireEvent } from '@testing-library/react';
 
 describe('createStore', () => {
-    it('should create an optix for each property', () => {
+    it('should create an c for each property', () => {
         expect(createStore({ foo: 'foo', bar: 'bar' })).toEqual(
             expect.objectContaining({ onFoo: expect.anything(), onBar: expect.anything() }),
         );
     });
-    it('should return only the root optix if not object', () => {
+    it('should return only the root optic if not object', () => {
         expect(createStore(42)).toStrictEqual({
             store: expect.anything(),
             wrapper: expect.anything(),
-            onRoot: expect.any(Optix),
+            onRoot: expect.any(Optic),
             setRoot: expect.any(Function),
         });
     });
 });
-describe('useOptix', () => {
+describe('useOptic', () => {
     const initial = { test: 42 };
     const { onRoot, setRoot, wrapper } = createStore(initial);
     beforeEach(() => {
         setRoot(initial);
     });
     it('should set state', () => {
-        const { result } = renderHook(() => useOptix(onRoot), { wrapper });
+        const { result } = renderHook(() => useOptic(onRoot), { wrapper });
         act(() => result.current[1]((prev) => ({ test: prev.test * 2 })));
         expect(result.current[0]).toStrictEqual({ test: 84 });
     });
     it('should be referentially stable', () => {
-        const { result, rerender } = renderHook(() => useOptix(onRoot), {
+        const { result, rerender } = renderHook(() => useOptic(onRoot), {
             wrapper,
         });
         const [prevState, prevSetState] = result.current;
@@ -44,9 +44,9 @@ describe('useOptix', () => {
         expect(prevSetState).toBe(setState);
     });
 });
-describe('useKeyedOptix', () => {
-    const Number = memo(({ onNumber }: { onNumber: Optix<number> }) => {
-        const [n] = useOptix(onNumber);
+describe('useArrayOptic', () => {
+    const Number = memo(({ onNumber }: { onNumber: Optic<number> }) => {
+        const [n] = useOptic(onNumber);
         const renders = useRef(0);
         renders.current = renders.current + 1;
 
@@ -58,8 +58,8 @@ describe('useKeyedOptix', () => {
         );
     });
 
-    const Numbers = ({ onArray }: { onArray: Optix<number[]> }) => {
-        const [array, setArray, getOptix] = useKeyedOptix(
+    const Numbers = ({ onArray }: { onArray: Optic<number[]> }) => {
+        const [array, setArray, getOptic] = useArrayOptic(
             onArray,
             useCallback((n) => n.toString(), []),
         );
@@ -78,7 +78,7 @@ describe('useKeyedOptix', () => {
                 <button onClick={changeSecond}>changeSecond</button>
                 {array.map((n) => {
                     const key = n.toString();
-                    return <Number onNumber={getOptix(key)} key={key} />;
+                    return <Number onNumber={getOptic(key)} key={key} />;
                 })}
             </div>
         );

@@ -1,8 +1,8 @@
-import { optix } from '../src/lens';
+import { optic } from '../src/lens';
 
 describe('Focus method', () => {
     const obj = { a: { as: [1, 2, 3] } };
-    const onAsFirst = optix<typeof obj>().focus('a', 'as', 0);
+    const onAsFirst = optic<typeof obj>().focus('a', 'as', 0);
 
     it('should focus object', () => {
         const newObj = onAsFirst.set(42, obj);

@@ -1,12 +1,12 @@
 import React, { createContext, MutableRefObject, ReactNode } from 'react';
-import { Optix, optix, total } from '../lens';
+import { Optic, optic, total } from '../lens';
 import { isObject } from '../utils';
 
 type Subscriptions = Set<MutableRefObject<(root: any) => void>>;
 type Store = { root: { ref: any }; setRoot: (root: any) => void; subscriptions: Subscriptions };
-type RootKeyOptix<T> = T extends Record<string, unknown>
+type RootKeyOptic<T> = T extends Record<string, unknown>
     ? {
-          [Key in keyof T as `on${Capitalize<Key & string>}`]: Optix<T[Key], total, T>;
+          [Key in keyof T as `on${Capitalize<Key & string>}`]: Optic<T[Key], total, T>;
       }
     : Record<string, never>;
 
@@ -31,15 +31,15 @@ export default function createStore<T>(initialState: T) {
     };
     const store: Store = { root, subscriptions, setRoot };
     const wrapper = ({ children }: any) => <Provider store={store}>{children}</Provider>;
-    const onRoot = optix<T>();
-    const rootKeysOptix: RootKeyOptix<T> = isObject(initialState)
+    const onRoot = optic<T>();
+    const rootKeysOptic: RootKeyOptic<T> = isObject(initialState)
         ? (Object.fromEntries(
               Object.keys(initialState).map((key) => [
                   `on${key.replace(/^\w/, (c) => c.toUpperCase())}`,
-                  optix<typeof initialState>().focus(key),
+                  optic<typeof initialState>().focus(key),
               ]),
           ) as any)
         : {};
 
-    return { store, wrapper, onRoot, setRoot, ...rootKeysOptix };
+    return { store, wrapper, onRoot, setRoot, ...rootKeysOptic };
 }

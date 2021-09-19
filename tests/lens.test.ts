@@ -1,11 +1,12 @@
-import { Optix, optix, optixPartial, total } from '../src/lens';
+import { Optic, optic, opticPartial, total } from '../src/lens';
+import { noop } from '../src/utils';
 
-const expectType = <T>(t: T) => {};
-const expectNotType = <T>(t: T) => {};
+const expectType = <T>(t: T) => noop();
+const expectNotType = <T>(t: T) => noop();
 
 describe('lens', () => {
     const obj = { a: { as: [1, 2, 3] } };
-    const onAsFirst = optix<typeof obj>().focus('a', 'as', 0);
+    const onAsFirst = optic<typeof obj>().focus('a', 'as', 0);
 
     it('should be referentially stable', () => {
         const newObj = onAsFirst.set(1, obj);
@@ -14,7 +15,7 @@ describe('lens', () => {
 });
 describe('optional', () => {
     type TestObj = { a: { b?: { c: number } } };
-    const onC = optix<TestObj>().focus('a', 'b', 'c');
+    const onC = optic<TestObj>().focus('a', 'b', 'c');
     const testObj: TestObj = { a: { b: undefined } };
     it('should return undefined', () => {
         expect(onC.get(testObj)).toBeUndefined();
@@ -27,20 +28,20 @@ describe('refine', () => {
     type FooBar = { type: 'foo'; foo: string } | { type: 'bar'; bar: number };
     const foo: FooBar = { type: 'foo', foo: 'test' };
     it('should focus on a part of the union', () => {
-        const onFoo = optix<FooBar>().refine((a) => a.type === 'foo' && a);
+        const onFoo = optic<FooBar>().refine((a) => a.type === 'foo' && a);
         expect(onFoo.get(foo)?.foo).toBe('test');
 
         const updated = onFoo.set({ type: 'foo', foo: 'newFoo' }, foo);
         expect(onFoo.get(updated)?.foo).toBe('newFoo');
     });
     it('should handle the type narrowing failing', () => {
-        const onBar = optix<FooBar>().refine((a) => a.type === 'bar' && a);
+        const onBar = optic<FooBar>().refine((a) => a.type === 'bar' && a);
         expect(onBar.get(foo)).toBeUndefined();
         expect(onBar.set({ type: 'bar', bar: 99 }, foo)).toBe(foo);
     });
 });
 describe('convert', () => {
-    const onTuple = optix<[string, number]>().convert(
+    const onTuple = optic<[string, number]>().convert(
         ([name, age]) => ({ name, age }),
         ({ name, age }) => [name, age],
     );
@@ -50,7 +51,7 @@ describe('convert', () => {
         expect(onTuple.set({ name: 'Albert', age: 65 }, ['Jean', 34])).toStrictEqual(['Albert', 65]);
     });
     it('should convert from celcius to fahrenheit', () => {
-        const onTemp = optix<number>().convert(
+        const onTemp = optic<number>().convert(
             (celcius) => celcius * (9 / 5) + 32,
             (fahrenheit) => (fahrenheit - 32) * (5 / 9),
         );
@@ -66,9 +67,9 @@ describe('convert', () => {
     });
 });
 describe('filter', () => {
-    const onEvenNumber = optix<number>().filter((n) => n % 2 === 0);
+    const onEvenNumber = optic<number>().filter((n) => n % 2 === 0);
 
-    const onMajorName = optix<{ age: number; name: string }>()
+    const onMajorName = optic<{ age: number; name: string }>()
         .filter(({ age }) => age >= 18)
         .focus('name');
     const major = { age: 42, name: 'Louis' };
@@ -90,7 +91,7 @@ describe('filter', () => {
 });
 describe('findFirst', () => {
     const arr = [42, 78, 23];
-    const onArr = optix<number[]>();
+    const onArr = optic<number[]>();
 
     it('should find the element and focus on it', () => {
         const onOdd = onArr.findFirst((x) => x % 2 !== 0);
@@ -108,7 +109,7 @@ describe('findFirst', () => {
 });
 describe('key', () => {
     const countryCodes: Record<string, number> = { france: 33, germany: 49, italy: 39 };
-    const onCountryCodes = optix<typeof countryCodes>();
+    const onCountryCodes = optic<typeof countryCodes>();
 
     it('should focus on the value indexed by the key', () => {
         const onFrance = onCountryCodes.key('france');
@@ -123,7 +124,7 @@ describe('key', () => {
 });
 describe('focusWithDefault', () => {
     type Test = { a?: { b?: number } };
-    const onB = optix<Test>()
+    const onB = optic<Test>()
         .focus('a')
         .focusWithDefault('b', () => 42);
 
@@ -133,13 +134,13 @@ describe('focusWithDefault', () => {
         expect(onB.set(90, test)).toStrictEqual({ a: { b: 90 } });
     });
     it('should be referentially stable', () => {
-        const onA = optix<Test>().focusWithDefault('a', () => ({ b: 42 }));
+        const onA = optic<Test>().focusWithDefault('a', () => ({ b: 42 }));
         const emptyA: Test = { a: undefined };
         expect(onA.get(emptyA)).toBe(onA.get(emptyA));
     });
 });
-describe('custom optix', () => {
-    const onEvenNums = optix({ get: (s: number[]) => s.filter((n) => n % 2 === 0), set: (a) => a, key: 'onEven' });
+describe('custom optic', () => {
+    const onEvenNums = optic({ get: (s: number[]) => s.filter((n) => n % 2 === 0), set: (a) => a, key: 'onEven' });
     const nums = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
     it('should work', () => {
         expect(onEvenNums.get(nums)).toStrictEqual([0, 2, 4, 6, 8]);
@@ -149,14 +150,14 @@ describe('custom optix', () => {
         expect(onEvenNums.get(nums)).toBe(onEvenNums.get(nums));
     });
 });
-describe('custom partial optix', () => {
+describe('custom partial optic', () => {
     const countryInfos: Record<string, { capital: string }> = {
         france: { capital: 'Paris' },
         germany: { capital: 'Berlin' },
     };
     it('should work', () => {
         const onCountry = (country: string) =>
-            optixPartial({
+            opticPartial({
                 get: (s: typeof countryInfos) => s[country],
                 set: (a, s) => (s[country] !== undefined ? { ...s, [country]: a } : s),
                 key: 'onCountry ' + country,
@@ -170,7 +171,7 @@ describe('custom partial optix', () => {
         expect(onSpain.set({ capital: 'Barcelona' }, countryInfos)).toBe(countryInfos);
     });
     it('should be referentially stable', () => {
-        const onEntriesNoEmpty = optixPartial({
+        const onEntriesNoEmpty = opticPartial({
             get: (s: typeof countryInfos) => {
                 const values = Object.values(s);
                 return values.length > 0 ? values : undefined;
@@ -186,32 +187,32 @@ describe('custom partial optix', () => {
     });
 });
 describe('focusMany', () => {
-    const onObj = optix<{ a: string[]; b: boolean }>();
-    it('should return optix with capitalized names', () => {
+    const onObj = optic<{ a: string[]; b: boolean }>();
+    it('should return optics with capitalized names', () => {
         expect(onObj.focusMany(['a', 'b'])).toStrictEqual({
-            onA: expect.any(Optix),
-            onB: expect.any(Optix),
+            onA: expect.any(Optic),
+            onB: expect.any(Optic),
         });
-        expect(optix<number[]>().focusMany([0, 1])).toStrictEqual({ on0: expect.any(Optix), on1: expect.any(Optix) });
+        expect(optic<number[]>().focusMany([0, 1])).toStrictEqual({ on0: expect.any(Optic), on1: expect.any(Optic) });
     });
     it('should allow custom prefix', () => {
         expect(onObj.focusMany(['a', 'b'], 'test')).toStrictEqual({
-            testA: expect.any(Optix),
-            testB: expect.any(Optix),
+            testA: expect.any(Optic),
+            testB: expect.any(Optic),
         });
     });
     it('should allow no prefix', () => {
         expect(onObj.focusMany(['a', 'b'], '')).toStrictEqual({
-            a: expect.any(Optix),
-            b: expect.any(Optix),
+            a: expect.any(Optic),
+            b: expect.any(Optic),
         });
-        expect(optix<number[]>().focusMany([0, 1], '')).toStrictEqual({ 0: expect.any(Optix), 1: expect.any(Optix) });
+        expect(optic<number[]>().focusMany([0, 1], '')).toStrictEqual({ 0: expect.any(Optic), 1: expect.any(Optic) });
     });
-    it('should yield partial optix when parent optix focus on nullable', () => {
-        const { onB, onC } = optix<{ a?: { b: boolean; c: number } }>().focus('a').focusMany(['b', 'c']);
+    it('should yield partial optics when parent optic focus on nullable', () => {
+        const { onB, onC } = optic<{ a?: { b: boolean; c: number } }>().focus('a').focusMany(['b', 'c']);
         // @ts-expect-error
-        expectNotType<Optix<any, total>>(onB);
+        expectNotType<Optic<any, total>>(onB);
         // @ts-expect-error
-        expectNotType<Optix<any, total>>(onC);
+        expectNotType<Optic<any, total>>(onC);
     });
 });

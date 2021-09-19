@@ -1,17 +1,17 @@
 import { useCallback, useContext, useEffect, useRef, useState } from 'react';
-import { Optix, partial } from '../lens';
+import { Optic, partial } from '../lens';
 import { StoreContext } from './createStore';
 
-const useOptix = <T, TLensType extends partial>(optix: Optix<T, TLensType>) => {
+const useOptic = <T, TLensType extends partial>(optic: Optic<T, TLensType>) => {
     const { root, setRoot, subscriptions } = useContext(StoreContext);
 
-    const [slice, setSlice] = useState(optix.get(root.ref));
+    const [slice, setSlice] = useState(optic.get(root.ref));
 
     const subscription = useCallback(
         (newRoot: any) => {
-            setSlice(optix.get(newRoot));
+            setSlice(optic.get(newRoot));
         },
-        [optix],
+        [optic],
     );
 
     const subRef = useRef(subscription);
@@ -39,13 +39,13 @@ const useOptix = <T, TLensType extends partial>(optix: Optix<T, TLensType>) => {
     const setter = useCallback(
         (value: T | ((prevState: typeof slice) => T)) => {
             const newValue =
-                typeof value !== 'function' ? value : (value as (prevState: typeof slice) => T)(optix.get(root.ref));
-            setRoot(optix.set(newValue, root.ref));
+                typeof value !== 'function' ? value : (value as (prevState: typeof slice) => T)(optic.get(root.ref));
+            setRoot(optic.set(newValue, root.ref));
         },
-        [optix, root, setRoot],
+        [optic, root, setRoot],
     );
 
     return [slice, setter] as [typeof slice, typeof setter];
 };
 
-export default useOptix;
+export default useOptic;

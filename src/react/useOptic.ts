@@ -1,5 +1,5 @@
 import { useCallback, useContext, useEffect, useRef, useState } from 'react';
-import { Optic, partial } from '../lens';
+import { Optic, partial } from '..';
 import { StoreContext } from './createStore';
 
 const useOptic = <T, TLensType extends partial>(optic: Optic<T, TLensType>) => {

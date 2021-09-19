@@ -1,4 +1,4 @@
-import { optic } from '../src/lens';
+import { optic } from '../src';
 
 describe('Focus method', () => {
     const obj = { a: { as: [1, 2, 3] } };

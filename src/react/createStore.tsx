@@ -1,5 +1,5 @@
 import React, { createContext, MutableRefObject, ReactNode } from 'react';
-import { Optic, optic, total } from '../lens';
+import { Optic, optic, total } from '..';
 import { isObject } from '../utils';
 
 type Subscriptions = Set<MutableRefObject<(root: any) => void>>;

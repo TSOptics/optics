@@ -1,4 +1,4 @@
-import { Optic, optic, opticPartial, total } from '../src/lens';
+import { Optic, optic, opticPartial, total } from '../src';
 import { noop } from '../src/utils';
 
 const expectType = <T>(t: T) => noop();

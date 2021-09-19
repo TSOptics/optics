@@ -3,7 +3,7 @@ import { renderHook } from '@testing-library/react-hooks';
 import createStore from '../src/react/createStore';
 import useOptic from '../src/react/useOptic';
 import { act } from 'react-test-renderer';
-import { Optic } from '../src/lens';
+import { Optic } from '../src';
 import useArrayOptic from '../src/react/useArrayOptic';
 import { render, fireEvent } from '@testing-library/react';
 

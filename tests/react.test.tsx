@@ -1,4 +1,4 @@
-import React, { memo, useCallback, useEffect, useRef } from 'react';
+import React, { memo, useCallback, useRef } from 'react';
 import { renderHook } from '@testing-library/react-hooks';
 import createStore from '../src/react/createStore';
 import useOptix from '../src/react/useOptix';

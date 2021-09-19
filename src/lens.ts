@@ -26,7 +26,7 @@ export class Optix<A, TLensType extends partial = total, S = any> {
     }
     #type: TLensType = {} as any;
 
-    get(s: S): TLensType extends total ? A : A | undefined {
+    get: (s: S) => TLensType extends total ? A : A | undefined = (s) => {
         let accumulator: any = s;
         for (const lens of this.lenses) {
             const slice = lens.get(accumulator);
@@ -36,9 +36,9 @@ export class Optix<A, TLensType extends partial = total, S = any> {
             accumulator = slice;
         }
         return accumulator;
-    }
+    };
 
-    set(a: A, s: S): S {
+    set: (a: A, s: S) => S = (a, s) => {
         const aux = (a: A, s: S, lenses = this.lenses): S => {
             const [hd, ...tl] = lenses;
             if (!hd) return a as any;
@@ -49,7 +49,7 @@ export class Optix<A, TLensType extends partial = total, S = any> {
             return hd.set(newSlice, s);
         };
         return aux(a, s);
-    }
+    };
 
     focus: Focus<A, TLensType, S> = (...props: any[]): any => {
         const lenses: Lens[] = props.map((prop) => ({
@@ -80,17 +80,19 @@ export class Optix<A, TLensType extends partial = total, S = any> {
         }, {} as any);
     };
 
-    getKeys(): string[] {
+    getKeys = () => {
         return this.lenses.map((l) => l.key);
-    }
+    };
 
-    compose<B, TLensTypeB extends partial>(
+    compose: <B, TLensTypeB extends partial>(
         other: Optix<B, TLensTypeB, A>,
-    ): Return<S, A, B, TLensTypeB extends total ? (TLensType extends total ? total : partial) : partial> {
+    ) => Return<S, A, B, TLensTypeB extends total ? (TLensType extends total ? total : partial) : partial> = (
+        other,
+    ) => {
         return new Optix([...this.lenses, ...other.lenses]) as any;
-    }
+    };
 
-    refine<B>(refiner: (a: A) => B | false): B extends false ? never : Optix<B, partial, S> {
+    refine: <B>(refiner: (a: A) => B | false) => B extends false ? never : Optix<B, partial, S> = (refiner) => {
         return new Optix([
             ...this.lenses,
             {
@@ -99,13 +101,13 @@ export class Optix<A, TLensType extends partial = total, S = any> {
                 key: 'refine',
             },
         ]) as any;
-    }
+    };
 
-    convert<B>(get: (a: A) => B, reverseGet: (b: B) => A): Optix<B, TLensType, S> {
+    convert: <B>(get: (a: A) => B, reverseGet: (b: B) => A) => Optix<B, TLensType, S> = (get, reverseGet) => {
         return new Optix([...this.lenses, { get: memoize(get), set: reverseGet, key: 'convert' }]);
-    }
+    };
 
-    filter(predicate: (a: A) => boolean): Optix<A, partial, S> {
+    filter: (predicate: (a: A) => boolean) => Optix<A, partial, S> = (predicate) => {
         return new Optix([
             ...this.lenses,
             {
@@ -114,7 +116,7 @@ export class Optix<A, TLensType extends partial = total, S = any> {
                 key: 'filter',
             },
         ]);
-    }
+    };
 
     findFirst: A extends Array<infer R> ? (predicate: (r: R) => boolean) => Optix<R, partial, S> : never = ((
         predicate: (value: unknown) => boolean,

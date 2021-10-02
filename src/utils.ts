@@ -1,13 +1,11 @@
-export const memoize = <T, R>(f: (arg: T) => R): ((arg: T) => R) => {
-    const cache = new Map<T, R>();
-    return (arg: T): R => {
-        const cached = cache.get(arg);
-        if (cached) {
-            return cached;
-        }
-        const returnValue = f(arg);
-        cache.set(arg, returnValue);
-        return returnValue;
+export const stabilize = <T, R>(f: (arg: T) => R) => {
+    let latestArg: T;
+    let latestReturn: R;
+    return (arg: T) => {
+        if (arg === latestArg) return latestReturn;
+        latestReturn = f(arg);
+        latestArg = arg;
+        return latestReturn;
     };
 };
 

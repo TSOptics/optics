@@ -1,4 +1,4 @@
-import { memoize } from './utils';
+import { stabilize } from './utils';
 
 export interface partial {
     partial: 'partial';
@@ -104,7 +104,7 @@ export class Optic<A, TLensType extends partial = total, S = any> {
     };
 
     convert: <B>(get: (a: A) => B, reverseGet: (b: B) => A) => Optic<B, TLensType, S> = (get, reverseGet) => {
-        return new Optic([...this.lenses, { get: memoize(get), set: reverseGet, key: 'convert' }]);
+        return new Optic([...this.lenses, { get: stabilize(get), set: reverseGet, key: 'convert' }]);
     };
 
     filter: (predicate: (a: A) => boolean) => Optic<A, partial, S> = (predicate) => {
@@ -155,7 +155,7 @@ export class Optic<A, TLensType extends partial = total, S = any> {
         return new Optic([
             ...this.lenses,
             {
-                get: memoize((s) => {
+                get: stabilize((s) => {
                     const slice = s[key];
                     return slice !== undefined && slice !== null ? slice : fallback(s);
                 }),
@@ -177,7 +177,7 @@ export function optic<A, S>(lens: Lens<A, S>): Optic<A, total, S>;
 export function optic<S>(key?: string): Optic<S, total, S>;
 export function optic<A, S>(param?: Lens<A, S> | string): Optic<A, total, S> {
     if (typeof param === 'object') {
-        return new Optic([{ ...param, get: memoize(param.get) }]);
+        return new Optic([{ ...param, get: stabilize(param.get) }]);
     }
     return new Optic([{ get: (s) => s, set: (a) => a, key: param || 'root' }]);
 }
@@ -186,7 +186,7 @@ export function opticPartial<A, S>(lens: PartialLens<A, S>): Optic<A, partial, S
 export function opticPartial<S>(key?: string): Optic<S, partial, S>;
 export function opticPartial<A, S>(param?: PartialLens<A, S> | string): Optic<A, partial, S> {
     if (typeof param === 'object') {
-        return new Optic([{ ...param, get: memoize(param.get) }]);
+        return new Optic([{ ...param, get: stabilize(param.get) }]);
     }
     return new Optic([{ get: (s) => s, set: (a) => a, key: param || 'root' }]);
 }

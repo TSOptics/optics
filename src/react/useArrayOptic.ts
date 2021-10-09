@@ -1,7 +1,8 @@
 import { useCallback, useContext, useEffect, useRef } from 'react';
 import { Lens, optic, Optic, partial } from '..';
 import { noop } from '../utils';
-import { OptixStoresContext, Store } from './createStore';
+import { Store } from '../createStore';
+import { OptixStoresContext } from './provider';
 import useOptic from './useOptic';
 
 const useArrayOptic = <T, TLensType extends partial, S>(
@@ -16,7 +17,6 @@ const useArrayOptic = <T, TLensType extends partial, S>(
 
     const subscription = useCallback(
         (newRoot: any) => {
-            console.log(newRoot);
             const array = onArray.get(newRoot);
             keyedOptics.current =
                 array?.reduce<Record<string, Optic<T, TLensType, S>>>((acc, cv, ci) => {
@@ -44,6 +44,8 @@ const useArrayOptic = <T, TLensType extends partial, S>(
     // synchronize optics cache with the subscription
     if (subscription !== subRef.current) {
         subscription(stores);
+        store.subscriptions.delete(subRef.current);
+        store.subscriptions.add(subscription);
         subRef.current = subscription;
     }
 
@@ -51,14 +53,14 @@ const useArrayOptic = <T, TLensType extends partial, S>(
 
     // register subscription on mount (parent first)
     if (!mounted.current) {
-        store.subscriptions.add(subRef);
+        store.subscriptions.add(subscription);
         mounted.current = true;
     }
 
     // unregister subscription on unmount (children first)‡
     useEffect(
         () => () => {
-            store.subscriptions.delete(subRef);
+            store.subscriptions.delete(subRef.current);
         },
         [store.subscriptions],
     );

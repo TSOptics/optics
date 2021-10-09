@@ -1,7 +1,6 @@
-import React, { createContext, FC, MutableRefObject, useRef } from 'react';
-import { Lens, Optic, total } from '..';
+import { Lens, Optic, total } from '.';
 
-type Subscriptions = Set<MutableRefObject<(root: any) => void>>;
+type Subscriptions = Set<(root: any) => void>;
 export type Store<T = any> = { root: T; subscriptions: Subscriptions };
 export type Stores = Map<Record<string, never>, Store>;
 export const rootOpticSymbol = Symbol('rootOptic');
@@ -19,7 +18,7 @@ export function createStore<T>(initialValue: T, key?: string) {
             },
             set: (a, s) => {
                 s.set(id, a);
-                s.get(id)!.subscriptions.forEach((subscriber) => subscriber.current(s));
+                s.get(id)!.subscriptions.forEach((subscriber) => subscriber(s));
                 return s;
             },
         } as Lens<Store<T>, Stores>,
@@ -36,8 +35,3 @@ export function createStore<T>(initialValue: T, key?: string) {
     ]);
     return rootOptic;
 }
-export const OptixStoresContext = createContext<Stores>(new Map());
-
-export const Provider: FC = ({ children }) => {
-    return <OptixStoresContext.Provider value={useRef(new Map()).current}>{children}</OptixStoresContext.Provider>;
-};

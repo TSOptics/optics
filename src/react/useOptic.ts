@@ -1,6 +1,7 @@
 import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { Optic, partial } from '..';
-import { OptixStoresContext, rootOpticSymbol, Stores, Store } from './createStore';
+import { rootOpticSymbol, Stores, Store } from '../createStore';
+import { OptixStoresContext } from './provider';
 
 function useOptic<T, TLensType extends partial>(optic: Optic<T, TLensType, Stores>) {
     const stores = useContext(OptixStoresContext);
@@ -25,19 +26,21 @@ function useOptic<T, TLensType extends partial>(optic: Optic<T, TLensType, Store
     // synchronize local state with the subscription
     if (subscription !== subRef.current) {
         subscription(store.root);
+        store.subscriptions.delete(subRef.current);
+        store.subscriptions.add(subscription);
         subRef.current = subscription;
     }
 
     // register subscription on mount (parent first)
     const mounted = useRef(false);
     if (!mounted.current) {
-        store.subscriptions.add(subRef);
+        store.subscriptions.add(subscription);
         mounted.current = true;
     }
     // unregister subscription on unmount (children first)
     useEffect(
         () => () => {
-            store.subscriptions.delete(subRef);
+            store.subscriptions.delete(subRef.current);
         },
         [store.subscriptions],
     );

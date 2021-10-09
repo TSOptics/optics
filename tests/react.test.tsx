@@ -1,11 +1,12 @@
 import React, { memo, useCallback, useRef } from 'react';
 import { renderHook } from '@testing-library/react-hooks';
-import { createStore, Provider } from '../src/react/createStore';
+import { createStore } from '../src/createStore';
 import { act } from 'react-test-renderer';
 import { optic, Optic, total } from '../src';
 import useArrayOptic from '../src/react/useArrayOptic';
 import { render, fireEvent } from '@testing-library/react';
 import useOptic from '../src/react/useOptic';
+import Provider from '../src/react/provider';
 
 describe('useOptic', () => {
     it('should set state', () => {

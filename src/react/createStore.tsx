@@ -1,45 +1,43 @@
-import React, { createContext, MutableRefObject, ReactNode } from 'react';
-import { Optic, optic, total } from '..';
-import { isObject } from '../utils';
+import React, { createContext, FC, MutableRefObject, useRef } from 'react';
+import { Lens, Optic, total } from '..';
 
 type Subscriptions = Set<MutableRefObject<(root: any) => void>>;
-type Store = { root: { ref: any }; setRoot: (root: any) => void; subscriptions: Subscriptions };
-type RootKeyOptic<T> = T extends Record<string, unknown>
-    ? {
-          [Key in keyof T as `on${Capitalize<Key & string>}`]: Optic<T[Key], total, T>;
-      }
-    : Record<string, never>;
+export type Store<T = any> = { root: T; subscriptions: Subscriptions };
+export type Stores = Map<Record<string, never>, Store>;
+export const rootOpticSymbol = Symbol('rootOptic');
 
-export const StoreContext = createContext<Store>({
-    subscriptions: new Set(),
-    root: { ref: undefined },
-    setRoot: () => {
-        // noop
-    },
-});
-
-export const Provider = ({ store, children }: { store: Store; children: ReactNode }) => {
-    return <StoreContext.Provider value={store}>{children}</StoreContext.Provider>;
-};
-
-export default function createStore<T>(initialState: T) {
-    const subscriptions: Subscriptions = new Set();
-    const root = { ref: initialState };
-    const setRoot = (newRoot: any) => {
-        root.ref = newRoot;
-        subscriptions.forEach((subscriber) => subscriber.current(newRoot));
-    };
-    const store: Store = { root, subscriptions, setRoot };
-    const wrapper = ({ children }: any) => <Provider store={store}>{children}</Provider>;
-    const onRoot = optic<T>();
-    const rootKeysOptic: RootKeyOptic<T> = isObject(initialState)
-        ? (Object.fromEntries(
-              Object.keys(initialState).map((key) => [
-                  `on${key.replace(/^\w/, (c) => c.toUpperCase())}`,
-                  optic<typeof initialState>().focus(key),
-              ]),
-          ) as any)
-        : {};
-
-    return { store, wrapper, onRoot, setRoot, ...rootKeysOptic };
+export function createStore<T>(initialValue: T, key?: string) {
+    const id = {};
+    const rootOptic = new Optic<T, total, Stores>([
+        {
+            key: rootOpticSymbol,
+            get: (s) => {
+                if (!s.has(id)) {
+                    s.set(id, { root: initialValue, subscriptions: new Set() });
+                }
+                return s.get(id) as Store<T>;
+            },
+            set: (a, s) => {
+                s.set(id, a);
+                s.get(id)!.subscriptions.forEach((subscriber) => subscriber.current(s));
+                return s;
+            },
+        } as Lens<Store<T>, Stores>,
+        {
+            key: key ?? 'store',
+            get: (s) => {
+                return s.root;
+            },
+            set: (a, s) => ({
+                ...s,
+                root: a,
+            }),
+        },
+    ]);
+    return rootOptic;
 }
+export const OptixStoresContext = createContext<Stores>(new Map());
+
+export const Provider: FC = ({ children }) => {
+    return <OptixStoresContext.Provider value={useRef(new Map()).current}>{children}</OptixStoresContext.Provider>;
+};

@@ -9,8 +9,6 @@ export const stabilize = <T, R>(f: (arg: T) => R) => {
     };
 };
 
-export const isObject = (obj: unknown): obj is Record<string, unknown> => typeof obj === 'object' && obj !== null;
-
 export const noop = () => {
     //
 };

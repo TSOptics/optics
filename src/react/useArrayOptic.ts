@@ -1,7 +1,7 @@
 import { useCallback, useContext, useEffect, useRef } from 'react';
 import { Lens, optic, Optic, partial } from '..';
 import { noop } from '../utils';
-import { StoreContext } from './createStore';
+import { OptixStoresContext, Store } from './createStore';
 import useOptic from './useOptic';
 
 const useArrayOptic = <T, TLensType extends partial, S>(
@@ -9,12 +9,14 @@ const useArrayOptic = <T, TLensType extends partial, S>(
     keyExtractor: (t: T) => string,
 ) => {
     const [slice, setSlice] = useOptic(onArray);
-    const { root, subscriptions } = useContext(StoreContext);
+    const stores = useContext(OptixStoresContext);
+    const store = onArray.__getFirst().get(stores) as Store;
 
     const keyedOptics = useRef<Record<string, Optic<T, TLensType, S>>>({});
 
     const subscription = useCallback(
         (newRoot: any) => {
+            console.log(newRoot);
             const array = onArray.get(newRoot);
             keyedOptics.current =
                 array?.reduce<Record<string, Optic<T, TLensType, S>>>((acc, cv, ci) => {
@@ -41,7 +43,7 @@ const useArrayOptic = <T, TLensType extends partial, S>(
 
     // synchronize optics cache with the subscription
     if (subscription !== subRef.current) {
-        subscription(root.ref);
+        subscription(stores);
         subRef.current = subscription;
     }
 
@@ -49,16 +51,16 @@ const useArrayOptic = <T, TLensType extends partial, S>(
 
     // register subscription on mount (parent first)
     if (!mounted.current) {
-        subscriptions.add(subRef);
+        store.subscriptions.add(subRef);
         mounted.current = true;
     }
 
     // unregister subscription on unmount (children first)‡
     useEffect(
         () => () => {
-            subscriptions.delete(subRef);
+            store.subscriptions.delete(subRef);
         },
-        [subscriptions],
+        [store.subscriptions],
     );
 
     const getOpticFromKey = useCallback((key: string) => keyedOptics.current[key], []);

@@ -8,13 +8,13 @@ export interface total extends partial {
 }
 
 export interface Lens<A = any, S = any> {
-    key: string;
+    key: string | symbol;
     get: (s: S) => A;
     set: (a: A, s: S) => S;
 }
 
 interface PartialLens<A = any, S = any> {
-    key: string;
+    key: string | symbol;
     get: (s: S) => A | undefined;
     set: (a: A, s: S) => S;
 }
@@ -168,9 +168,12 @@ export class Optic<A, TLensType extends partial = total, S = any> {
     toString() {
         return this.getKeys().toString();
     }
+
     __unsafeReplaceLast = (newLast: Lens<A>) => {
         this.lenses[this.lenses.length - 1] = newLast;
     };
+
+    __getFirst = () => this.lenses[0];
 }
 
 export function optic<A, S>(lens: Lens<A, S>): Optic<A, total, S>;
@@ -179,7 +182,7 @@ export function optic<A, S>(param?: Lens<A, S> | string): Optic<A, total, S> {
     if (typeof param === 'object') {
         return new Optic([{ ...param, get: stabilize(param.get) }]);
     }
-    return new Optic([{ get: (s) => s, set: (a) => a, key: param || 'root' }]);
+    return new Optic([{ get: (s) => s, set: (a) => a, key: param || 'optic' }]);
 }
 
 export function opticPartial<A, S>(lens: PartialLens<A, S>): Optic<A, partial, S>;
@@ -188,7 +191,7 @@ export function opticPartial<A, S>(param?: PartialLens<A, S> | string): Optic<A,
     if (typeof param === 'object') {
         return new Optic([{ ...param, get: stabilize(param.get) }]);
     }
-    return new Optic([{ get: (s) => s, set: (a) => a, key: param || 'root' }]);
+    return new Optic([{ get: (s) => s, set: (a) => a, key: param || 'optic' }]);
 }
 export type Return<Root, Types, LastType, TLensType extends partial> = TLensType extends total
     ? undefined extends Types

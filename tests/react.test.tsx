@@ -1,47 +1,37 @@
 import React, { memo, useCallback, useRef } from 'react';
 import { renderHook } from '@testing-library/react-hooks';
-import createStore from '../src/react/createStore';
-import useOptic from '../src/react/useOptic';
+import { createStore, Provider } from '../src/react/createStore';
 import { act } from 'react-test-renderer';
-import { Optic } from '../src';
+import { optic, Optic, total } from '../src';
 import useArrayOptic from '../src/react/useArrayOptic';
 import { render, fireEvent } from '@testing-library/react';
+import useOptic from '../src/react/useOptic';
 
-describe('createStore', () => {
-    it('should create an c for each property', () => {
-        expect(createStore({ foo: 'foo', bar: 'bar' })).toEqual(
-            expect.objectContaining({ onFoo: expect.anything(), onBar: expect.anything() }),
-        );
-    });
-    it('should return only the root optic if not object', () => {
-        expect(createStore(42)).toStrictEqual({
-            store: expect.anything(),
-            wrapper: expect.anything(),
-            onRoot: expect.any(Optic),
-            setRoot: expect.any(Function),
-        });
-    });
-});
 describe('useOptic', () => {
-    const initial = { test: 42 };
-    const { onRoot, setRoot, wrapper } = createStore(initial);
-    beforeEach(() => {
-        setRoot(initial);
-    });
     it('should set state', () => {
-        const { result } = renderHook(() => useOptic(onRoot), { wrapper });
+        const onRoot = createStore({ test: 42 });
+        const { result } = renderHook(() => useOptic(onRoot), { wrapper: Provider });
         act(() => result.current[1]((prev) => ({ test: prev.test * 2 })));
         expect(result.current[0]).toStrictEqual({ test: 84 });
     });
     it('should be referentially stable', () => {
+        const onRoot = createStore({ test: 42 });
         const { result, rerender } = renderHook(() => useOptic(onRoot), {
-            wrapper,
+            wrapper: Provider,
         });
         const [prevState, prevSetState] = result.current;
         rerender();
         const [state, setState] = result.current;
         expect(prevState).toBe(state);
         expect(prevSetState).toBe(setState);
+    });
+
+    it('should only accept optics with Optix stores as root', () => {
+        const onA: Optic<string, total, any> = optic<{ a: string }>().focus('a');
+        const {
+            result: { error },
+        } = renderHook(() => useOptic(onA), { wrapper: Provider });
+        expect(error?.message).toBe("This optic isn't linked to a store");
     });
 });
 describe('useArrayOptic', () => {
@@ -83,10 +73,10 @@ describe('useArrayOptic', () => {
             </div>
         );
     };
-    const { onRoot: onArray, wrapper } = createStore([1, 2, 3, 4, 5]);
+    const onArray = createStore([1, 2, 3, 4, 5]);
 
     it('should not rerender the list elements', () => {
-        const { getAllByTestId, getByText } = render(<Numbers onArray={onArray} />, { wrapper });
+        const { getAllByTestId, getByText } = render(<Numbers onArray={onArray} />, { wrapper: Provider });
         const prepend = getByText('prepend');
         fireEvent.click(prepend);
         const elems = getAllByTestId('display');

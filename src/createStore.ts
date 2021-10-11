@@ -1,11 +1,11 @@
-import { Lens, Optic, total } from '.';
+import { Lens, Optic, total } from './Optic';
 
 type Subscriptions = Set<(root: any) => void>;
 export type Store<T = any> = { root: T; subscriptions: Subscriptions };
 export type Stores = Map<Record<string, never>, Store>;
 export const rootOpticSymbol = Symbol('rootOptic');
 
-export function createStore<T>(initialValue: T, key?: string) {
+function createStore<T>(initialValue: T, key?: string) {
     const id = {};
     const rootOptic = new Optic<T, total, Stores>([
         {
@@ -35,3 +35,5 @@ export function createStore<T>(initialValue: T, key?: string) {
     ]);
     return rootOptic;
 }
+
+export default createStore;

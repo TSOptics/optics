@@ -27,9 +27,18 @@
         "ts-essentials": "^7.0.0",
         "typescript": "^4.3.5"
     },
+    "peerDependencies": {
+        "react": ">=16.8"
+    },
+    "peerDependenciesMeta": {
+        "react": {
+            "optional": true
+        }
+    },
     "scripts": {
         "test": "jest",
-        "tsc": "tsc --skipLibCheck --noEmit"
+        "tsc": "tsc --skipLibCheck --noEmit",
+        "build": "tsc -p tsconfig-build.json"
     },
     "repository": {
         "type": "git",

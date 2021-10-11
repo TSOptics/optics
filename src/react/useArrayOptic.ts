@@ -1,5 +1,5 @@
 import { useCallback, useContext, useEffect, useRef } from 'react';
-import { Lens, optic, Optic, partial } from '..';
+import { Lens, optic, Optic, partial } from '../Optic';
 import { noop } from '../utils';
 import { Store } from '../createStore';
 import { OptixStoresContext } from './provider';

@@ -1,5 +1,5 @@
 import { useCallback, useContext, useEffect, useRef, useState } from 'react';
-import { Optic, partial } from '..';
+import { Optic, partial } from '../Optic';
 import { rootOpticSymbol, Stores, Store } from '../createStore';
 import { OptixStoresContext } from './provider';
 

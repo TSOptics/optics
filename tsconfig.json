@@ -2,14 +2,15 @@
     "compilerOptions": {
         "module": "commonjs",
         "target": "esnext",
-        "jsx": "preserve",
-        "sourceMap": true,
+        "jsx": "react-jsx",
         "strict": true,
-        "outDir": "out",
-        "esModuleInterop": true
+        "outDir": "dist",
+        "esModuleInterop": true,
+        "declaration": true,
     },
     "exclude": [
         "node_modules",
-        "**/node_modules/*"
+        "**/node_modules/*",
+        "dist",
     ]
 }

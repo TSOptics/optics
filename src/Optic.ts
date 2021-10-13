@@ -13,12 +13,6 @@ export interface Lens<A = any, S = any> {
     set: (a: A, s: S) => S;
 }
 
-interface PartialLens<A = any, S = any> {
-    key: string | symbol;
-    get: (s: S) => A | undefined;
-    set: (a: A, s: S) => S;
-}
-
 export class Optic<A, TLensType extends partial = total, S = any> {
     private lenses: Lens[];
     constructor(lenses: Lens[]) {
@@ -85,10 +79,8 @@ export class Optic<A, TLensType extends partial = total, S = any> {
     };
 
     compose: <B, TLensTypeB extends partial>(
-        other: Optic<B, TLensTypeB, A>,
-    ) => Return<S, A, B, TLensTypeB extends total ? (TLensType extends total ? total : partial) : partial> = (
-        other,
-    ) => {
+        other: Optic<B, TLensTypeB, NonNullable<A>>,
+    ) => Return<S, A, B, TLensTypeB extends total ? TLensType : partial> = (other) => {
         return new Optic([...this.lenses, ...other.lenses]) as any;
     };
 
@@ -176,24 +168,36 @@ export class Optic<A, TLensType extends partial = total, S = any> {
     __getFirst = () => this.lenses[0];
 }
 
-export function optic<A, S>(lens: Lens<A, S>): Optic<A, total, S>;
+export function optic<A, S>(get: (s: S) => A, set: (a: A, s: S) => S, key?: string): Optic<A, total, S>;
 export function optic<S>(key?: string): Optic<S, total, S>;
-export function optic<A, S>(param?: Lens<A, S> | string): Optic<A, total, S> {
-    if (typeof param === 'object') {
-        return new Optic([{ ...param, get: stabilize(param.get) }]);
+export function optic<A, S>(
+    getOrKey?: string | ((s: S) => A),
+    set?: (a: A, s: S) => S,
+    key?: string,
+): Optic<A, total, S> {
+    if (typeof getOrKey === 'function') {
+        return new Optic([{ get: stabilize(getOrKey), set: set as any, key: key ?? 'custom optic' }]);
     }
-    return new Optic([{ get: (s) => s, set: (a) => a, key: param || 'optic' }]);
+    return new Optic([{ get: (s) => s, set: (a) => a, key: getOrKey || 'custom optic' }]);
 }
 
-export function opticPartial<A, S>(lens: PartialLens<A, S>): Optic<A, partial, S>;
+export function opticPartial<A, S>(
+    get: (s: S) => A | undefined,
+    set: (a: A, s: S) => S,
+    key?: string,
+): Optic<A, partial, S>;
 export function opticPartial<S>(key?: string): Optic<S, partial, S>;
-export function opticPartial<A, S>(param?: PartialLens<A, S> | string): Optic<A, partial, S> {
-    if (typeof param === 'object') {
-        return new Optic([{ ...param, get: stabilize(param.get) }]);
+export function opticPartial<A, S>(
+    getOrKey?: string | ((s: S) => A),
+    set?: (a: A, s: S) => S,
+    key?: string,
+): Optic<A, partial, S> {
+    if (typeof getOrKey === 'function') {
+        return new Optic([{ get: stabilize(getOrKey), set: set as any, key: key ?? 'custom partial optic' }]);
     }
-    return new Optic([{ get: (s) => s, set: (a) => a, key: param || 'optic' }]);
+    return new Optic([{ get: (s) => s, set: (a) => a, key: getOrKey || 'custom partial optic' }]);
 }
-export type Return<Root, Types, LastType, TLensType extends partial> = TLensType extends total
+type Return<Root, Types, LastType, TLensType extends partial> = TLensType extends total
     ? undefined extends Types
         ? Optic<LastType, partial, Root>
         : null extends Types
@@ -201,7 +205,7 @@ export type Return<Root, Types, LastType, TLensType extends partial> = TLensType
         : Optic<LastType, total, Root>
     : Optic<LastType, partial, Root>;
 
-export interface Focus<A, TLensType extends partial, S> {
+interface Focus<A, TLensType extends partial, S> {
     <Key1 extends keyof NonNullable<A>>(k1: Key1): Return<S, A, NonNullable<A>[Key1], TLensType>;
     <Key1 extends keyof NonNullable<A>, Key2 extends keyof NonNullable<NonNullable<A>[Key1]>>(
         k1: Key1,

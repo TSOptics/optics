@@ -140,7 +140,11 @@ describe('focusWithDefault', () => {
     });
 });
 describe('custom optic', () => {
-    const onEvenNums = optic({ get: (s: number[]) => s.filter((n) => n % 2 === 0), set: (a) => a, key: 'onEven' });
+    const onEvenNums = optic(
+        (s: number[]) => s.filter((n) => n % 2 === 0),
+        (a) => a,
+        'onEven',
+    );
     const nums = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
     it('should work', () => {
         expect(onEvenNums.get(nums)).toStrictEqual([0, 2, 4, 6, 8]);
@@ -157,11 +161,11 @@ describe('custom partial optic', () => {
     };
     it('should work', () => {
         const onCountry = (country: string) =>
-            opticPartial({
-                get: (s: typeof countryInfos) => s[country],
-                set: (a, s) => (s[country] !== undefined ? { ...s, [country]: a } : s),
-                key: 'onCountry ' + country,
-            });
+            opticPartial(
+                (s: typeof countryInfos) => s[country],
+                (a, s) => (s[country] !== undefined ? { ...s, [country]: a } : s),
+                'onCountry ' + country,
+            );
         const onFrance = onCountry('france');
         const onSpain = onCountry('spain');
 
@@ -171,17 +175,17 @@ describe('custom partial optic', () => {
         expect(onSpain.set({ capital: 'Barcelona' }, countryInfos)).toBe(countryInfos);
     });
     it('should be referentially stable', () => {
-        const onEntriesNoEmpty = opticPartial({
-            get: (s: typeof countryInfos) => {
+        const onEntriesNoEmpty = opticPartial(
+            (s: typeof countryInfos) => {
                 const values = Object.values(s);
                 return values.length > 0 ? values : undefined;
             },
-            set: (a, s) => {
+            (a, s) => {
                 const values = Object.values(s);
                 return values.length > 0 ? Object.fromEntries(Object.keys(s).map((k, i) => [k, a[i]])) : s;
             },
-            key: 'onEntriesNoEmpty',
-        });
+            'onEntriesNoEmpty',
+        );
 
         expect(onEntriesNoEmpty.get(countryInfos)).toBe(onEntriesNoEmpty.get(countryInfos));
     });

@@ -1,5 +1,5 @@
 import { useCallback, useContext, useEffect, useRef } from 'react';
-import { Lens, optic, Optic, partial } from '../Optic';
+import { Lens, Optic, partial } from '../Optic';
 import { noop } from '../utils';
 import { Store } from '../createStore';
 import { OptixStoresContext } from './provider';
@@ -31,7 +31,7 @@ const useArrayOptic = <T, TLensType extends partial, S>(
                         previous.__unsafeReplaceLast(lensOnIndex);
                         acc[key] = previous;
                     } else {
-                        acc[key] = onArray.compose(optic(lensOnIndex)) as any;
+                        acc[key] = onArray.compose(new Optic([lensOnIndex])) as any;
                     }
                     return acc;
                 }, {}) ?? {};

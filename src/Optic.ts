@@ -18,7 +18,6 @@ export class Optic<A, TLensType extends partial = total, S = any> {
     constructor(lenses: Lens[]) {
         this.lenses = lenses;
     }
-    #type: TLensType = {} as any;
 
     get: (s: S) => TLensType extends total ? A : A | undefined = (s) => {
         let accumulator: any = s;
@@ -161,11 +160,13 @@ export class Optic<A, TLensType extends partial = total, S = any> {
         return this.getKeys().toString();
     }
 
-    __unsafeReplaceLast = (newLast: Lens<A>) => {
+    ˍˍunsafeReplaceLast = (newLast: Lens<A>) => {
         this.lenses[this.lenses.length - 1] = newLast;
     };
 
-    __getFirst = () => this.lenses[0];
+    ˍˍunsafeGetFirstLens = () => this.lenses[0];
+
+    ˍˍcovariance: () => TLensType | null = () => null;
 }
 
 export function optic<A, S>(get: (s: S) => A, set: (a: A, s: S) => S, key?: string): Optic<A, total, S>;
@@ -197,6 +198,7 @@ export function opticPartial<A, S>(
     }
     return new Optic([{ get: (s) => s, set: (a) => a, key: getOrKey || 'custom partial optic' }]);
 }
+
 type Return<Root, Types, LastType, TLensType extends partial> = TLensType extends total
     ? undefined extends Types
         ? Optic<LastType, partial, Root>

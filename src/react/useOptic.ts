@@ -6,7 +6,7 @@ import { OptixStoresContext } from './provider';
 function useOptic<T, TLensType extends partial>(optic: Optic<T, TLensType, Stores>) {
     const stores = useContext(OptixStoresContext);
 
-    const storeLens = optic.__getFirst();
+    const storeLens = optic.ˍˍunsafeGetFirstLens();
     if (storeLens.key !== rootOpticSymbol) {
         throw new Error("This optic isn't linked to a store");
     }

@@ -11,7 +11,7 @@ const useArrayOptic = <T, TLensType extends partial, S>(
 ) => {
     const [slice, setSlice] = useOptic(onArray);
     const stores = useContext(OptixStoresContext);
-    const store = onArray.__getFirst().get(stores) as Store;
+    const store = onArray.ˍˍunsafeGetFirstLens().get(stores) as Store;
 
     const keyExtractorRef = useRef(keyExtractor).current;
     const keyedOptics = useRef<Record<string, Optic<T, TLensType, S>>>({});
@@ -29,7 +29,7 @@ const useArrayOptic = <T, TLensType extends partial, S>(
                     };
                     const previous = keyedOptics.current[key];
                     if (previous) {
-                        previous.__unsafeReplaceLast(lensOnIndex);
+                        previous.ˍˍunsafeReplaceLast(lensOnIndex);
                         acc[key] = previous;
                     } else {
                         acc[key] = onArray.compose(new Optic([lensOnIndex])) as any;

@@ -1,5 +1,5 @@
-export type { Optic, total, partial } from './Optic';
-export { optic, opticPartial } from './Optic';
+export type { Optic } from './Optic';
+export { optic, opticPartial, total, partial } from './Optic';
 
 import Provider from './react/provider';
 export { Provider };

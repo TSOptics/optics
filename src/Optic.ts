@@ -126,7 +126,7 @@ export class Optic<A, TLensType extends partial = total, S = any> {
         ]);
     }) as any;
 
-    key: A extends Record<string, infer R> ? (key: string) => Optic<R, partial, S> : never = ((key: string) => {
+    atKey: A extends Record<string, infer R> ? (key: string) => Optic<R, partial, S> : never = ((key: string) => {
         return new Optic([
             ...this.lenses,
             {

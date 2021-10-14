@@ -13,6 +13,7 @@ const useArrayOptic = <T, TLensType extends partial, S>(
     const stores = useContext(OptixStoresContext);
     const store = onArray.__getFirst().get(stores) as Store;
 
+    const keyExtractorRef = useRef(keyExtractor).current;
     const keyedOptics = useRef<Record<string, Optic<T, TLensType, S>>>({});
 
     const subscription = useCallback(
@@ -20,7 +21,7 @@ const useArrayOptic = <T, TLensType extends partial, S>(
             const array = onArray.get(newRoot);
             keyedOptics.current =
                 array?.reduce<Record<string, Optic<T, TLensType, S>>>((acc, cv, ci) => {
-                    const key = keyExtractor(cv);
+                    const key = keyExtractorRef(cv);
                     const lensOnIndex: Lens<T, T[]> = {
                         get: (s) => s[ci],
                         set: (a, s) => [...s.slice(0, ci), a, ...s.slice(ci + 1)],
@@ -36,7 +37,7 @@ const useArrayOptic = <T, TLensType extends partial, S>(
                     return acc;
                 }, {}) ?? {};
         },
-        [keyExtractor, onArray],
+        [keyExtractorRef, onArray],
     );
 
     const subRef = useRef<typeof subscription>(noop);

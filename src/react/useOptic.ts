@@ -25,7 +25,7 @@ function useOptic<T, TLensType extends partial>(optic: Optic<T, TLensType, Store
 
     // synchronize local state with the subscription
     if (subscription !== subRef.current) {
-        subscription(store.root);
+        subscription(stores);
         store.subscriptions.delete(subRef.current);
         store.subscriptions.add(subscription);
         subRef.current = subscription;

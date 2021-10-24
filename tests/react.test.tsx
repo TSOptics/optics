@@ -34,6 +34,26 @@ describe('useOptic', () => {
         } = renderHook(() => useOptic(onA), { wrapper: Provider });
         expect(error?.message).toBe("This optic isn't linked to a store");
     });
+    it('should update state if optic changes', () => {
+        const onRoot = createStore({ test: 42 });
+        const timesTwo = onRoot.convert(
+            (a) => ({
+                test: a.test * 2,
+            }),
+            (b) => ({
+                test: b.test / 2,
+            }),
+        );
+        const { result, rerender } = renderHook(
+            ({ initialValue }: { initialValue: typeof onRoot }) => useOptic(initialValue),
+            {
+                wrapper: Provider,
+                initialProps: { initialValue: onRoot },
+            },
+        );
+        rerender({ initialValue: timesTwo });
+        expect(result.current[0]).toEqual({ test: 84 });
+    });
 });
 describe('useArrayOptic', () => {
     const Number = memo(({ onNumber }: { onNumber: Optic<number> }) => {

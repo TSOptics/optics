@@ -6,7 +6,7 @@ const expectNotType = <T>(t: T) => noop();
 
 describe('lens', () => {
     const obj = { a: { as: [1, 2, 3] } };
-    const onAsFirst = optic<typeof obj>().focus('a', 'as', 0);
+    const onAsFirst = optic<typeof obj>().focus('a.as').focus(0);
 
     it('should be referentially stable', () => {
         const newObj = onAsFirst.set(1, obj);
@@ -15,7 +15,7 @@ describe('lens', () => {
 });
 describe('optional', () => {
     type TestObj = { a: { b?: { c: number } } };
-    const onC = optic<TestObj>().focus('a', 'b', 'c');
+    const onC = optic<TestObj>().focus('a.b?.c');
     const testObj: TestObj = { a: { b: undefined } };
     it('should return undefined', () => {
         expect(onC.get(testObj)).toBeUndefined();

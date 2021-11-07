@@ -5,8 +5,8 @@ import { Store } from '../createStore';
 import { OptixStoresContext } from './provider';
 import useOptic from './useOptic';
 
-const useArrayOptic = <T, TLensType extends partial, S>(
-    onArray: Optic<T[], TLensType>,
+const useArrayOptic = <T, Completeness extends partial, S>(
+    onArray: Optic<T[], Completeness>,
     keyExtractor: (t: T) => string,
 ) => {
     const [slice, setSlice] = useOptic(onArray);
@@ -14,13 +14,13 @@ const useArrayOptic = <T, TLensType extends partial, S>(
     const store = onArray.ˍˍunsafeGetFirstLens().get(stores) as Store;
 
     const keyExtractorRef = useRef(keyExtractor).current;
-    const keyedOptics = useRef<Record<string, Optic<T, TLensType, S>>>({});
+    const keyedOptics = useRef<Record<string, Optic<T, Completeness, S>>>({});
 
     const subscription = useCallback(
         (newRoot: any) => {
             const array = onArray.get(newRoot);
             keyedOptics.current =
-                array?.reduce<Record<string, Optic<T, TLensType, S>>>((acc, cv, ci) => {
+                array?.reduce<Record<string, Optic<T, Completeness, S>>>((acc, cv, ci) => {
                     const key = keyExtractorRef(cv);
                     const lensOnIndex: Lens<T, T[]> = {
                         get: (s) => s[ci],

@@ -3,7 +3,7 @@ import { Optic, partial } from '../Optic';
 import { rootOpticSymbol, Stores, Store } from '../createStore';
 import { OptixStoresContext } from './provider';
 
-function useOptic<T, TLensType extends partial>(optic: Optic<T, TLensType, Stores>) {
+function useOptic<T, Completeness extends partial>(optic: Optic<T, Completeness, Stores>) {
     const stores = useContext(OptixStoresContext);
 
     const storeLens = optic.ˍˍunsafeGetFirstLens();

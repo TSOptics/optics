@@ -47,12 +47,12 @@
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/OptixJs/Optix.git"
+        "url": "git+https://github.com/OptixJs/react-optix.git"
     },
     "author": "",
     "license": "ISC",
     "bugs": {
-        "url": "https://github.com/OptixJs/Optix/issues"
+        "url": "https://github.com/OptixJs/react-optix/issues"
     },
-    "homepage": "https://github.com/OptixJs/Optix#readme"
+    "homepage": "https://github.com/OptixJs/react-optix#readme"
 }

@@ -1,9 +1,10 @@
 import { useCallback, useContext, useEffect, useRef } from 'react';
 import { Lens, Optic, partial } from '../Optic';
-import { noop } from '../utils';
 import { Store } from '../createStore';
 import { OptixStoresContext } from './provider';
 import useOptic from './useOptic';
+import { opticPartial } from '..';
+import { noop } from '../utils';
 
 const useArrayOptic = <T, Completeness extends partial, S>(
     onArray: Optic<T[], Completeness>,
@@ -16,38 +17,34 @@ const useArrayOptic = <T, Completeness extends partial, S>(
     const keyExtractorRef = useRef(keyExtractor).current;
     const keyedOptics = useRef<Record<string, Optic<T, Completeness, S>>>({});
 
-    const subscription = useCallback(
-        (newRoot: any) => {
-            const array = onArray.get(newRoot);
-            keyedOptics.current =
-                array?.reduce<Record<string, Optic<T, Completeness, S>>>((acc, cv, ci) => {
-                    const key = keyExtractorRef(cv);
-                    const lensOnIndex: Lens<T, T[]> = {
-                        get: (s) => s[ci],
-                        set: (a, s) => [...s.slice(0, ci), a, ...s.slice(ci + 1)],
-                        key: 'focus ' + ci,
-                    };
-                    const previous = keyedOptics.current[key];
-                    if (previous) {
-                        previous.ˍˍunsafeReplaceLast(lensOnIndex);
-                        acc[key] = previous;
-                    } else {
-                        acc[key] = onArray.compose(new Optic([lensOnIndex])) as any;
-                    }
-                    return acc;
-                }, {}) ?? {};
-        },
-        [keyExtractorRef, onArray],
-    );
+    const subscription = useRef<(newRoot: any) => void>(noop);
+    subscription.current = (newRoot: any) => {
+        const array = onArray.get(newRoot);
+        keyedOptics.current =
+            array?.reduce<Record<string, Optic<T, Completeness, S>>>((acc, cv, ci) => {
+                const key = keyExtractorRef(cv);
+                const lensOnIndex: Lens<T, T[]> = {
+                    get: (s) => s[ci],
+                    set: (a, s) => [...s.slice(0, ci), a, ...s.slice(ci + 1)],
+                    key: 'focus ' + ci,
+                };
+                const previous = keyedOptics.current[key];
+                if (previous) {
+                    previous.ˍˍunsafeReplaceLast(lensOnIndex);
+                    acc[key] = previous;
+                } else {
+                    acc[key] = onArray.compose(new Optic([lensOnIndex])) as any;
+                }
+                return acc;
+            }, {}) ?? {};
+    };
 
-    const subRef = useRef<typeof subscription>(noop);
+    const opticRef = useRef(opticPartial() as typeof onArray);
 
-    // synchronize optics cache with the subscription
-    if (subscription !== subRef.current) {
-        subscription(stores);
-        store.subscriptions.delete(subRef.current);
-        store.subscriptions.add(subscription);
-        subRef.current = subscription;
+    // update optics cache if onArray changed
+    if (onArray !== opticRef.current) {
+        subscription.current(stores);
+        opticRef.current = onArray;
     }
 
     const mounted = useRef(false);
@@ -61,7 +58,7 @@ const useArrayOptic = <T, Completeness extends partial, S>(
     // unregister subscription on unmount (children first)‡
     useEffect(
         () => () => {
-            store.subscriptions.delete(subRef.current);
+            store.subscriptions.delete(subscription);
         },
         [store.subscriptions],
     );

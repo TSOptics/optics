@@ -2,6 +2,7 @@ import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { Optic, partial } from '../Optic';
 import { rootOpticSymbol, Stores, Store } from '../createStore';
 import { OptixStoresContext } from './provider';
+import { noop } from '../utils';
 
 function useOptic<T, Completeness extends partial>(optic: Optic<T, Completeness, Stores>) {
     const stores = useContext(OptixStoresContext);
@@ -15,20 +16,19 @@ function useOptic<T, Completeness extends partial>(optic: Optic<T, Completeness,
 
     const store = storeLens.get(stores) as Store;
 
-    const subscription = useCallback(
-        (newRoot: any) => {
-            setSlice(optic.get(newRoot));
-        },
-        [optic],
-    );
-    const subRef = useRef(subscription);
+    const subscription = useRef<(newRoot: any) => void>(noop);
+    subscription.current = (newRoot: any) => {
+        const value = optic.get(newRoot);
+        if (value === slice) return;
+        setSlice(value);
+    };
 
-    // synchronize local state with the subscription
-    if (subscription !== subRef.current) {
-        subscription(stores);
-        store.subscriptions.delete(subRef.current);
-        store.subscriptions.add(subscription);
-        subRef.current = subscription;
+    const opticRef = useRef(optic);
+
+    // update local state if optic changed
+    if (opticRef.current !== optic) {
+        subscription.current(stores);
+        opticRef.current = optic;
     }
 
     // register subscription on mount (parent first)
@@ -40,7 +40,7 @@ function useOptic<T, Completeness extends partial>(optic: Optic<T, Completeness,
     // unregister subscription on unmount (children first)
     useEffect(
         () => () => {
-            store.subscriptions.delete(subRef.current);
+            store.subscriptions.delete(subscription);
         },
         [store.subscriptions],
     );

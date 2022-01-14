@@ -1,4 +1,5 @@
-import { Lens, Optic, total } from './Optic';
+import { Optic } from '../Optic';
+import { Lens, total } from '../types';
 
 type Subscriptions = Set<{ current: (root: any) => void }>;
 export type Store<T = any> = { root: T; subscriptions: Subscriptions };

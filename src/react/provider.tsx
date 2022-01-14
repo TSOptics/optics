@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import { createContext, FC } from 'react';
-import { Stores } from '../createStore';
+import { Stores } from './createStore';
 
 export const OptixStoresContext = createContext<Stores>(new Map());
 

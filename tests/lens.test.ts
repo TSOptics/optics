@@ -1,4 +1,5 @@
-import { Optic, optic, opticPartial, total } from '../src/Optic';
+import { Optic, optic, opticPartial } from '../src/Optic';
+import { total } from '../src/types';
 import { noop } from '../src/utils';
 
 const expectType = <T>(t: T) => noop();
@@ -9,8 +10,8 @@ describe('lens', () => {
     const onAsFirst = optic<typeof obj>().focus('a.as').focus(0);
 
     it('should be referentially stable', () => {
-        const newObj = onAsFirst.set(1, obj);
-        expect(obj).toBe(newObj);
+        expect(onAsFirst.set(1, obj)).toBe(obj);
+        expect(onAsFirst.set((prev) => prev, obj)).toBe(obj);
     });
 });
 describe('optional', () => {
@@ -66,11 +67,11 @@ describe('convert', () => {
         expect(onTuple.set(onTuple.get(tuple), tuple)).toBe(tuple);
     });
 });
-describe('filter', () => {
-    const onEvenNumber = optic<number>().filter((n) => n % 2 === 0);
+describe('if', () => {
+    const onEvenNumber = optic<number>().if((n) => n % 2 === 0);
 
     const onMajorName = optic<{ age: number; name: string }>()
-        .filter(({ age }) => age >= 18)
+        .if(({ age }) => age >= 18)
         .focus('name');
     const major = { age: 42, name: 'Louis' };
     const minor = { age: 15, name: 'Killian' };
@@ -87,24 +88,6 @@ describe('filter', () => {
 
         expect(onMajorName.get(minor)).toBeUndefined();
         expect(onMajorName.set('Titouan', minor)).toBe(minor);
-    });
-});
-describe('findFirst', () => {
-    const arr = [42, 78, 23];
-    const onArr = optic<number[]>();
-
-    it('should find the element and focus on it', () => {
-        const onOdd = onArr.findFirst((x) => x % 2 !== 0);
-        expect(onOdd.get(arr)).toBe(23);
-
-        const newArr = onOdd.set(2, arr);
-        expect(newArr).toStrictEqual([42, 78, 2]);
-        expect(onOdd.get(newArr)).toBeUndefined();
-    });
-    it('should find no element and return undefined', () => {
-        const onOver100 = onArr.findFirst((x) => x > 100);
-        expect(onOver100.get(arr)).toBeUndefined();
-        expect(onOver100.set(1000, arr)).toBe(arr);
     });
 });
 describe('atKey', () => {

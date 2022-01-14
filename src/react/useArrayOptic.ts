@@ -1,27 +1,28 @@
 import { useCallback, useContext, useEffect, useRef } from 'react';
-import { Lens, Optic, partial } from '../Optic';
-import { Store } from '../createStore';
+import { Optic } from '../Optic';
+import { Store } from './createStore';
 import { OptixStoresContext } from './provider';
 import useOptic from './useOptic';
 import { opticPartial } from '..';
 import { noop } from '../utils';
+import { Lens, OpticType } from '../types';
 
-const useArrayOptic = <T, Completeness extends partial, S>(
-    onArray: Optic<T[], Completeness>,
+const useArrayOptic = <T, TOpticType extends OpticType, S>(
+    onArray: Optic<T[], TOpticType>,
     keyExtractor: (t: T) => string,
 ) => {
     const [slice, setSlice] = useOptic(onArray);
     const stores = useContext(OptixStoresContext);
-    const store = onArray.ˍˍunsafeGetFirstLens().get(stores) as Store;
+    const store = onArray.ˍˍunsafeGetLenses()[0].get(stores) as Store;
 
     const keyExtractorRef = useRef(keyExtractor).current;
-    const keyedOptics = useRef<Record<string, Optic<T, Completeness, S>>>({});
+    const keyedOptics = useRef<Record<string, Optic<T, TOpticType, S>>>({});
 
     const subscription = useRef<(newRoot: any) => void>(noop);
     subscription.current = (newRoot: any) => {
         const array = onArray.get(newRoot);
         keyedOptics.current =
-            array?.reduce<Record<string, Optic<T, Completeness, S>>>((acc, cv, ci) => {
+            (array as T[] | undefined)?.reduce<Record<string, Optic<T, TOpticType, S>>>((acc, cv, ci) => {
                 const key = keyExtractorRef(cv);
                 const lensOnIndex: Lens<T, T[]> = {
                     get: (s) => s[ci],
@@ -30,7 +31,8 @@ const useArrayOptic = <T, Completeness extends partial, S>(
                 };
                 const previous = keyedOptics.current[key];
                 if (previous) {
-                    previous.ˍˍunsafeReplaceLast(lensOnIndex);
+                    const previousLenses = previous.ˍˍunsafeGetLenses();
+                    previousLenses[previousLenses.length - 1] = lensOnIndex;
                     acc[key] = previous;
                 } else {
                     acc[key] = onArray.compose(new Optic([lensOnIndex])) as any;

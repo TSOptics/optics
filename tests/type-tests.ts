@@ -1,4 +1,5 @@
-import { optic, Optic, opticPartial, partial, total } from '../src/Optic';
+import { optic, Optic, opticPartial } from '../src/Optic';
+import { total, partial } from '../src/types';
 
 const expect = <T>(t: T) => {
     // type level test

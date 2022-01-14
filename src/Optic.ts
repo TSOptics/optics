@@ -1,76 +1,107 @@
+import { getFoldGroups, getElemsWithPath, replaceTraversals } from './mapReduce';
+import {
+    ComposeCompleteness,
+    IsNullable,
+    Lens,
+    partial,
+    Path,
+    PathOpticType,
+    PathType,
+    total,
+    map,
+    OpticType,
+} from './types';
 import { stabilize } from './utils';
 
-export interface partial {
-    partial: 'partial';
-}
-export interface total extends partial {
-    total: 'total';
-}
-
-export interface Lens<A = any, S = any> {
-    key: string | symbol;
-    get: (s: S) => A;
-    set: (a: A, s: S) => S;
-}
-
-type IsNullable<T> = null extends T ? true : undefined extends T ? true : false;
-
-type RecursivePath<T, K = Exclude<keyof NonNullable<T>, keyof any[]>> = K extends string
-    ? T extends Record<string, any>
-        ? K | `${K}${IsNullable<T[K]> extends true ? '?.' : '.'}${RecursivePath<NonNullable<T[K]>>}`
-        : never
-    : never;
-
-type Path<T> = T extends any[] ? (T extends [any, ...any] ? RecursivePath<T> : number) : RecursivePath<T>;
-
-type PathType<T, P extends string | number> = P extends keyof NonNullable<T>
-    ? NonNullable<T>[P]
-    : P extends `${infer Head}${'.' | '?.'}${infer Tail}`
-    ? Head extends keyof NonNullable<T>
-        ? PathType<NonNullable<T>[Head], Tail>
-        : never
-    : never;
-
-type PathCompleteness<T, P extends string | number> = IsNullable<T> extends true
-    ? partial
-    : P extends `${string}?.${string}`
-    ? partial
-    : total;
-
-export class Optic<A, Completeness extends partial = total, S = any> {
+export class Optic<A, TOpticType extends OpticType = total, S = any> {
     private lenses: Lens[];
+    private cache: Map<Lens, [key: any[], value: any]> = new Map();
     constructor(lenses: Lens[]) {
         this.lenses = lenses;
     }
 
-    get: (s: S) => Completeness extends total ? A : A | undefined = (s) => {
-        let accumulator: any = s;
-        for (const lens of this.lenses) {
-            const slice = lens.get(accumulator);
-            if (slice === undefined || slice === null) {
-                return slice;
+    get: (s: S) => TOpticType extends map ? A[] : TOpticType extends total ? A : A | undefined = (s) => {
+        const isOpticTraversal = this.lenses.reduce(
+            (acc, cv) => (cv.type === 'reduce' ? false : acc || cv.type === 'map'),
+            false,
+        );
+        const aux = (s: any, lenses: Lens[], isTraversal = false): any => {
+            const [hd, ...tl] = lenses;
+            if (!hd) {
+                return s;
             }
-            accumulator = slice;
-        }
-        return accumulator;
+            if (hd.type === 'map') {
+                const traversalCache = this.cache.get(hd);
+                if (!isTraversal && traversalCache) {
+                    const [cacheKey, cacheValue] = traversalCache;
+                    if (cacheKey === s) return cacheValue;
+                }
+                const result = aux(isTraversal ? (s as any[]).flat() : s, tl, true);
+                this.cache.set(hd, [s, result]);
+                return result;
+            }
+            if (hd.type === 'reduce') {
+                const index = hd.get(s);
+                if (index === -1) return undefined;
+                return aux((s as any[])[index], tl, false);
+            }
+            const slice = isTraversal
+                ? tl.length > 0
+                    ? (s as any[]).reduce<any[]>((acc, cv) => {
+                          const n = hd.get(cv);
+                          if (n !== undefined && n !== null) {
+                              acc.push(n);
+                          }
+                          return acc;
+                      }, [])
+                    : (s as any[]).map((x) => hd.get(x))
+                : hd.get(s);
+
+            if (slice === undefined || slice === null || (slice as any[])?.length === 0) {
+                return isOpticTraversal ? [] : tl.length > 0 ? undefined : slice;
+            }
+            return aux(slice, tl, isTraversal);
+        };
+
+        return aux(s, this.lenses);
     };
 
-    set: (a: A, s: S) => S = (a, s) => {
-        const aux = (a: A, s: S, lenses = this.lenses): S => {
+    set: (a: A | ((prev: A) => A), s: S) => S = (a, s) => {
+        const aux = (
+            a: A | ((prev: A) => A),
+            s: S,
+            lenses = this.lenses,
+            foldGroups = getFoldGroups(this.lenses),
+        ): S => {
             const [hd, ...tl] = lenses;
-            if (!hd) return a as any;
+            const [group, ...groups] = foldGroups;
+            if (!hd) return typeof a === 'function' ? (a as (prev: any) => A)(s) : (a as any);
+            if (group && hd === group.openingTraversal) {
+                const elemsWithPath = getElemsWithPath(s, lenses);
+                const elems = elemsWithPath.map(([, elem]) => elem);
+                const index: number = group.reduce.get(elems);
+                if (index === -1) return s;
+                const [path] = elemsWithPath[index];
+                const replacedLenses = replaceTraversals(lenses, path);
+                return aux(a, s, replacedLenses, groups);
+            }
             const slice = hd.get(s);
+            if (hd.type === 'map') {
+                const newSlice = (slice as any[]).map((x) => aux(a, x, tl, foldGroups)) as any;
+                return (slice as any[]).every((x, i) => x === newSlice[i]) ? slice : newSlice;
+            }
             if (tl.length > 0 && (slice === undefined || slice === null)) return s;
-            const newSlice = aux(a, slice, tl);
+            const newSlice = aux(a, slice, tl, foldGroups);
             if (slice === newSlice) return s;
             return hd.set(newSlice, s);
         };
+
         return aux(a, s);
     };
 
     focus: <TPath extends Path<A>>(
         path: TPath,
-    ) => Optic<PathType<A, TPath>, Completeness extends total ? PathCompleteness<A, TPath> : partial, S> = (path) => {
+    ) => Optic<PathType<A, TPath>, TOpticType extends total ? PathOpticType<A, TPath> : TOpticType, S> = (path) => {
         if (typeof path === 'number')
             return new Optic([
                 ...this.lenses,
@@ -98,7 +129,7 @@ export class Optic<A, Completeness extends partial = total, S = any> {
             ? Key
             : Capitalize<Key & string>}`]-?: Optic<
             NonNullable<A>[Key],
-            undefined extends A ? partial : null extends A ? partial : Completeness,
+            TOpticType extends total ? (IsNullable<A> extends true ? partial : total) : TOpticType,
             S
         >;
     } = (props, prefix) => {
@@ -114,15 +145,15 @@ export class Optic<A, Completeness extends partial = total, S = any> {
         return this.lenses.map((l) => l.key);
     };
 
-    compose: <B, CompletenessB extends partial>(
+    compose: <B, CompletenessB extends partial | map>(
         other: Optic<B, CompletenessB, NonNullable<A>>,
-    ) => Optic<B, Completeness extends total ? (IsNullable<A> extends false ? CompletenessB : partial) : partial, S> = (
-        other,
-    ) => {
+    ) => Optic<B, ComposeCompleteness<TOpticType, CompletenessB, A>, S> = (other) => {
         return new Optic([...this.lenses, ...other.lenses]) as any;
     };
 
-    refine: <B>(refiner: (a: A) => B | false) => B extends false ? never : Optic<B, partial, S> = (refiner) => {
+    refine: <B>(
+        refiner: (a: A) => B | false,
+    ) => B extends false ? never : Optic<B, TOpticType extends total ? partial : TOpticType, S> = (refiner) => {
         return new Optic([
             ...this.lenses,
             {
@@ -133,11 +164,17 @@ export class Optic<A, Completeness extends partial = total, S = any> {
         ]) as any;
     };
 
-    convert: <B>(get: (a: A) => B, reverseGet: (b: B) => A) => Optic<B, Completeness, S> = (get, reverseGet) => {
+    convert: <B>(get: (a: A) => B, reverseGet: (b: B) => A) => Optic<B, TOpticType, S> = (get, reverseGet) => {
         return new Optic([...this.lenses, { get: stabilize(get), set: reverseGet, key: 'convert' }]);
     };
 
-    filter: (predicate: (a: A) => boolean) => Optic<A, partial, S> = (predicate) => {
+    map: A extends readonly (infer R)[] ? () => Optic<R, map, S> : never = (() => {
+        return new Optic([...this.lenses, { get: (s) => s, set: (a) => a, key: 'map', type: 'map' }]);
+    }) as any;
+
+    if: (predicate: (a: A) => boolean) => Optic<A, TOpticType extends total ? partial : TOpticType, S> = (
+        predicate,
+    ) => {
         return new Optic([
             ...this.lenses,
             {
@@ -148,7 +185,7 @@ export class Optic<A, Completeness extends partial = total, S = any> {
         ]);
     };
 
-    findFirst: A extends Array<infer R> ? (predicate: (r: R) => boolean) => Optic<R, partial, S> : never = ((
+    findFirst: TOpticType extends map ? (predicate: (a: A) => boolean) => Optic<A, partial, S> : never = ((
         predicate: (value: unknown) => boolean,
     ) => {
         return new Optic([
@@ -165,7 +202,9 @@ export class Optic<A, Completeness extends partial = total, S = any> {
         ]);
     }) as any;
 
-    atKey: A extends Record<string, infer R> ? (key: string) => Optic<R, partial, S> : never = ((key: string) => {
+    atKey: A extends Record<string, infer R>
+        ? (key: string) => Optic<R, TOpticType extends total ? partial : TOpticType, S>
+        : never = ((key: string) => {
         return new Optic([
             ...this.lenses,
             {
@@ -176,12 +215,13 @@ export class Optic<A, Completeness extends partial = total, S = any> {
         ]);
     }) as any;
 
-    toPartial: () => Optic<NonNullable<A>, partial, S> = () => new Optic([...this.lenses]);
+    toPartial: TOpticType extends map ? never : () => Optic<NonNullable<A>, partial, S> = (() =>
+        new Optic([...this.lenses])) as any;
 
     focusWithDefault: <Prop extends keyof NonNullable<A>>(
         prop: Prop,
         fallback: (parent: A) => NonNullable<NonNullable<A>[Prop]>,
-    ) => Optic<NonNullable<NonNullable<A>[Prop]>, Completeness, S> = (key, fallback) => {
+    ) => Optic<NonNullable<NonNullable<A>[Prop]>, TOpticType, S> = (key, fallback) => {
         return new Optic([
             ...this.lenses,
             {
@@ -199,13 +239,9 @@ export class Optic<A, Completeness extends partial = total, S = any> {
         return this.getKeys().toString();
     }
 
-    ˍˍunsafeReplaceLast = (newLast: Lens<A>) => {
-        this.lenses[this.lenses.length - 1] = newLast;
-    };
+    ˍˍunsafeGetLenses = () => this.lenses;
 
-    ˍˍunsafeGetFirstLens = () => this.lenses[0];
-
-    ˍˍcovariance: () => Completeness | null = () => null;
+    ˍˍcovariance: () => TOpticType | null = () => null;
 }
 
 export function optic<A, S>(get: (s: S) => A, set: (a: A, s: S) => S, key?: string): Optic<A, total, S>;

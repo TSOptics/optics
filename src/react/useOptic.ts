@@ -1,13 +1,14 @@
 import { useCallback, useContext, useEffect, useRef, useState } from 'react';
-import { Optic, partial } from '../Optic';
-import { rootOpticSymbol, Stores, Store } from '../createStore';
+import { Optic } from '../Optic';
+import { rootOpticSymbol, Stores, Store } from './createStore';
 import { OptixStoresContext } from './provider';
 import { noop } from '../utils';
+import { OpticType } from '../types';
 
-function useOptic<T, Completeness extends partial>(optic: Optic<T, Completeness, Stores>) {
+function useOptic<T, TOpticType extends OpticType>(optic: Optic<T, TOpticType, Stores>) {
     const stores = useContext(OptixStoresContext);
 
-    const storeLens = optic.ˍˍunsafeGetFirstLens();
+    const storeLens = optic.ˍˍunsafeGetLenses()[0];
     if (storeLens.key !== rootOpticSymbol) {
         throw new Error("This optic isn't linked to a store");
     }
@@ -46,10 +47,8 @@ function useOptic<T, Completeness extends partial>(optic: Optic<T, Completeness,
     );
 
     const setter = useCallback(
-        (value: T | ((prevState: typeof slice) => T)) => {
-            const newValue =
-                typeof value !== 'function' ? value : (value as (prevState: typeof slice) => T)(optic.get(stores));
-            optic.set(newValue, stores);
+        (value: Parameters<typeof optic.set>[0]) => {
+            optic.set(value, stores);
         },
         [optic, stores],
     );

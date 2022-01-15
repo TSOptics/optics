@@ -1,4 +1,5 @@
-import { Optic, optic, opticPartial } from '../src/Optic';
+import { optic, opticPartial } from '../src/constructors';
+import { Optic } from '../src/Optic';
 import { total } from '../src/types';
 import { noop } from '../src/utils';
 

@@ -98,4 +98,27 @@ describe('traversal', () => {
         expect(onDurabilities.set((x) => x + 1 - 1, state)).toBe(state);
     });
 });
-describe('fold', () => {});
+describe('fold', () => {
+    describe('findFirst', () => {
+        const lowerThan10Durability = onDurabilities.findFirst((x) => x < 10);
+        expect(lowerThan10Durability.get(state)).toBe(6);
+        expect(lowerThan10Durability.get(lowerThan10Durability.set((x) => x + 10, state))).toBe(2);
+
+        const onDurabilityOf2 = onDurabilities.findFirst((x) => x === 2);
+        expect(onDurabilityOf2.get(onDurabilityOf2.set((x) => x + 1, state))).toBe(undefined);
+    });
+    describe('maxBy', () => {
+        const onMaxDurability = onDurabilities.maxBy((x) => x);
+        expect(onMaxDurability.get(state)).toBe(12);
+        expect(onMaxDurability.get(onMaxDurability.set(0, state))).toBe(7);
+    });
+    describe('minBy', () => {
+        const onMinDurability = onDurabilities.minBy((x) => x);
+        expect(onMinDurability.get(state)).toBe(2);
+        expect(onMinDurability.get(onMinDurability.set(1000, state))).toBe(6);
+    });
+    describe('atIndex', () => {
+        expect(onDurabilities.atIndex(3).get(state)).toBe(7);
+        expect(onDurabilities.atIndex(4).get(state)).toBe(undefined);
+    });
+});

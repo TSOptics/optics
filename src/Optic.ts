@@ -1,6 +1,6 @@
 import { getFoldGroups, getElemsWithPath, replaceTraversals } from './mapReduce';
 import {
-    ComposeCompleteness,
+    ComposedOpticType,
     IsNullable,
     Lens,
     partial,
@@ -10,8 +10,9 @@ import {
     total,
     map,
     OpticType,
+    reduce,
 } from './types';
-import { stabilize } from './utils';
+import { noop, stabilize } from './utils';
 
 export class Optic<A, TOpticType extends OpticType = total, S = any> {
     private lenses: Lens[];
@@ -145,9 +146,11 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> {
         return this.lenses.map((l) => l.key);
     };
 
-    compose: <B, CompletenessB extends partial | map>(
-        other: Optic<B, CompletenessB, NonNullable<A>>,
-    ) => Optic<B, ComposeCompleteness<TOpticType, CompletenessB, A>, S> = (other) => {
+    compose: <B, TOpticTypeB extends OpticType>(
+        other: Optic<B, TOpticTypeB, NonNullable<A>>,
+    ) => ComposedOpticType<TOpticType, TOpticTypeB, A> extends never
+        ? void
+        : Optic<B, ComposedOpticType<TOpticType, TOpticTypeB, A>, S> = (other) => {
         return new Optic([...this.lenses, ...other.lenses]) as any;
     };
 
@@ -185,19 +188,74 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> {
         ]);
     };
 
-    findFirst: TOpticType extends map ? (predicate: (a: A) => boolean) => Optic<A, partial, S> : never = ((
+    // FOLDS
+
+    findFirst: TOpticType extends map ? (predicate: (a: A) => boolean) => Optic<A, reduce, S> : never = ((
         predicate: (value: unknown) => boolean,
     ) => {
         return new Optic([
             ...this.lenses,
             {
-                get: (s: unknown[]) => s.find(predicate),
-                set: (a: unknown, s: unknown[]) => {
-                    const i = s.findIndex(predicate);
-                    if (i === -1) return s;
-                    return [...s.slice(0, i), a, ...s.slice(i + 1)];
-                },
+                get: (s: A[]) => s.findIndex(predicate),
+                set: noop,
+                type: 'reduce',
                 key: 'findFirst',
+            },
+        ]);
+    }) as any;
+
+    maxBy: TOpticType extends map ? (f: (a: A) => number) => Optic<A, reduce, S> : never = ((f: (a: A) => number) => {
+        return new Optic([
+            ...this.lenses,
+            {
+                get: (s: A[]) =>
+                    s.reduce<{ maxValue: number; indexOfMax: number }>(
+                        ({ maxValue, indexOfMax }, cv: A, ci) => {
+                            const numValue = f(cv);
+                            return {
+                                maxValue: numValue > maxValue ? numValue : maxValue,
+                                indexOfMax: numValue > maxValue ? ci : indexOfMax,
+                            };
+                        },
+                        { maxValue: Number.MIN_VALUE, indexOfMax: -1 },
+                    ).indexOfMax,
+                set: noop,
+                type: 'reduce',
+                key: 'maxBy',
+            },
+        ]);
+    }) as any;
+
+    minBy: TOpticType extends map ? (f: (a: A) => number) => Optic<A, reduce, S> : never = ((f: (a: A) => number) => {
+        return new Optic([
+            ...this.lenses,
+            {
+                get: (s: A[]) =>
+                    s.reduce<{ minValue: number; indexOfMin: number }>(
+                        ({ minValue, indexOfMin }, cv: A, ci) => {
+                            const numValue = f(cv);
+                            return {
+                                minValue: numValue < minValue ? numValue : minValue,
+                                indexOfMin: numValue < minValue ? ci : indexOfMin,
+                            };
+                        },
+                        { minValue: Number.MAX_VALUE, indexOfMin: -1 },
+                    ).indexOfMin,
+                set: noop,
+                type: 'reduce',
+                key: 'minBy',
+            },
+        ]);
+    }) as any;
+
+    atIndex: TOpticType extends map ? (index: number) => Optic<A, reduce, S> : never = ((index: number) => {
+        return new Optic([
+            ...this.lenses,
+            {
+                get: (s: A[]) => (index >= 0 && index < s.length ? index : -1),
+                set: noop,
+                type: 'reduce',
+                key: 'atIndex',
             },
         ]);
     }) as any;
@@ -215,7 +273,7 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> {
         ]);
     }) as any;
 
-    toPartial: TOpticType extends map ? never : () => Optic<NonNullable<A>, partial, S> = (() =>
+    toPartial: TOpticType extends total ? () => Optic<NonNullable<A>, partial, S> : never = (() =>
         new Optic([...this.lenses])) as any;
 
     focusWithDefault: <Prop extends keyof NonNullable<A>>(

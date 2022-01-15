@@ -47,12 +47,20 @@ export type PathOpticType<T, P extends string | number> = IsNullable<T> extends 
     ? partial
     : total;
 
-export type ComposeCompleteness<CompletenessA extends OpticType, CompletenessB extends OpticType, A> = map extends
-    | CompletenessA
-    | CompletenessB
+export type ComposedOpticType<TOpticTypeA extends OpticType, TOpticTypeB extends OpticType, A> = TOpticTypeB extends map
     ? map
-    : partial extends CompletenessA | CompletenessB
-    ? partial
-    : IsNullable<A> extends true
-    ? partial
-    : total;
+    : TOpticTypeB extends reduce
+    ? TOpticTypeA extends map
+        ? reduce
+        : never
+    : TOpticTypeA extends reduce
+    ? reduce
+    : TOpticTypeA extends map
+    ? map
+    : TOpticTypeA extends total
+    ? TOpticTypeB extends total
+        ? IsNullable<A> extends false
+            ? total
+            : partial
+        : partial
+    : partial;

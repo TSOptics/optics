@@ -1,100 +1,149 @@
-import { optic, Optic, opticPartial } from '../src/Optic';
-import { total, partial } from '../src/types';
+import { optic, Optic } from '../src/Optic';
+import { total, partial, map, reduce } from '../src/types';
+import { noop } from '../src/utils';
 
-const expect = <T>(t: T) => {
-    // type level test
-};
+const expectTotal: <A = any, S = any>(o: Optic<A, total, S>) => void = noop;
+const expectPartial: <A = any, T extends partial = partial, S = any>(
+    o: partial extends T ? Optic<A, T, S> : never,
+) => void = noop;
+const expectMap: <A = any, S = any>(o: Optic<A, map, S>) => void = noop;
+const expectReduce: <A = any, S = any>(o: Optic<A, reduce, S>) => void = noop;
+const expectVoid: (_: void) => void = noop;
 
-const expectNot = <T>(t: T) => {
-    // type level test
-};
+describe('compose types', () => {
+    /**
+     * total on non nullable + total = total
+     */
+    expectTotal(
+        optic<{ foo: string }>()
+            .focus('foo')
+            .compose({} as Optic<boolean>),
+    );
 
-/**
- * composing a total optic focusing a nullable type with any optic should return a partial optic
- */
-const composed1 = optic<{ yolo: string | undefined }>()
-    .focus('yolo')
-    .compose({} as Optic<boolean, total, string>);
-// @ts-expect-error shoud be partial
-expectNot<Optic<any, total>>(composed1);
+    /**
+     * total on nullable + total = partial
+     */
+    expectPartial(
+        optic<{ foo: string | undefined }>()
+            .focus('foo')
+            .compose({} as Optic<boolean, total, string>),
+    );
 
-const composed1_1 = optic<{ yolo: string | undefined }>()
-    .focus('yolo')
-    .compose({} as Optic<boolean, partial>);
+    /**
+     * total + partial = partial
+     */
+    expectPartial(
+        optic<{ foo: string }>()
+            .focus('foo')
+            .compose({} as Optic<boolean, partial>),
+    );
 
-// @ts-expect-error shoud be partial
-expectNot<Optic<any, total>>(composed1_1);
+    /**
+     * total + traversal = traversal
+     */
+    expectMap(
+        optic<{ foo: string[] }>()
+            .focus('foo')
+            .compose({} as Optic<boolean, map>),
+    );
 
-/**
- * composing a total optic with a partial one shoud return a partial optic
- * */
-const composed2 = optic<{ yolo: string }>()
-    .focus('yolo')
-    .compose({} as Optic<boolean, partial>);
-// @ts-expect-error shoud be partial
-expectNot<Optic<any, total>>(composed2);
+    /**
+     * total + fold = void
+     */
+    expectVoid(
+        optic<{ foo: string[] }>()
+            .focus('foo')
+            .compose({} as Optic<boolean, reduce>),
+    );
 
-/**
- * composing partial optic with a total one should return a partial optic
- * */
-const composed3 = optic<{ yolo?: { swag: string } }>()
-    .focus('yolo')
-    .focus('swag')
-    .compose({} as Optic<boolean>);
-// @ts-expect-error shoud be partial
-expectNot<Optic<any, total>>(composed3);
+    /**
+     * partial + total = partial
+     */
+    expectPartial(
+        optic<{ foo?: { bar: string } }>()
+            .focus('foo?.bar')
+            .compose({} as Optic<boolean>),
+    );
 
-/**
- * composing a partial optic with a partial one should return partial optic
- * */
-const composed4 = optic<{ yolo?: { swag: string } }>()
-    .focus('yolo')
-    .focus('swag')
-    .compose({} as Optic<boolean, partial>);
-// @ts-expect-error shoud be partial
-expectNot<Optic<any, total>>(composed4);
+    /**
+     * partial + partial = partial
+     */
+    expectPartial(
+        optic<{ foo?: { bar: string } }>()
+            .focus('foo?.bar')
+            .compose({} as Optic<boolean, partial>),
+    );
 
-/**
- * composing a total optic with a total one shoud return a total optic
- * */
-const composed5 = optic<{ yolo: string }>()
-    .focus('yolo')
-    .compose({} as Optic<boolean>);
-expect<Optic<any, total>>(composed5);
+    /**
+     * partial + traversal = traversal
+     */
+    expectMap(
+        optic<{ foo?: { bar: string } }>()
+            .focus('foo?.bar')
+            .compose({} as Optic<boolean, map>),
+    );
+    /**
+     * partial + fold = void
+     */
+    expectVoid(
+        optic<{ foo?: { bar: string } }>()
+            .focus('foo?.bar')
+            .compose({} as Optic<boolean, reduce>),
+    );
+
+    /**
+     * traversal + total = traversal
+     */
+    expectMap(({} as Optic<string, map>).compose({} as Optic<boolean>));
+
+    /**
+     * traversal + partial = traversal
+     */
+    expectMap(({} as Optic<string, map>).compose({} as Optic<boolean, partial>));
+
+    /**
+     * traversal + traversal = traversal
+     */
+    expectMap(({} as Optic<string, map>).compose({} as Optic<boolean, map>));
+
+    /**
+     * traversal + fold = fold
+     */
+    expectReduce(({} as Optic<string, map>).compose({} as Optic<boolean, reduce>));
+
+    /**
+     * fold + total = fold
+     */
+    expectReduce(({} as Optic<string, reduce>).compose({} as Optic<boolean>));
+
+    /**
+     * fold + partial = fold
+     */
+    expectReduce(({} as Optic<string, reduce>).compose({} as Optic<boolean, partial>));
+
+    /**
+     * fold + traversal = traversal
+     */
+    expectMap(({} as Optic<string, reduce>).compose({} as Optic<boolean, map>));
+
+    /**
+     * fold + total = fold
+     */
+    expectVoid(({} as Optic<string, reduce>).compose({} as Optic<boolean, reduce>));
+});
 
 describe('lens', () => {
-    it('shoud be a subtype of optional', () => {
+    it('shoud be a subtype of partial', () => {
         const lens: Optic<any, total> = new Optic([]);
-        expect<Optic<any, partial>>(lens);
+        const partial: Optic<any, partial> = lens;
     });
-    it("should't be a supertype of optional", () => {
-        const optional: Optic<any, partial> = new Optic([]);
-        // @ts-expect-error optional isn't assignable to lens
-        expectNot<Optic<any, total>>(optional);
+    it("should't be a supertype of partial", () => {
+        const partial: Optic<any, partial> = new Optic([]);
+        // @ts-expect-error partial isn't assignable to total
+        const total: Optic<any> = partial;
     });
     it('toPartial should return a partial focusing on the nonnullable type', () => {
         const onNullable = optic<{ a: string | null | undefined }>().focus('a');
-        expect<Optic<string, partial, any>>(onNullable.toPartial());
-    });
-});
-describe('compose', () => {
-    it('should be able to take a new optic', () => {
-        type Test = { k1: { k2: number } };
-        const test = optic<Test>().compose(
-            optic(
-                (s) => s.k1,
-                (a, s) => ({ ...s, k1: a }),
-                'yolo',
-            ),
-        );
-    });
-    it('should be able to take a new partial', () => {
-        const test = optic<number>().compose(
-            opticPartial(
-                (s) => (s > 10 ? s : undefined),
-                (a, s) => (a > 10 ? a : s),
-                'over 10',
-            ),
-        );
+        expectPartial<string>(onNullable.toPartial());
     });
 });

@@ -183,7 +183,7 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> {
             {
                 get: (s) => (predicate(s) === true ? s : undefined),
                 set: (a, s) => (predicate(s) === true ? a : s),
-                key: 'filter',
+                key: 'if',
             },
         ]);
     };

@@ -3,7 +3,6 @@ import { Optic } from '../Optic';
 import { Store } from './createStore';
 import { OptixStoresContext } from './provider';
 import useOptic from './useOptic';
-import { opticPartial } from '..';
 import { noop } from '../utils';
 import { Lens, OpticType } from '../types';
 
@@ -41,7 +40,7 @@ const useArrayOptic = <T, TOpticType extends OpticType, S>(
             }, {}) ?? {};
     };
 
-    const opticRef = useRef(opticPartial() as typeof onArray);
+    const opticRef = useRef({} as typeof onArray);
 
     // update optics cache if onArray changed
     if (onArray !== opticRef.current) {

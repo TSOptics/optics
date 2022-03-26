@@ -1,4 +1,8 @@
-export interface partial {
+export interface reduce {
+    reduce: 'reduce';
+}
+
+export interface partial extends reduce {
     partial: 'partial';
 }
 
@@ -10,11 +14,7 @@ export interface map {
     map: 'map';
 }
 
-export interface reduce {
-    reduce: 'reduce';
-}
-
-export type OpticType = partial | map | reduce;
+export type OpticType = map | reduce;
 
 export interface Lens<A = any, S = any> {
     key: string | symbol;
@@ -47,20 +47,14 @@ export type PathOpticType<T, P extends string | number> = IsNullable<T> extends 
     ? partial
     : total;
 
-export type ComposedOpticType<TOpticTypeA extends OpticType, TOpticTypeB extends OpticType, A> = TOpticTypeB extends map
+export type ComposedOpticType<TOpticTypeA extends OpticType, TOpticTypeB extends OpticType, A> = map extends
+    | TOpticTypeA
+    | TOpticTypeB
     ? map
-    : TOpticTypeB extends reduce
-    ? TOpticTypeA extends map
-        ? reduce
-        : never
-    : TOpticTypeA extends reduce
+    : reduce extends TOpticTypeA | TOpticTypeB
     ? reduce
-    : TOpticTypeA extends map
-    ? map
-    : TOpticTypeA extends total
-    ? TOpticTypeB extends total
-        ? IsNullable<A> extends false
-            ? total
-            : partial
-        : partial
-    : partial;
+    : partial extends TOpticTypeA | TOpticTypeB
+    ? partial
+    : IsNullable<A> extends true
+    ? partial
+    : total;

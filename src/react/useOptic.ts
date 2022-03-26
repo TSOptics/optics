@@ -1,12 +1,12 @@
 import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { Optic } from '../Optic';
 import { rootOpticSymbol, Stores, Store } from './createStore';
-import { OptixStoresContext } from './provider';
+import { OpticsStoresContext } from './provider';
 import { noop } from '../utils';
 import { OpticType } from '../types';
 
 function useOptic<T, TOpticType extends OpticType>(optic: Optic<T, TOpticType, Stores>) {
-    const stores = useContext(OptixStoresContext);
+    const stores = useContext(OpticsStoresContext);
 
     const storeLens = optic.ˍˍunsafeGetLenses()[0];
     if (storeLens.key !== rootOpticSymbol) {

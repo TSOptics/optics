@@ -29,7 +29,7 @@ describe('useOptic', () => {
         expect(prevSetState).toBe(setState);
     });
 
-    it('should only accept optics with Optix stores as root', () => {
+    it('should only accept optics with the stores as root', () => {
         const onA: Optic<string, total, any> = optic<{ a: string }>().focus('a');
         const {
             result: { error },

@@ -1,5 +1,5 @@
 {
-    "name": "react-optix",
+    "name": "react-optics",
     "version": "0.1.0",
     "description": "",
     "main": "dist/index.js",
@@ -48,12 +48,12 @@
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/OptixJs/react-optix.git"
+        "url": "git+https://github.com/OptixJs/react-optics.git"
     },
     "author": "",
     "license": "ISC",
     "bugs": {
-        "url": "https://github.com/OptixJs/react-optix/issues"
+        "url": "https://github.com/OptixJs/react-optics/issues"
     },
-    "homepage": "https://github.com/OptixJs/react-optix#readme"
+    "homepage": "https://github.com/OptixJs/react-optics#readme"
 }

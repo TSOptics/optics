@@ -1,7 +1,7 @@
 import { useCallback, useContext, useEffect, useRef } from 'react';
 import { Optic } from '../Optic';
 import { Store } from './createStore';
-import { OptixStoresContext } from './provider';
+import { OpticsStoresContext } from './provider';
 import useOptic from './useOptic';
 import { noop } from '../utils';
 import { Lens, OpticType } from '../types';
@@ -11,7 +11,7 @@ const useArrayOptic = <T, TOpticType extends OpticType, S>(
     keyExtractor: (t: T) => string,
 ) => {
     const [slice, setSlice] = useOptic(onArray);
-    const stores = useContext(OptixStoresContext);
+    const stores = useContext(OpticsStoresContext);
     const store = onArray.ˍˍunsafeGetLenses()[0].get(stores) as Store;
 
     const keyExtractorRef = useRef(keyExtractor).current;

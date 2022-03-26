@@ -1,15 +1,15 @@
 import { optic } from '../src/constructors';
 import { Optic } from '../src/Optic';
-import { total, partial, map, reduce } from '../src/types';
+import { total, partial, mapped, reduced } from '../src/types';
 import { noop } from '../src/utils';
 
 const expectTotal: <A = any, S = any>(o: Optic<A, total, S>) => void = noop;
 const expectPartial: <A = any, T extends partial = partial, S = any>(
     o: partial extends T ? Optic<A, T, S> : never,
 ) => void = noop;
-const expectMapped: <A = any, S = any>(o: Optic<A, map, S>) => void = noop;
-const expectReduced: <A = any, T extends reduce = reduce, S = any>(
-    o: reduce extends T ? Optic<A, T, S> : never,
+const expectMapped: <A = any, S = any>(o: Optic<A, mapped, S>) => void = noop;
+const expectReduced: <A = any, T extends reduced = reduced, S = any>(
+    o: reduced extends T ? Optic<A, T, S> : never,
 ) => void = noop;
 
 describe('compose types', () => {
@@ -46,7 +46,7 @@ describe('compose types', () => {
     expectMapped(
         optic<{ foo: string[] }>()
             .focus('foo')
-            .compose({} as Optic<boolean, map>),
+            .compose({} as Optic<boolean, mapped>),
     );
 
     /**
@@ -55,7 +55,7 @@ describe('compose types', () => {
     expectReduced(
         optic<{ foo: string[] }>()
             .focus('foo')
-            .compose({} as Optic<boolean, reduce>),
+            .compose({} as Optic<boolean, reduced>),
     );
 
     /**
@@ -82,7 +82,7 @@ describe('compose types', () => {
     expectMapped(
         optic<{ foo?: { bar: string } }>()
             .focus('foo?.bar')
-            .compose({} as Optic<boolean, map>),
+            .compose({} as Optic<boolean, mapped>),
     );
     /**
      * partial + reduced = reduced
@@ -90,48 +90,48 @@ describe('compose types', () => {
     expectReduced(
         optic<{ foo?: { bar: string } }>()
             .focus('foo?.bar')
-            .compose({} as Optic<boolean, reduce>),
+            .compose({} as Optic<boolean, reduced>),
     );
 
     /**
      * mapped + total = mapped
      */
-    expectMapped(({} as Optic<string, map>).compose({} as Optic<boolean>));
+    expectMapped(({} as Optic<string, mapped>).compose({} as Optic<boolean>));
 
     /**
      * mapped + partial = mapped
      */
-    expectMapped(({} as Optic<string, map>).compose({} as Optic<boolean, partial>));
+    expectMapped(({} as Optic<string, mapped>).compose({} as Optic<boolean, partial>));
 
     /**
      * mapped + mapped = mapped
      */
-    expectMapped(({} as Optic<string, map>).compose({} as Optic<boolean, map>));
+    expectMapped(({} as Optic<string, mapped>).compose({} as Optic<boolean, mapped>));
 
     /**
      * mapped + reduced = mapped
      */
-    expectMapped(({} as Optic<string, map>).compose({} as Optic<boolean, reduce>));
+    expectMapped(({} as Optic<string, mapped>).compose({} as Optic<boolean, reduced>));
 
     /**
      * reduced + total = reduced
      */
-    expectReduced(({} as Optic<string, reduce>).compose({} as Optic<boolean>));
+    expectReduced(({} as Optic<string, reduced>).compose({} as Optic<boolean>));
 
     /**
      * reduced + partial = reduced
      */
-    expectReduced(({} as Optic<string, reduce>).compose({} as Optic<boolean, partial>));
+    expectReduced(({} as Optic<string, reduced>).compose({} as Optic<boolean, partial>));
 
     /**
      * reduced + mapped = mapped
      */
-    expectMapped(({} as Optic<string, reduce>).compose({} as Optic<boolean, map>));
+    expectMapped(({} as Optic<string, reduced>).compose({} as Optic<boolean, mapped>));
 
     /**
      * reduced + total = reduced
      */
-    expectReduced(({} as Optic<string, reduce>).compose({} as Optic<boolean, reduce>));
+    expectReduced(({} as Optic<string, reduced>).compose({} as Optic<boolean, reduced>));
 });
 
 describe('lens', () => {

@@ -7,27 +7,27 @@ describe('getFoldGroups', () => {
     const lens = { get: noop, set: noop, key: '' };
     const lenses: Lens[] = [
         { ...lens },
-        { ...lens, type: 'map', key: 'opening group 1' },
+        { ...lens, type: 'mapped', key: 'opening group 1' },
         { ...lens },
-        { ...lens, type: 'map' },
+        { ...lens, type: 'mapped' },
         { ...lens },
-        { ...lens, type: 'reduce', key: 'reducing group 1' },
+        { ...lens, type: 'reduced', key: 'reducing group 1' },
         { ...lens },
-        { ...lens, type: 'map', key: 'opening group 2' },
-        { ...lens, type: 'map' },
-        { ...lens, type: 'map' },
-        { ...lens, type: 'reduce', key: 'reducing group 2' },
-        { ...lens, type: 'map', key: 'opening group 3' },
+        { ...lens, type: 'mapped', key: 'opening group 2' },
+        { ...lens, type: 'mapped' },
+        { ...lens, type: 'mapped' },
+        { ...lens, type: 'reduced', key: 'reducing group 2' },
+        { ...lens, type: 'mapped', key: 'opening group 3' },
     ];
     it('should group map and reduce optics', () => {
         expect(getFoldGroups(lenses)).toEqual([
             {
-                openingTraversal: { ...lens, type: 'map', key: 'opening group 1' },
-                reduce: { ...lens, type: 'reduce', key: 'reducing group 1' },
+                openingTraversal: { ...lens, type: 'mapped', key: 'opening group 1' },
+                reduce: { ...lens, type: 'reduced', key: 'reducing group 1' },
             },
             {
-                openingTraversal: { ...lens, type: 'map', key: 'opening group 2' },
-                reduce: { ...lens, type: 'reduce', key: 'reducing group 2' },
+                openingTraversal: { ...lens, type: 'mapped', key: 'opening group 2' },
+                reduce: { ...lens, type: 'reduced', key: 'reducing group 2' },
             },
         ]);
     });

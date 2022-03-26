@@ -8,9 +8,9 @@ import {
     PathOpticType,
     PathType,
     total,
-    map,
+    mapped,
     OpticType,
-    reduce,
+    reduced,
 } from './types';
 import { noop, stabilize } from './utils';
 
@@ -21,9 +21,9 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> {
         this.lenses = lenses;
     }
 
-    get: (s: S) => TOpticType extends map ? A[] : TOpticType extends total ? A : A | undefined = (s) => {
+    get: (s: S) => TOpticType extends mapped ? A[] : TOpticType extends total ? A : A | undefined = (s) => {
         const isOpticTraversal = this.lenses.reduce(
-            (acc, cv) => (cv.type === 'reduce' ? false : acc || cv.type === 'map'),
+            (acc, cv) => (cv.type === 'reduced' ? false : acc || cv.type === 'mapped'),
             false,
         );
         const aux = (s: any, lenses: Lens[], isTraversal = false): any => {
@@ -31,7 +31,7 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> {
             if (!hd) {
                 return s;
             }
-            if (hd.type === 'map') {
+            if (hd.type === 'mapped') {
                 const traversalCache = this.cache.get(hd);
                 if (!isTraversal && traversalCache) {
                     const [cacheKey, cacheValue] = traversalCache;
@@ -41,7 +41,7 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> {
                 this.cache.set(hd, [s, result]);
                 return result;
             }
-            if (hd.type === 'reduce') {
+            if (hd.type === 'reduced') {
                 const index = hd.get(s);
                 if (index === -1) return undefined;
                 return aux((s as any[])[index], tl, false);
@@ -87,7 +87,7 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> {
                 return aux(a, s, replacedLenses, groups);
             }
             const slice = hd.get(s);
-            if (hd.type === 'map') {
+            if (hd.type === 'mapped') {
                 const newSlice = (slice as any[]).map((x) => aux(a, x, tl, foldGroups)) as any;
                 return (slice as any[]).every((x, i) => x === newSlice[i]) ? slice : newSlice;
             }
@@ -171,8 +171,8 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> {
         return new Optic([...this.lenses, { get: stabilize(get), set: reverseGet, key: 'convert' }]);
     };
 
-    map: A extends readonly (infer R)[] ? () => Optic<R, map, S> : never = (() => {
-        return new Optic([...this.lenses, { get: (s) => s, set: (a) => a, key: 'map', type: 'map' }]);
+    map: A extends readonly (infer R)[] ? () => Optic<R, mapped, S> : never = (() => {
+        return new Optic([...this.lenses, { get: (s) => s, set: (a) => a, key: 'map', type: 'mapped' }]);
     }) as any;
 
     if: (predicate: (a: A) => boolean) => Optic<A, TOpticType extends total ? partial : TOpticType, S> = (
@@ -190,7 +190,7 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> {
 
     // FOLDS
 
-    findFirst: TOpticType extends map ? (predicate: (a: A) => boolean) => Optic<A, reduce, S> : never = ((
+    findFirst: TOpticType extends mapped ? (predicate: (a: A) => boolean) => Optic<A, reduced, S> : never = ((
         predicate: (value: unknown) => boolean,
     ) => {
         return new Optic([
@@ -198,13 +198,15 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> {
             {
                 get: (s: A[]) => s.findIndex(predicate),
                 set: noop,
-                type: 'reduce',
+                type: 'reduced',
                 key: 'findFirst',
             },
         ]);
     }) as any;
 
-    maxBy: TOpticType extends map ? (f: (a: A) => number) => Optic<A, reduce, S> : never = ((f: (a: A) => number) => {
+    maxBy: TOpticType extends mapped ? (f: (a: A) => number) => Optic<A, reduced, S> : never = ((
+        f: (a: A) => number,
+    ) => {
         return new Optic([
             ...this.lenses,
             {
@@ -220,13 +222,15 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> {
                         { maxValue: Number.MIN_VALUE, indexOfMax: -1 },
                     ).indexOfMax,
                 set: noop,
-                type: 'reduce',
+                type: 'reduced',
                 key: 'maxBy',
             },
         ]);
     }) as any;
 
-    minBy: TOpticType extends map ? (f: (a: A) => number) => Optic<A, reduce, S> : never = ((f: (a: A) => number) => {
+    minBy: TOpticType extends mapped ? (f: (a: A) => number) => Optic<A, reduced, S> : never = ((
+        f: (a: A) => number,
+    ) => {
         return new Optic([
             ...this.lenses,
             {
@@ -242,19 +246,19 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> {
                         { minValue: Number.MAX_VALUE, indexOfMin: -1 },
                     ).indexOfMin,
                 set: noop,
-                type: 'reduce',
+                type: 'reduced',
                 key: 'minBy',
             },
         ]);
     }) as any;
 
-    atIndex: TOpticType extends map ? (index: number) => Optic<A, reduce, S> : never = ((index: number) => {
+    atIndex: TOpticType extends mapped ? (index: number) => Optic<A, reduced, S> : never = ((index: number) => {
         return new Optic([
             ...this.lenses,
             {
                 get: (s: A[]) => (index >= 0 && index < s.length ? index : -1),
                 set: noop,
-                type: 'reduce',
+                type: 'reduced',
                 key: 'atIndex',
             },
         ]);

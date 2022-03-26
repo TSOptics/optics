@@ -10,10 +10,10 @@ export const getFoldGroups = (lenses: Lens[], openingTraversal?: Lens): FoldGrou
     if (!hd) {
         return [];
     }
-    if (hd.type === 'reduce' && openingTraversal) {
+    if (hd.type === 'reduced' && openingTraversal) {
         return [{ openingTraversal, reduce: hd }, ...getFoldGroups(tl)];
     }
-    if (hd.type === 'map' && !openingTraversal) {
+    if (hd.type === 'mapped' && !openingTraversal) {
         return getFoldGroups(tl, hd);
     }
     return getFoldGroups(tl, openingTraversal);
@@ -23,7 +23,7 @@ const partialSymbol = Symbol('partial');
 export const getElemsWithPath = (s: any, lenses: Lens[]) => {
     const aux = (s: any, lenses: Lens[], path: number[] = []): ([number[], any] | typeof partialSymbol)[] => {
         const [hd, ...tl] = lenses;
-        if (!hd || hd.type === 'reduce') {
+        if (!hd || hd.type === 'reduced') {
             return [[path, s]];
         }
         const slice = hd.get(s);
@@ -48,10 +48,10 @@ const focusIndex = (index: number): Lens<any, any[]> => ({
 export const replaceTraversals = (lenses: Lens[], indexesPath: number[]): Lens[] => {
     const [hdIndexes, ...tlIndexes] = indexesPath;
     const [hdLenses, ...tlLenses] = lenses;
-    if (hdLenses.type === 'map') {
+    if (hdLenses.type === 'mapped') {
         return [focusIndex(hdIndexes), ...replaceTraversals(tlLenses, tlIndexes)];
     }
-    if (hdLenses.type === 'reduce') {
+    if (hdLenses.type === 'reduced') {
         return tlLenses;
     }
     return [hdLenses, ...replaceTraversals(tlLenses, indexesPath)];

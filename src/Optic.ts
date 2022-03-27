@@ -10,7 +10,6 @@ import {
     total,
     mapped,
     OpticType,
-    reduced,
 } from './types';
 import { noop, stabilize } from './utils';
 
@@ -190,7 +189,7 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> {
 
     // FOLDS
 
-    findFirst: TOpticType extends mapped ? (predicate: (a: A) => boolean) => Optic<A, reduced, S> : never = ((
+    findFirst: TOpticType extends mapped ? (predicate: (a: A) => boolean) => Optic<A, partial, S> : never = ((
         predicate: (value: unknown) => boolean,
     ) => {
         return new Optic([
@@ -204,7 +203,7 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> {
         ]);
     }) as any;
 
-    maxBy: TOpticType extends mapped ? (f: (a: A) => number) => Optic<A, reduced, S> : never = ((
+    maxBy: TOpticType extends mapped ? (f: (a: A) => number) => Optic<A, partial, S> : never = ((
         f: (a: A) => number,
     ) => {
         return new Optic([
@@ -228,7 +227,7 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> {
         ]);
     }) as any;
 
-    minBy: TOpticType extends mapped ? (f: (a: A) => number) => Optic<A, reduced, S> : never = ((
+    minBy: TOpticType extends mapped ? (f: (a: A) => number) => Optic<A, partial, S> : never = ((
         f: (a: A) => number,
     ) => {
         return new Optic([
@@ -252,7 +251,7 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> {
         ]);
     }) as any;
 
-    atIndex: TOpticType extends mapped ? (index: number) => Optic<A, reduced, S> : never = ((index: number) => {
+    atIndex: TOpticType extends mapped ? (index: number) => Optic<A, partial, S> : never = ((index: number) => {
         return new Optic([
             ...this.lenses,
             {

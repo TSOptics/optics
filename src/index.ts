@@ -1,6 +1,6 @@
 export type { Optic } from './Optic';
 export { optic, opticPartial } from './constructors';
-export { total, partial, mapped as map, reduced as reduce } from './types';
+export { total, partial, mapped } from './types';
 
 import Provider from './react/provider';
 export { Provider };

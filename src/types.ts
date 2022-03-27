@@ -1,8 +1,4 @@
-export interface reduced {
-    reduce: 'reduced';
-}
-
-export interface partial extends reduced {
+export interface partial {
     partial: 'partial';
 }
 
@@ -14,7 +10,7 @@ export interface mapped {
     map: 'mapped';
 }
 
-export type OpticType = mapped | reduced;
+export type OpticType = mapped | partial;
 
 export interface Lens<A = any, S = any> {
     key: string | symbol;
@@ -51,8 +47,6 @@ export type ComposedOpticType<TOpticTypeA extends OpticType, TOpticTypeB extends
     | TOpticTypeA
     | TOpticTypeB
     ? mapped
-    : reduced extends TOpticTypeA | TOpticTypeB
-    ? reduced
     : partial extends TOpticTypeA | TOpticTypeB
     ? partial
     : IsNullable<A> extends true

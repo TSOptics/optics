@@ -48,20 +48,19 @@ const useArrayOptic = <T, TOpticType extends OpticType, S>(
         opticRef.current = onArray;
     }
 
-    const mounted = useRef(false);
+    const unsubscribe = useRef<() => void>();
 
     // register subscription on mount (parent first)
-    if (!mounted.current) {
-        store.subscriptions.add(subscription);
-        mounted.current = true;
+    if (!unsubscribe.current) {
+        unsubscribe.current = store.subscribe(subscription);
     }
 
     // unregister subscription on unmount (children first)‡
     useEffect(
         () => () => {
-            store.subscriptions.delete(subscription);
+            unsubscribe.current?.();
         },
-        [store.subscriptions],
+        [],
     );
 
     const getOpticFromKey = useCallback((key: string) => keyedOptics.current[key], []);

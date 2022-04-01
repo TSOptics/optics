@@ -1,25 +1,32 @@
 import { Optic } from '../Optic';
 import { Lens, total } from '../types';
 
-type Subscriptions = Set<{ current: (root: any) => void }>;
-export type Store<T = any> = { root: T; subscriptions: Subscriptions };
+type Listener = { current: (root: any) => void };
+export type Store<T = any> = { root: T; subscribe: (Listener: Listener) => () => void };
 export type Stores = Map<Record<string, never>, Store>;
 export const rootOpticSymbol = Symbol('rootOptic');
 
 function createStore<T>(initialValue: T, key?: string) {
     const id = {};
+    const subscriptions: Set<Listener> = new Set();
+    const subscribe = (listener: Listener) => {
+        subscriptions.add(listener);
+        return () => {
+            subscriptions.delete(listener);
+        };
+    };
     const rootOptic = new Optic<T, total, Stores>([
         {
             key: rootOpticSymbol,
             get: (s) => {
                 if (!s.has(id)) {
-                    s.set(id, { root: initialValue, subscriptions: new Set() });
+                    s.set(id, { root: initialValue, subscribe });
                 }
                 return s.get(id) as Store<T>;
             },
             set: (a, s) => {
                 s.set(id, a);
-                s.get(id)!.subscriptions.forEach((subscriber) => subscriber.current(s));
+                subscriptions.forEach((subscriber) => subscriber.current(s));
                 return s;
             },
         } as Lens<Store<T>, Stores>,

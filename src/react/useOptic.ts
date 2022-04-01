@@ -1,4 +1,5 @@
 import { useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { useSyncExternalStore } from 'use-sync-external-store/shim';
 import { Optic } from '../Optic';
 import { rootOpticSymbol, Stores, Store } from './createStore';
 import { OpticsStoresContext } from './provider';
@@ -24,26 +25,25 @@ function useOptic<T, TOpticType extends OpticType>(optic: Optic<T, TOpticType, S
         setSlice(value);
     };
 
-    const opticRef = useRef(optic);
+    const previousOptic = useRef(optic);
 
     // update local state if optic changed
-    if (opticRef.current !== optic) {
+    if (previousOptic.current !== optic) {
         subscription.current(stores);
-        opticRef.current = optic;
+        previousOptic.current = optic;
     }
 
     // register subscription on mount (parent first)
-    const mounted = useRef(false);
-    if (!mounted.current) {
-        store.subscriptions.add(subscription);
-        mounted.current = true;
+    const unsubscribe = useRef<() => void>();
+    if (!unsubscribe.current) {
+        unsubscribe.current = store.subscribe(subscription);
     }
     // unregister subscription on unmount (children first)
     useEffect(
         () => () => {
-            store.subscriptions.delete(subscription);
+            unsubscribe.current?.();
         },
-        [store.subscriptions],
+        [],
     );
 
     const setter = useCallback(

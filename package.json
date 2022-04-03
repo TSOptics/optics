@@ -45,7 +45,7 @@
         "test": "jest",
         "type-check": "tsc --skipLibCheck --noEmit",
         "build": "tsc -p tsconfig-build.json",
-        "rebuild": "rm -rf dist && yarn build"
+        "rebuild": "rm -rf dist && npm run build"
     },
     "repository": {
         "type": "git",

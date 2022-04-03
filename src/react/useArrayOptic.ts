@@ -51,10 +51,10 @@ const useArrayOptic = <T, TOpticType extends OpticType, S>(
     const unsubscribe = useRef<() => void>();
 
     // register subscription on mount (parent first)
-    if (!unsubscribe.current) {
+    /*     if (!unsubscribe.current) {
         unsubscribe.current = store.subscribe(subscription);
     }
-
+ */
     // unregister subscription on unmount (children first)‡
     useEffect(
         () => () => {

@@ -1,9 +1,8 @@
-import React, { memo, useCallback, useRef } from 'react';
+import React from 'react';
 import { renderHook } from '@testing-library/react-hooks';
 import createStore from '../src/react/createStore';
 import { act } from 'react-test-renderer';
 import { Optic } from '../src/Optic';
-import useArrayOptic from '../src/react/useArrayOptic';
 import { render, fireEvent } from '@testing-library/react';
 import useOptic from '../src/react/useOptic';
 import Provider from '../src/react/provider';
@@ -56,8 +55,30 @@ describe('useOptic', () => {
         rerender({ initialValue: timesTwo });
         expect(result.current[0]).toEqual({ test: 84 });
     });
+    it('should not exhibit the zombie child problem', () => {
+        const onState = createStore<number[]>([42]);
+        const onFirst = onState.focus(0);
+
+        const Children = ({ onElem }: { onElem: Optic<number> }) => {
+            const [elem] = useOptic(onElem);
+            return <>{elem.toString()}</>;
+        };
+        const Parent = () => {
+            const [state, setState] = useOptic(onState);
+            return (
+                <>
+                    {state.length > 0 ? <Children onElem={onFirst} /> : null}
+                    <button onClick={() => setState([])}>delete</button>
+                </>
+            );
+        };
+
+        const { getByText } = render(<Parent />, { wrapper: Provider });
+        const button = getByText('delete');
+        fireEvent.click(button);
+    });
 });
-describe('useArrayOptic', () => {
+/* describe('useArrayOptic', () => {
     const Number = memo(({ onNumber }: { onNumber: Optic<number> }) => {
         const [n] = useOptic(onNumber);
         const renders = useRef(0);
@@ -108,3 +129,4 @@ describe('useArrayOptic', () => {
         expect(renders.map((x) => x.textContent)).toEqual(['1', '1', '1', '1', '1', '1']);
     });
 });
+ */

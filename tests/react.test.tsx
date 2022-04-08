@@ -9,6 +9,7 @@ import Provider from '../src/react/provider';
 import { total } from '../src/types';
 import { optic } from '../src/constructors';
 import useKeyedOptics from '../src/react/useKeyedOptics';
+import useOpticReducer from '../src/react/useOpticReducer';
 
 describe('useOptic', () => {
     it('should set state', () => {
@@ -165,5 +166,65 @@ describe('useKeyedOptics', () => {
         for (const evenKey of evenKeys) {
             expect(result.current(evenKey)).toBeUndefined();
         }
+    });
+});
+describe('useOpticReducer', () => {
+    type State = { counter: number; step: number };
+    type Action =
+        | { type: 'increment' }
+        | { type: 'decrement' }
+        | { type: 'changeStep'; step: number }
+        | { type: 'reset' };
+    const initialValue: State = { counter: 0, step: 1 };
+    const onState = createStore(initialValue);
+    const reducer = (state: State, action: Action): State => {
+        switch (action.type) {
+            case 'increment':
+                return { ...state, counter: state.counter + state.step };
+            case 'decrement':
+                return { ...state, counter: state.counter - state.step };
+            case 'changeStep':
+                return { ...state, step: action.step };
+            case 'reset':
+                return initialValue;
+        }
+    };
+    const reducerWithOptic = (state: State, action: Action, onState: Optic<State, total, State>): State => {
+        const onCounter = onState.focus('counter');
+        const onStep = onState.focus('step');
+        switch (action.type) {
+            case 'increment':
+                return onCounter.set((prev) => prev + state.step, state);
+            case 'decrement':
+                return onCounter.set((prev) => prev - state.step, state);
+            case 'changeStep':
+                return onStep.set(action.step, state);
+            case 'reset':
+                return initialValue;
+        }
+    };
+    it('should dispatch actions', () => {
+        const { result, rerender } = renderHook(
+            ({ initialReducer }: { initialReducer: typeof reducerWithOptic }) =>
+                useOpticReducer(onState, initialReducer),
+            { wrapper: Provider, initialProps: { initialReducer: reducer } },
+        );
+        const dispatchActions = () => {
+            result.current[1]({ type: 'increment' });
+            result.current[1]({ type: 'increment' });
+            result.current[1]({ type: 'changeStep', step: 20 });
+            result.current[1]({ type: 'increment' });
+            result.current[1]({ type: 'changeStep', step: 5 });
+            result.current[1]({ type: 'decrement' });
+        };
+        act(dispatchActions);
+        expect(result.current[0]).toEqual({ counter: 17, step: 5 });
+
+        act(() => result.current[1]({ type: 'reset' }));
+        rerender({ initialReducer: reducerWithOptic });
+        expect(result.current[0]).toEqual({ counter: 0, step: 1 });
+
+        act(dispatchActions);
+        expect(result.current[0]).toEqual({ counter: 17, step: 5 });
     });
 });

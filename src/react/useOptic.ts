@@ -1,5 +1,5 @@
 import { useCallback, useContext } from 'react';
-import { useSyncExternalStore } from 'use-sync-external-store/shim';
+import { useSyncExternalStore } from 'use-sync-external-store/shim/';
 import { Optic } from '../Optic';
 import { rootOpticSymbol, Stores, Store } from './createStore';
 import { OpticsStoresContext } from './provider';
@@ -15,10 +15,7 @@ function useOptic<T, TOpticType extends OpticType>(optic: Optic<T, TOpticType, S
 
     const store = storeLens.get(stores) as Store;
 
-    const slice = useSyncExternalStore(
-        store.subscribe,
-        useCallback(() => optic.get(stores), [optic, stores]),
-    );
+    const slice = useSyncExternalStore(store.subscribe, () => optic.get(stores));
 
     const setter = useCallback(
         (value: Parameters<typeof optic.set>[0]) => {

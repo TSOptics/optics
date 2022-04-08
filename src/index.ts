@@ -6,6 +6,6 @@ import Provider from './react/provider';
 export { Provider };
 
 import useOptic from './react/useOptic';
-import useArrayOptic from './react/useArrayOptic';
+import useKeyedOptics from './react/useKeyedOptics';
 import createStore from './react/createStore';
-export { useOptic, useArrayOptic, createStore };
+export { useOptic, useKeyedOptics, createStore };

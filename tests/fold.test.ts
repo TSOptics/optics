@@ -1,37 +1,5 @@
 import { optic } from '../src';
-import { getElemsWithPath, getFoldGroups } from '../src/mapReduce';
-import { Lens } from '../src/types';
-import { noop } from '../src/utils';
-
-describe('getFoldGroups', () => {
-    const lens = { get: noop, set: noop, key: '' };
-    const lenses: Lens[] = [
-        { ...lens },
-        { ...lens, type: 'mapped', key: 'opening group 1' },
-        { ...lens },
-        { ...lens, type: 'mapped' },
-        { ...lens },
-        { ...lens, type: 'reduced', key: 'reducing group 1' },
-        { ...lens },
-        { ...lens, type: 'mapped', key: 'opening group 2' },
-        { ...lens, type: 'mapped' },
-        { ...lens, type: 'mapped' },
-        { ...lens, type: 'reduced', key: 'reducing group 2' },
-        { ...lens, type: 'mapped', key: 'opening group 3' },
-    ];
-    it('should group map and reduce optics', () => {
-        expect(getFoldGroups(lenses)).toEqual([
-            {
-                openingTraversal: { ...lens, type: 'mapped', key: 'opening group 1' },
-                reduce: { ...lens, type: 'reduced', key: 'reducing group 1' },
-            },
-            {
-                openingTraversal: { ...lens, type: 'mapped', key: 'opening group 2' },
-                reduce: { ...lens, type: 'reduced', key: 'reducing group 2' },
-            },
-        ]);
-    });
-});
+import { getElemsWithPath } from '../src/fold';
 
 const state: {
     playerList: {
@@ -59,12 +27,13 @@ const state: {
 const onState = optic<typeof state>();
 const onInventoriesMap = onState.focus('playerList').map().focus('inventory').map();
 const onDurabilities = onInventoriesMap.focus('durability');
-const onFire = onInventoriesMap.focus('enchantement?.fire');
+const onFires = onInventoriesMap.focus('enchantement?.fire');
 
 describe('traversal', () => {
     describe('getElemsWithPath', () => {
-        const elemsWithPath = getElemsWithPath(state, onDurabilities.ˍˍunsafeGetLenses());
         it('should return elems and their respective index paths', () => {
+            const onDurabilityAbove10 = onDurabilities.findFirst((d) => d > 10);
+            const elemsWithPath = getElemsWithPath(state, onDurabilityAbove10.ˍˍunsafeGetLenses());
             expect(elemsWithPath).toEqual([
                 [[0, 0], 12],
                 [[0, 1], 6],
@@ -72,9 +41,11 @@ describe('traversal', () => {
                 [[1, 1], 7],
             ]);
         });
-        it('shoud filter out the nullables returned by partial optics', () => {
-            expect(getElemsWithPath(state, onFire.ˍˍunsafeGetLenses())).toEqual([
+        it("shoud filter out the paths of partials that don't resolve", () => {
+            const onDefinedFires = onFires.findFirst((n) => n !== undefined);
+            expect(getElemsWithPath(state, onDefinedFires.ˍˍunsafeGetLenses())).toEqual([
                 [[0, 0], 32],
+                [[0, 1], undefined],
                 [[1, 1], 54],
             ]);
         });
@@ -83,15 +54,15 @@ describe('traversal', () => {
         expect(onDurabilities.get(state)).toEqual([12, 6, 2, 7]);
     });
     it("should exlude elems where partial didn't resolve", () => {
-        expect(onFire.get(state)).toEqual([32, undefined, 54]);
+        expect(onFires.get(state)).toEqual([32, undefined, 54]);
     });
     it('should increment by one all elems of the traversal', () => {
-        const newState = onFire.set((x) => (x ? x + 1 : 1), state);
-        expect(onFire.get(newState)).toEqual([33, 1, 55]);
+        const newState = onFires.set((x) => (x ? x + 1 : 1), state);
+        expect(onFires.get(newState)).toEqual([33, 1, 55]);
     });
     it('should replace all elems of the traversal', () => {
-        const newState = onFire.set(42, state);
-        expect(onFire.get(newState)).toEqual([42, 42, 42]);
+        const newState = onFires.set(42, state);
+        expect(onFires.get(newState)).toEqual([42, 42, 42]);
     });
     it('should be referentially stable', () => {
         expect(onDurabilities.get(state)).toBe(onDurabilities.get(state));

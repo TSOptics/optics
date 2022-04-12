@@ -1,4 +1,4 @@
-import { getFoldGroups, getElemsWithPath, replaceTraversals } from './mapReduce';
+import { getElemsWithPath, getNextFold, replaceTraversals } from './fold';
 import {
     ComposedOpticType,
     IsNullable,
@@ -67,33 +67,31 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> {
     };
 
     set: (a: A | ((prev: A) => A), s: S) => S = (a, s) => {
-        const aux = (
-            a: A | ((prev: A) => A),
-            s: S,
-            lenses = this.lenses,
-            foldGroups = getFoldGroups(this.lenses),
-        ): S => {
-            const [hd, ...tl] = lenses;
-            const [group, ...groups] = foldGroups;
-            if (!hd) return typeof a === 'function' ? (a as (prev: any) => A)(s) : (a as any);
-            if (group && hd === group.openingTraversal) {
-                const elemsWithPath = getElemsWithPath(s, lenses);
-                const elems = elemsWithPath.map(([, elem]) => elem);
-                const index: number = group.reduce.get(elems);
-                if (index === -1) return s;
-                const [path] = elemsWithPath[index];
-                const replacedLenses = replaceTraversals(lenses, path);
-                return aux(a, s, replacedLenses, groups);
+        const aux = (a: A | ((prev: A) => A), s: S, lenses = this.lenses, fold = getNextFold(lenses)): S => {
+            const [lens, ...tailLenses] = lenses;
+            if (!lens) return typeof a === 'function' ? (a as (prev: any) => A)(s) : (a as any);
+            if (lens.type === 'reduced') {
+                return aux(a, s, tailLenses, getNextFold(tailLenses));
             }
-            const slice = hd.get(s);
-            if (hd.type === 'mapped') {
-                const newSlice = (slice as any[]).map((x) => aux(a, x, tl, foldGroups)) as any;
-                return (slice as any[]).every((x, i) => x === newSlice[i]) ? slice : newSlice;
+            const slice = lens.get(s);
+            if (lens.type === 'mapped') {
+                if (fold) {
+                    const elemsWithPath = getElemsWithPath(s, lenses);
+                    const elems = elemsWithPath.map(([, elem]) => elem);
+                    const index: number = fold.get(elems);
+                    if (index === -1) return s;
+                    const [path] = elemsWithPath[index];
+                    const replacedLenses = replaceTraversals(lenses, path);
+                    return aux(a, s, replacedLenses, undefined);
+                } else {
+                    const newSlice = (slice as any[]).map((x) => aux(a, x, tailLenses, fold)) as any;
+                    return (slice as any[]).every((x, i) => x === newSlice[i]) ? slice : newSlice;
+                }
             }
-            if (tl.length > 0 && (slice === undefined || slice === null)) return s;
-            const newSlice = aux(a, slice, tl, foldGroups);
+            if (tailLenses.length > 0 && (slice === undefined || slice === null)) return s;
+            const newSlice = aux(a, slice, tailLenses, fold);
             if (slice === newSlice) return s;
-            return hd.set(newSlice, s);
+            return lens.set(newSlice, s);
         };
 
         return aux(a, s);

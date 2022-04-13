@@ -16,7 +16,7 @@ export interface Lens<A = any, S = any> {
     key: string | symbol;
     get: (s: S) => A;
     set: (a: A, s: S) => S;
-    type?: 'reduced' | 'mapped';
+    type?: 'fold' | 'mapped';
 }
 
 export type IsNullable<T> = null extends T ? true : undefined extends T ? true : false;

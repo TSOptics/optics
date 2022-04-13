@@ -22,7 +22,7 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> {
 
     get: (s: S) => TOpticType extends mapped ? A[] : TOpticType extends total ? A : A | undefined = (s) => {
         const isOpticTraversal = this.lenses.reduce(
-            (acc, cv) => (cv.type === 'reduced' ? false : acc || cv.type === 'mapped'),
+            (acc, cv) => (cv.type === 'fold' ? false : acc || cv.type === 'mapped'),
             false,
         );
         const aux = (s: any, lenses: Lens[], isTraversal = false): any => {
@@ -40,7 +40,7 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> {
                 this.cache.set(hd, [s, result]);
                 return result;
             }
-            if (hd.type === 'reduced') {
+            if (hd.type === 'fold') {
                 const index = hd.get(s);
                 if (index === -1) return undefined;
                 return aux((s as any[])[index], tl, false);
@@ -70,7 +70,7 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> {
         const aux = (a: A | ((prev: A) => A), s: S, lenses = this.lenses, fold = getNextFold(lenses)): S => {
             const [lens, ...tailLenses] = lenses;
             if (!lens) return typeof a === 'function' ? (a as (prev: any) => A)(s) : (a as any);
-            if (lens.type === 'reduced') {
+            if (lens.type === 'fold') {
                 return aux(a, s, tailLenses, getNextFold(tailLenses));
             }
             const slice = lens.get(s);
@@ -195,7 +195,7 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> {
             {
                 get: (s: A[]) => s.findIndex(predicate),
                 set: noop,
-                type: 'reduced',
+                type: 'fold',
                 key: 'findFirst',
             },
         ]);
@@ -219,7 +219,7 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> {
                         { maxValue: Number.MIN_VALUE, indexOfMax: -1 },
                     ).indexOfMax,
                 set: noop,
-                type: 'reduced',
+                type: 'fold',
                 key: 'maxBy',
             },
         ]);
@@ -243,7 +243,7 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> {
                         { minValue: Number.MAX_VALUE, indexOfMin: -1 },
                     ).indexOfMin,
                 set: noop,
-                type: 'reduced',
+                type: 'fold',
                 key: 'minBy',
             },
         ]);
@@ -255,7 +255,7 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> {
             {
                 get: (s: A[]) => (index >= 0 && index < s.length ? index : -1),
                 set: noop,
-                type: 'reduced',
+                type: 'fold',
                 key: 'atIndex',
             },
         ]);

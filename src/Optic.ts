@@ -1,4 +1,4 @@
-import { getElemsWithPath, getNextFold, replaceTraversals } from './fold';
+import { getFoldTree } from './fold';
 import {
     ComposedOpticType,
     IsNullable,
@@ -41,7 +41,13 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> {
                 return result;
             }
             if (hd.type === 'fold') {
-                const index = hd.get(s);
+                const index: number | number[] = hd.get(s);
+                if (Array.isArray(index)) {
+                    if (index.length === 0) return [];
+                    return Array(index.length)
+                        .fill(undefined)
+                        .map((_, i) => s[index[i]]);
+                }
                 if (index === -1) return undefined;
                 return aux((s as any[])[index], tl, false);
             }
@@ -67,29 +73,25 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> {
     };
 
     set: (a: A | ((prev: A) => A), s: S) => S = (a, s) => {
-        const aux = (a: A | ((prev: A) => A), s: S, lenses = this.lenses, fold = getNextFold(lenses)): S => {
+        const aux = (a: A | ((prev: A) => A), s: S, lenses = this.lenses, foldTree = getFoldTree(lenses, s)): S => {
             const [lens, ...tailLenses] = lenses;
             if (!lens) return typeof a === 'function' ? (a as (prev: any) => A)(s) : (a as any);
             if (lens.type === 'fold') {
-                return aux(a, s, tailLenses, getNextFold(tailLenses));
+                return aux(a, s, tailLenses);
             }
             const slice = lens.get(s);
             if (lens.type === 'mapped') {
-                if (fold) {
-                    const elemsWithPath = getElemsWithPath(s, lenses);
-                    const elems = elemsWithPath.map(([, elem]) => elem);
-                    const index: number = fold.get(elems);
-                    if (index === -1) return s;
-                    const [path] = elemsWithPath[index];
-                    const replacedLenses = replaceTraversals(lenses, path);
-                    return aux(a, s, replacedLenses, undefined);
+                if (foldTree) {
+                    return (slice as any[]).map((x, index) =>
+                        foldTree[index] ? aux(a, x, tailLenses, foldTree[index]) : x,
+                    ) as any;
                 } else {
-                    const newSlice = (slice as any[]).map((x) => aux(a, x, tailLenses, fold)) as any;
+                    const newSlice = (slice as any[]).map((x) => aux(a, x, tailLenses, foldTree));
                     return (slice as any[]).every((x, i) => x === newSlice[i]) ? slice : newSlice;
                 }
             }
             if (tailLenses.length > 0 && (slice === undefined || slice === null)) return s;
-            const newSlice = aux(a, slice, tailLenses, fold);
+            const newSlice = aux(a, slice, tailLenses, foldTree);
             if (slice === newSlice) return s;
             return lens.set(newSlice, s);
         };
@@ -257,6 +259,24 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> {
                 set: noop,
                 type: 'fold',
                 key: 'atIndex',
+            },
+        ]);
+    }) as any;
+
+    filter: TOpticType extends mapped ? (predicate: (a: A) => boolean) => Optic<A, mapped, S> : never = ((
+        predicate: (a: A) => boolean,
+    ) => {
+        return new Optic([
+            ...this.lenses,
+            {
+                get: (s: A[]) =>
+                    s.reduce((acc, cv, ci) => {
+                        if (predicate(cv)) acc.push(ci);
+                        return acc;
+                    }, [] as number[]),
+                set: noop,
+                key: 'filter',
+                type: 'fold',
             },
         ]);
     }) as any;

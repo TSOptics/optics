@@ -1,40 +1,52 @@
 import { Lens } from './types';
 
-export const getNextFold = (lenses: Lens[]) => lenses.find((lens) => lens.type === 'fold');
+type IndexTree = IndexTree[] | number;
+type FoldTree = FoldTree[] | undefined;
 
-export const getElemsWithPath = (s: any, lenses: Lens[]) => {
-    const aux = (s: any, lenses: Lens[], path: number[] = []): [number[], any][] => {
-        const [lens, ...tailLenses] = lenses;
-        if (!lens || lens.type === 'fold') {
-            return [[path, s]];
+const filterIndexTree = (indexTree: IndexTree, indexes: Set<number>) => {
+    const aux = (indexTree: IndexTree): FoldTree => {
+        if (typeof indexTree === 'number') {
+            return indexes.has(indexTree) ? [] : undefined;
         }
-        const slice = lens.get(s);
-        if ((slice === null || slice === undefined) && tailLenses[0].type !== 'fold') {
-            return [];
-        }
-        if (!lens.type) {
-            return aux(slice, tailLenses, path);
-        }
-        return (slice as any[]).flatMap((x, index) => aux(x, tailLenses, [...path, index]));
+        let isEmpty = true;
+        const foldTree = indexTree.map((subTree) => {
+            const filtered = aux(subTree);
+            if (filtered !== undefined) isEmpty = false;
+            return filtered;
+        });
+        return isEmpty ? undefined : foldTree;
     };
-
-    return aux(s, lenses);
+    return aux(indexTree);
 };
 
-const focusIndex = (index: number): Lens<any, any[]> => ({
-    get: (s) => s[index],
-    set: (a, s) => [...s.slice(0, index), a, ...s.slice(index + 1)],
-    key: '',
-});
-
-export const replaceTraversals = (lenses: Lens[], path: number[]): Lens[] => {
-    const [index, ...tailPath] = path;
-    const [lens, ...tailLenses] = lenses;
-    if (lens.type === 'mapped') {
-        return [focusIndex(index), ...replaceTraversals(tailLenses, tailPath)];
-    }
-    if (lens.type === 'fold') {
-        return lenses;
-    }
-    return [lens, ...replaceTraversals(tailLenses, path)];
+export const getFoldTree = (lenses: Lens[], s: any) => {
+    const fold = lenses.find((lens) => lens.type === 'fold');
+    if (!fold) return;
+    const array: any[] = [];
+    const getIndexTree = (lenses: Lens[], s: any): IndexTree => {
+        const [lens, ...tailLenses] = lenses;
+        if (lens.type === 'fold') {
+            const index = array.length;
+            array.push(s);
+            return index;
+        }
+        const slice = lens.get(s);
+        if ((slice === undefined || slice === null) && tailLenses[0].type !== 'fold') {
+            return -1;
+        }
+        if (lens.type === 'mapped') {
+            return (slice as any[]).reduce<IndexTree[]>((acc, cv) => {
+                const subTree = getIndexTree(tailLenses, cv);
+                if (subTree !== -1) {
+                    acc.push(subTree);
+                }
+                return acc;
+            }, []);
+        }
+        return getIndexTree(tailLenses, slice);
+    };
+    const indexTree = getIndexTree(lenses, s);
+    const foldReturn: number | number[] = fold.get(array);
+    const validIndexes = new Set(Array.isArray(foldReturn) ? foldReturn : [foldReturn]);
+    return filterIndexTree(indexTree, validIndexes);
 };

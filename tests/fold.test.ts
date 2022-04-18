@@ -1,5 +1,4 @@
 import { optic } from '../src';
-import { getElemsWithPath } from '../src/fold';
 
 const state: {
     playerList: {
@@ -29,48 +28,8 @@ const onInventoriesMap = onState.focus('playerList').map().focus('inventory').ma
 const onDurabilities = onInventoriesMap.focus('durability');
 const onFires = onInventoriesMap.focus('enchantement?.fire');
 
-describe('traversal', () => {
-    describe('getElemsWithPath', () => {
-        it('should return elems and their respective index paths', () => {
-            const onDurabilityAbove10 = onDurabilities.findFirst((d) => d > 10);
-            const elemsWithPath = getElemsWithPath(state, onDurabilityAbove10.ˍˍunsafeGetLenses());
-            expect(elemsWithPath).toEqual([
-                [[0, 0], 12],
-                [[0, 1], 6],
-                [[1, 0], 2],
-                [[1, 1], 7],
-            ]);
-        });
-        it("shoud filter out the paths of partials that don't resolve", () => {
-            const onDefinedFires = onFires.findFirst((n) => n !== undefined);
-            expect(getElemsWithPath(state, onDefinedFires.ˍˍunsafeGetLenses())).toEqual([
-                [[0, 0], 32],
-                [[0, 1], undefined],
-                [[1, 1], 54],
-            ]);
-        });
-    });
-    it('shoud return the array from the successive call to map', () => {
-        expect(onDurabilities.get(state)).toEqual([12, 6, 2, 7]);
-    });
-    it("should exlude elems where partial didn't resolve", () => {
-        expect(onFires.get(state)).toEqual([32, undefined, 54]);
-    });
-    it('should increment by one all elems of the traversal', () => {
-        const newState = onFires.set((x) => (x ? x + 1 : 1), state);
-        expect(onFires.get(newState)).toEqual([33, 1, 55]);
-    });
-    it('should replace all elems of the traversal', () => {
-        const newState = onFires.set(42, state);
-        expect(onFires.get(newState)).toEqual([42, 42, 42]);
-    });
-    it('should be referentially stable', () => {
-        expect(onDurabilities.get(state)).toBe(onDurabilities.get(state));
-        expect(onDurabilities.set((x) => x + 1 - 1, state)).toBe(state);
-    });
-});
 describe('fold', () => {
-    describe('findFirst', () => {
+    it('findFirst', () => {
         const lowerThan10Durability = onDurabilities.findFirst((x) => x < 10);
         expect(lowerThan10Durability.get(state)).toBe(6);
         expect(lowerThan10Durability.get(lowerThan10Durability.set((x) => x + 10, state))).toBe(2);
@@ -78,18 +37,43 @@ describe('fold', () => {
         const onDurabilityOf2 = onDurabilities.findFirst((x) => x === 2);
         expect(onDurabilityOf2.get(onDurabilityOf2.set((x) => x + 1, state))).toBe(undefined);
     });
-    describe('maxBy', () => {
+    it('maxBy', () => {
         const onMaxDurability = onDurabilities.maxBy((x) => x);
         expect(onMaxDurability.get(state)).toBe(12);
         expect(onMaxDurability.get(onMaxDurability.set(0, state))).toBe(7);
     });
-    describe('minBy', () => {
+    it('minBy', () => {
         const onMinDurability = onDurabilities.minBy((x) => x);
         expect(onMinDurability.get(state)).toBe(2);
         expect(onMinDurability.get(onMinDurability.set(1000, state))).toBe(6);
     });
-    describe('atIndex', () => {
+    it('atIndex', () => {
         expect(onDurabilities.atIndex(3).get(state)).toBe(7);
         expect(onDurabilities.atIndex(4).get(state)).toBe(undefined);
+    });
+    it('filter', () => {
+        const onEvenDurabilities = onDurabilities.filter((d) => d % 2 === 0);
+        expect(onEvenDurabilities.get(state)).toEqual([12, 6, 2]);
+
+        const newState = onEvenDurabilities.set((d) => d * 2, state);
+        expect(onDurabilities.get(newState)).toEqual([24, 12, 4, 7]);
+    });
+    it('filter on consecutive maps', () => {
+        const state: number[][] = [
+            [1, 2, 3, 4, 9, 8],
+            [5, 6, 7, 8],
+            [12, 0],
+        ];
+        const onState = optic<typeof state>();
+        const onEvens = onState
+            .map()
+            .map()
+            .filter((x) => x % 2 === 0);
+        expect(onEvens.get(state)).toEqual([2, 4, 8, 6, 8, 12, 0]);
+        expect(onState.get(onEvens.set(42, state))).toEqual([
+            [1, 42, 3, 42, 9, 42],
+            [5, 42, 7, 42],
+            [42, 42],
+        ]);
     });
 });

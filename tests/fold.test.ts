@@ -24,9 +24,9 @@ const state: {
     ],
 };
 const onState = optic<typeof state>();
-const onInventoriesMap = onState.focus('playerList').map().focus('inventory').map();
-const onDurabilities = onInventoriesMap.focus('durability');
-const onFires = onInventoriesMap.focus('enchantement?.fire');
+const onItems = onState.focus('playerList').map().focus('inventory').map();
+const onDurabilities = onItems.focus('durability');
+const onFires = onItems.focus('enchantement?.fire');
 
 describe('fold', () => {
     it('findFirst', () => {
@@ -75,5 +75,35 @@ describe('fold', () => {
             [5, 42, 7, 42],
             [42, 42],
         ]);
+    });
+    it('slice', () => {
+        const onFirstTwo = onDurabilities.slice(0, 2);
+        expect(onFirstTwo.get(state)).toEqual([12, 6]);
+
+        const onNone = onDurabilities.slice(2, 1);
+        expect(onNone.get(state)).toEqual([]);
+
+        const onLastThree = onDurabilities.slice(-3);
+        expect(onLastThree.get(state)).toEqual([6, 2, 7]);
+
+        const onAll = onDurabilities.slice();
+        expect(onAll.get(state)).toEqual([12, 6, 2, 7]);
+
+        expect(onDurabilities.get(onLastThree.set((d) => d * 2, state))).toEqual([12, 12, 4, 14]);
+    });
+    describe('sort', () => {
+        const onAscSort = onDurabilities.sort((a, b) => a - b);
+        expect(onAscSort.get(state)).toEqual([2, 6, 7, 12]);
+
+        const onDescSort = onDurabilities.sort((a, b) => b - a);
+        expect(onDescSort.get(state)).toEqual([12, 7, 6, 2]);
+
+        const onDefaultSort = onDurabilities.sort();
+        expect(onDefaultSort.get(state)).toEqual([12, 2, 6, 7]);
+
+        it('should put undefined values at the end', () => {
+            const onFireSorted = onFires.sort();
+            expect(onFireSorted.get(state)).toEqual([32, 54, undefined]);
+        });
     });
 });

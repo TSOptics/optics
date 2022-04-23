@@ -44,15 +44,16 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> {
                 const index: number | number[] = hd.get(s);
                 if (Array.isArray(index)) {
                     if (index.length === 0) return [];
-                    return Array(index.length)
+                    const projection = Array(index.length)
                         .fill(undefined)
                         .map((_, i) => s[index[i]]);
+                    return aux(projection, tl, true);
                 }
                 if (index === -1) return undefined;
                 return aux((s as any[])[index], tl, false);
             }
             const slice = isTraversal
-                ? tl.length > 0
+                ? tl[0]?.type !== 'fold'
                     ? (s as any[]).reduce<any[]>((acc, cv) => {
                           const n = hd.get(cv);
                           if (n !== undefined && n !== null) {
@@ -275,8 +276,47 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> {
                         return acc;
                     }, [] as number[]),
                 set: noop,
-                key: 'filter',
                 type: 'fold',
+                key: 'filter',
+            },
+        ]);
+    }) as any;
+
+    slice: TOpticType extends mapped ? (start?: number, end?: number) => Optic<A, mapped, S> : never = ((
+        start = 0,
+        end?: number,
+    ) => {
+        return new Optic([
+            ...this.lenses,
+            {
+                get: (s: A[]) => {
+                    const startAbs = start < 0 ? s.length + start : start;
+                    const endAbs = end === undefined ? s.length : end < 0 ? s.length + end : end;
+                    if (startAbs >= endAbs) return [];
+                    return Array(endAbs - startAbs)
+                        .fill(undefined)
+                        .map((_, i) => i + startAbs);
+                },
+                set: noop,
+                type: 'fold',
+                key: `slice from ${start ?? 0} to ${end ?? 'end'}`,
+            },
+        ]);
+    }) as any;
+
+    sort: TOpticType extends mapped ? (compareFn?: (a: A, b: A) => number) => Optic<A, mapped, S> : never = ((
+        compareFn = (a: any, b: any) => (`${a}` < `${b}` ? -1 : 1),
+    ) => {
+        return new Optic([
+            ...this.lenses,
+            {
+                get: (s: A[]) =>
+                    Object.entries(s)
+                        .sort(([, valueA], [, valueB]) => compareFn(valueA, valueB))
+                        .map(([index]) => index),
+                set: noop,
+                type: 'fold',
+                key: 'sort',
             },
         ]);
     }) as any;

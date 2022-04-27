@@ -26,43 +26,44 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> {
             false,
         );
         const aux = (s: any, lenses: Lens[], isTraversal = false): any => {
-            const [hd, ...tl] = lenses;
-            if (!hd) {
+            const [lens, ...tailLenses] = lenses;
+            if (!lens) {
                 return s;
             }
-            if (hd.type === 'mapped') {
-                const traversalCache = this.cache.get(hd);
+            if (lens.type === 'mapped') {
+                const traversalCache = this.cache.get(lens);
                 if (!isTraversal && traversalCache) {
                     const [cacheKey, cacheValue] = traversalCache;
                     if (cacheKey === s) return cacheValue;
                 }
-                const slice = hd.get(s) as any[];
+                const slice = lens.get(s) as any[];
                 const flattened = isTraversal ? slice.flat() : slice;
                 const filtered =
-                    tl[0]?.type !== 'fold' ? flattened.filter((x) => x !== undefined && x !== null) : flattened;
-                const result = filtered.length > 0 ? aux(isTraversal ? filtered : s, tl, true) : undefined;
-                this.cache.set(hd, [s, result]);
+                    tailLenses[0]?.type !== 'fold' ? flattened.filter((x) => x !== undefined && x !== null) : flattened;
+                const result = filtered.length > 0 ? aux(isTraversal ? filtered : s, tailLenses, true) : undefined;
+                this.cache.set(lens, [s, result]);
                 return result;
             }
-            if (hd.type === 'fold') {
-                const index: number | number[] = hd.get(s);
+            if (lens.type === 'fold') {
+                const index: number | number[] = lens.get(s);
                 if (Array.isArray(index)) {
                     if (index.length === 0) return [];
                     const projection = Array(index.length)
                         .fill(undefined)
                         .map((_, i) => s[index[i]]);
-                    return aux(projection, tl, true);
+                    return aux(projection, tailLenses, true);
                 }
                 if (index === -1) return undefined;
-                return aux((s as any[])[index], tl, false);
+                return aux((s as any[])[index], tailLenses, false);
             }
             if (isTraversal) {
-                const slice = (s as any[]).map(hd.get);
-                const filtered = tl[0]?.type !== 'fold' ? slice.filter((x) => x !== undefined && x !== null) : slice;
-                return filtered.length > 0 ? aux(filtered, tl, isTraversal) : undefined;
+                const slice = (s as any[]).map(lens.get);
+                const filtered =
+                    tailLenses[0]?.type !== 'fold' ? slice.filter((x) => x !== undefined && x !== null) : slice;
+                return filtered.length > 0 ? aux(filtered, tailLenses, isTraversal) : undefined;
             }
-            const slice = hd.get(s);
-            return slice === undefined || slice === null ? slice : aux(slice, tl, isTraversal);
+            const slice = lens.get(s);
+            return slice === undefined || slice === null ? slice : aux(slice, tailLenses, isTraversal);
         };
 
         const result = aux(s, this.lenses);

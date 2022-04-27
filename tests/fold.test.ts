@@ -1,5 +1,17 @@
 import { optic } from '../src';
 
+describe('map', () => {
+    it('should handle consecutive calls to map', () => {
+        type State = (number[] | undefined)[];
+        const state: State = [[1, 2, 3], undefined, [4, 5, 6], undefined];
+        const onState = optic<State>().map();
+        expect(onState.get(state)).toEqual(state);
+        const onNumbers = onState.map();
+        expect(onNumbers.get(state)).toEqual([1, 2, 3, 4, 5, 6]);
+        expect(onNumbers.set((x) => x * 2, state)).toEqual([[2, 4, 6], undefined, [8, 10, 12], undefined]);
+    });
+});
+
 const state: {
     playerList: {
         name: string;

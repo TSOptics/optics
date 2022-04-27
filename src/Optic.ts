@@ -36,7 +36,11 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> {
                     const [cacheKey, cacheValue] = traversalCache;
                     if (cacheKey === s) return cacheValue;
                 }
-                const result = aux(isTraversal ? (s as any[]).flat() : s, tl, true);
+                const slice = hd.get(s) as any[];
+                const flattened = isTraversal ? slice.flat() : slice;
+                const filtered =
+                    tl[0]?.type !== 'fold' ? flattened.filter((x) => x !== undefined && x !== null) : flattened;
+                const result = filtered.length > 0 ? aux(isTraversal ? filtered : s, tl, true) : undefined;
                 this.cache.set(hd, [s, result]);
                 return result;
             }
@@ -52,25 +56,17 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> {
                 if (index === -1) return undefined;
                 return aux((s as any[])[index], tl, false);
             }
-            const slice = isTraversal
-                ? tl[0]?.type !== 'fold'
-                    ? (s as any[]).reduce<any[]>((acc, cv) => {
-                          const n = hd.get(cv);
-                          if (n !== undefined && n !== null) {
-                              acc.push(n);
-                          }
-                          return acc;
-                      }, [])
-                    : (s as any[]).map((x) => hd.get(x))
-                : hd.get(s);
-
-            if (slice === undefined || slice === null || (slice as any[])?.length === 0) {
-                return isOpticTraversal ? [] : tl.length > 0 ? undefined : slice;
+            if (isTraversal) {
+                const slice = (s as any[]).map(hd.get);
+                const filtered = tl[0]?.type !== 'fold' ? slice.filter((x) => x !== undefined && x !== null) : slice;
+                return filtered.length > 0 ? aux(filtered, tl, isTraversal) : undefined;
             }
-            return aux(slice, tl, isTraversal);
+            const slice = hd.get(s);
+            return slice === undefined || slice === null ? slice : aux(slice, tl, isTraversal);
         };
 
-        return aux(s, this.lenses);
+        const result = aux(s, this.lenses);
+        return isOpticTraversal && (result === undefined || result === null) ? [] : result;
     };
 
     set: (a: A | ((prev: A) => A), s: S) => S = (a, s) => {
@@ -87,7 +83,9 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> {
                         foldTree[index] ? aux(a, x, tailLenses, foldTree[index]) : x,
                     ) as any;
                 } else {
-                    const newSlice = (slice as any[]).map((x) => aux(a, x, tailLenses, foldTree));
+                    const newSlice = (slice as any[]).map((x) =>
+                        tailLenses.length > 0 && (x === undefined || x === null) ? x : aux(a, x, tailLenses, foldTree),
+                    );
                     return (slice as any[]).every((x, i) => x === newSlice[i]) ? slice : newSlice;
                 }
             }

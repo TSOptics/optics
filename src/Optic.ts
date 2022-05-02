@@ -1,4 +1,4 @@
-import { getFoldTree } from './fold';
+import { getFoldTree, isFold } from './fold';
 import {
     ComposedOpticType,
     IsNullable,
@@ -22,7 +22,7 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> {
 
     get: (s: S) => TOpticType extends mapped ? A[] : TOpticType extends total ? A : A | undefined = (s) => {
         const isOpticTraversal = this.lenses.reduce(
-            (acc, cv) => (cv.type === 'fold' ? false : acc || cv.type === 'mapped'),
+            (acc, cv) => (cv.type === 'fold' ? false : acc || cv.type === 'mapped' || cv.type === 'foldMultiple'),
             false,
         );
         const aux = (s: any, lenses: Lens[], isTraversal = false): any => {
@@ -38,28 +38,29 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> {
                 }
                 const slice = lens.get(s) as any[];
                 const flattened = isTraversal ? slice.flat() : slice;
-                const filtered =
-                    tailLenses[0]?.type !== 'fold' ? flattened.filter((x) => x !== undefined && x !== null) : flattened;
+                const filtered = !isFold(tailLenses[0])
+                    ? flattened.filter((x) => x !== undefined && x !== null)
+                    : flattened;
                 const result = filtered.length > 0 ? aux(isTraversal ? filtered : s, tailLenses, true) : undefined;
                 this.cache.set(lens, [s, result]);
                 return result;
             }
             if (lens.type === 'fold') {
-                const index: number | number[] = lens.get(s);
-                if (Array.isArray(index)) {
-                    if (index.length === 0) return [];
-                    const projection = Array(index.length)
-                        .fill(undefined)
-                        .map((_, i) => s[index[i]]);
-                    return aux(projection, tailLenses, true);
-                }
+                const index: number = lens.get(s);
                 if (index === -1) return undefined;
                 return aux((s as any[])[index], tailLenses, false);
             }
+            if (lens.type === 'foldMultiple') {
+                const indexes: number[] = lens.get(s);
+                if (indexes.length === 0) return [];
+                const projection = Array(indexes.length)
+                    .fill(undefined)
+                    .map((_, i) => s[indexes[i]]);
+                return aux(projection, tailLenses, true);
+            }
             if (isTraversal) {
                 const slice = (s as any[]).map(lens.get);
-                const filtered =
-                    tailLenses[0]?.type !== 'fold' ? slice.filter((x) => x !== undefined && x !== null) : slice;
+                const filtered = !isFold(tailLenses[0]) ? slice.filter((x) => x !== undefined && x !== null) : slice;
                 return filtered.length > 0 ? aux(filtered, tailLenses, isTraversal) : undefined;
             }
             const slice = lens.get(s);
@@ -74,7 +75,7 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> {
         const aux = (a: A | ((prev: A) => A), s: S, lenses = this.lenses, foldTree = getFoldTree(lenses, s)): S => {
             const [lens, ...tailLenses] = lenses;
             if (!lens) return typeof a === 'function' ? (a as (prev: any) => A)(s) : (a as any);
-            if (lens.type === 'fold') {
+            if (isFold(lens)) {
                 return aux(a, s, tailLenses);
             }
             const slice = lens.get(s);
@@ -275,7 +276,7 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> {
                         return acc;
                     }, [] as number[]),
                 set: noop,
-                type: 'fold',
+                type: 'foldMultiple',
                 key: 'filter',
             },
         ]);
@@ -297,7 +298,7 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> {
                         .map((_, i) => i + startAbs);
                 },
                 set: noop,
-                type: 'fold',
+                type: 'foldMultiple',
                 key: `slice from ${start ?? 0} to ${end ?? 'end'}`,
             },
         ]);
@@ -314,7 +315,7 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> {
                         .sort(([, valueA], [, valueB]) => compareFn(valueA, valueB))
                         .map(([index]) => index),
                 set: noop,
-                type: 'fold',
+                type: 'foldMultiple',
                 key: 'sort',
             },
         ]);

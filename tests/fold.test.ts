@@ -62,6 +62,7 @@ describe('fold', () => {
     it('atIndex', () => {
         expect(onDurabilities.atIndex(3).get(state)).toBe(7);
         expect(onDurabilities.atIndex(4).get(state)).toBe(undefined);
+        expect(onDurabilities.get(onDurabilities.atIndex(3).set(42, state))).toEqual([12, 6, 2, 42]);
     });
     it('filter', () => {
         const onEvenDurabilities = onDurabilities.filter((d) => d % 2 === 0);
@@ -117,5 +118,11 @@ describe('fold', () => {
             const onFireSorted = onFires.sort();
             expect(onFireSorted.get(state)).toEqual([32, 54, undefined]);
         });
+    });
+    it("should return empty array if a partial doesn't resolve", () => {
+        const onState = optic<number[] | undefined>()
+            .map()
+            .filter((x) => x % 2 === 0);
+        expect(onState.get(undefined)).toEqual([]);
     });
 });

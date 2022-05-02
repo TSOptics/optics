@@ -3,6 +3,8 @@ import { Lens } from './types';
 type IndexTree = IndexTree[] | number;
 type FoldTree = FoldTree[] | undefined;
 
+export const isFold = (lens?: Lens) => lens && (lens.type === 'fold' || lens.type === 'foldMultiple');
+
 const filterIndexTree = (indexTree: IndexTree, indexes: Set<number>) => {
     const aux = (indexTree: IndexTree): FoldTree => {
         if (typeof indexTree === 'number') {
@@ -20,18 +22,18 @@ const filterIndexTree = (indexTree: IndexTree, indexes: Set<number>) => {
 };
 
 export const getFoldTree = (lenses: Lens[], s: any) => {
-    const fold = lenses.find((lens) => lens.type === 'fold');
+    const fold = lenses.find(isFold);
     if (!fold) return;
     const array: any[] = [];
     const getIndexTree = (lenses: Lens[], s: any): IndexTree => {
         const [lens, ...tailLenses] = lenses;
-        if (lens.type === 'fold') {
+        if (lens === fold) {
             const index = array.length;
             array.push(s);
             return index;
         }
         const slice = lens.get(s);
-        if ((slice === undefined || slice === null) && tailLenses[0].type !== 'fold') {
+        if ((slice === undefined || slice === null) && !isFold(tailLenses[0])) {
             return -1;
         }
         if (lens.type === 'mapped') {

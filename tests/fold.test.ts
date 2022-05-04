@@ -48,6 +48,9 @@ describe('fold', () => {
 
         const onDurabilityOf2 = onDurabilities.findFirst((x) => x === 2);
         expect(onDurabilityOf2.get(onDurabilityOf2.set((x) => x + 1, state))).toBe(undefined);
+
+        const on1000 = onDurabilities.findFirst((x) => x === 1000);
+        expect(onDurabilities.get(on1000.set(42, state))).toEqual(onDurabilities.get(state));
     });
     it('maxBy', () => {
         const onMaxDurability = onDurabilities.maxBy((x) => x);
@@ -70,6 +73,10 @@ describe('fold', () => {
 
         const newState = onEvenDurabilities.set((d) => d * 2, state);
         expect(onDurabilities.get(newState)).toEqual([24, 12, 4, 7]);
+
+        const onOver20 = onDurabilities.filter((d) => d > 20);
+        const durabilitiesOver20Updated = onDurabilities.get(onOver20.set(42, state));
+        expect(durabilitiesOver20Updated).toEqual([12, 6, 2, 7]);
     });
     it('filter on consecutive maps', () => {
         const state: number[][] = [

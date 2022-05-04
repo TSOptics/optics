@@ -18,7 +18,8 @@ const filterIndexTree = (indexTree: IndexTree, indexes: Set<number>) => {
         });
         return isEmpty ? undefined : foldTree;
     };
-    return aux(indexTree);
+    const tree = aux(indexTree);
+    return tree ?? [];
 };
 
 export const getFoldTree = (lenses: Lens[], s: any) => {

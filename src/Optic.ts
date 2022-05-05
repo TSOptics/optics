@@ -80,17 +80,16 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> {
             }
             const slice = lens.get(s);
             if (lens.type === 'mapped') {
-                if (foldTree) {
-                    return (slice as any[]).map((x, index) =>
-                        foldTree[index] ? aux(a, x, tailLenses, foldTree[index]) : x,
-                    ) as any;
-                } else {
-                    const newSlice = (slice as any[]).map((x) =>
-                        tailLenses.length > 0 && (x === undefined || x === null) ? x : aux(a, x, tailLenses, foldTree),
-                    );
-                    return (slice as any[]).every((x, i) => x === newSlice[i]) ? slice : newSlice;
-                }
+                const newSlice = foldTree
+                    ? (slice as any[]).map((x, index) => (foldTree[index] ? aux(a, x, tailLenses, foldTree[index]) : x))
+                    : (slice as any[]).map((x) =>
+                          tailLenses.length > 0 && (x === undefined || x === null)
+                              ? x
+                              : aux(a, x, tailLenses, foldTree),
+                      );
+                return (slice as any[]).some((x, i) => x !== newSlice[i]) ? newSlice : slice;
             }
+
             if (tailLenses.length > 0 && (slice === undefined || slice === null)) return s;
             const newSlice = aux(a, slice, tailLenses, foldTree);
             if (slice === newSlice) return s;

@@ -41,6 +41,33 @@ const onDurabilities = onItems.focus('durability');
 const onFires = onItems.focus('enchantement?.fire');
 
 describe('fold', () => {
+    it('should return the original root when calling set with the the same reference', () => {
+        // map
+        expect(onDurabilities.set((x) => x, state)).toBe(state);
+        // fold
+        expect(onDurabilities.findFirst((x) => x > 5).set((x) => x, state)).toBe(state);
+        // fold to multiple
+        expect(onDurabilities.filter((x) => x > 5).set((x) => x, state)).toBe(state);
+    });
+    it('should return the original root when calling set on a fold to nothing', () => {
+        // fold
+        expect(onDurabilities.findFirst((x) => x === 1000).set(42, state)).toBe(state);
+        // fold to multiple
+        expect(onDurabilities.filter((x) => x === 1000).set(42, state)).toBe(state);
+    });
+    it("should return empty array if a partial doesn't resolve", () => {
+        // map
+        const onNullableArray = optic<number[] | undefined>().map();
+        expect(onNullableArray.get(undefined)).toEqual([]);
+        // fold to multiple
+        expect(onNullableArray.filter((x) => x % 2 === 0).get(undefined)).toEqual([]);
+    });
+    it('should return empty array or undefined when folding to nothing', () => {
+        // fold
+        expect(onDurabilities.filter((x) => x === 1000).get(state)).toEqual([]);
+        // fold to multiple
+        expect(onDurabilities.findFirst((x) => x === 1000).get(state)).toBe(undefined);
+    });
     it('findFirst', () => {
         const lowerThan10Durability = onDurabilities.findFirst((x) => x < 10);
         expect(lowerThan10Durability.get(state)).toBe(6);
@@ -48,9 +75,6 @@ describe('fold', () => {
 
         const onDurabilityOf2 = onDurabilities.findFirst((x) => x === 2);
         expect(onDurabilityOf2.get(onDurabilityOf2.set((x) => x + 1, state))).toBe(undefined);
-
-        const on1000 = onDurabilities.findFirst((x) => x === 1000);
-        expect(onDurabilities.get(on1000.set(42, state))).toEqual(onDurabilities.get(state));
     });
     it('maxBy', () => {
         const onMaxDurability = onDurabilities.maxBy((x) => x);
@@ -73,10 +97,6 @@ describe('fold', () => {
 
         const newState = onEvenDurabilities.set((d) => d * 2, state);
         expect(onDurabilities.get(newState)).toEqual([24, 12, 4, 7]);
-
-        const onOver20 = onDurabilities.filter((d) => d > 20);
-        const durabilitiesOver20Updated = onDurabilities.get(onOver20.set(42, state));
-        expect(durabilitiesOver20Updated).toEqual([12, 6, 2, 7]);
     });
     it('filter on consecutive maps', () => {
         const state: number[][] = [
@@ -125,11 +145,5 @@ describe('fold', () => {
             const onFireSorted = onFires.sort();
             expect(onFireSorted.get(state)).toEqual([32, 54, undefined]);
         });
-    });
-    it("should return empty array if a partial doesn't resolve", () => {
-        const onState = optic<number[] | undefined>()
-            .map()
-            .filter((x) => x % 2 === 0);
-        expect(onState.get(undefined)).toEqual([]);
     });
 });

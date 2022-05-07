@@ -5,7 +5,6 @@ import { act } from 'react-test-renderer';
 import { Optic } from '../src/Optic';
 import { render, fireEvent } from '@testing-library/react';
 import useOptic from '../src/react/useOptic';
-import Provider from '../src/react/provider';
 import { total } from '../src/types';
 import { optic } from '../src/constructors';
 import useKeyedOptics from '../src/react/useKeyedOptics';
@@ -14,15 +13,13 @@ import useOpticReducer from '../src/react/useOpticReducer';
 describe('useOptic', () => {
     it('should set state', () => {
         const onRoot = createStore({ test: 42 });
-        const { result } = renderHook(() => useOptic(onRoot), { wrapper: Provider });
+        const { result } = renderHook(() => useOptic(onRoot));
         act(() => result.current[1]((prev) => ({ test: prev.test * 2 })));
         expect(result.current[0]).toStrictEqual({ test: 84 });
     });
     it('should return referentially stable state and setter', () => {
         const onRoot = createStore({ test: 42 });
-        const { result, rerender } = renderHook(() => useOptic(onRoot), {
-            wrapper: Provider,
-        });
+        const { result, rerender } = renderHook(() => useOptic(onRoot));
         const [prevState, prevSetState] = result.current;
         rerender();
         const [state, setState] = result.current;
@@ -31,9 +28,7 @@ describe('useOptic', () => {
     });
     it('should not rerender when calling setter with the same reference', () => {
         const onRoot = createStore({ test: 42 });
-        const { result } = renderHook(() => useOptic(onRoot), {
-            wrapper: Provider,
-        });
+        const { result } = renderHook(() => useOptic(onRoot));
         const initialResult = result.current;
         act(() => initialResult[1]((prev) => prev));
         expect(result.current).toBe(initialResult);
@@ -43,7 +38,7 @@ describe('useOptic', () => {
         const onA: Optic<string, total, any> = optic<{ a: string }>().focus('a');
         const {
             result: { error },
-        } = renderHook(() => useOptic(onA), { wrapper: Provider });
+        } = renderHook(() => useOptic(onA));
         expect(error?.message).toBe("This optic isn't linked to a store");
     });
     it('should update state if optic changes', () => {
@@ -59,7 +54,6 @@ describe('useOptic', () => {
         const { result, rerender } = renderHook(
             ({ initialValue }: { initialValue: typeof onRoot }) => useOptic(initialValue),
             {
-                wrapper: Provider,
                 initialProps: { initialValue: onRoot },
             },
         );
@@ -84,7 +78,7 @@ describe('useOptic', () => {
             );
         };
 
-        const { getByText } = render(<Parent />, { wrapper: Provider });
+        const { getByText } = render(<Parent />);
         const button = getByText('delete');
         fireEvent.click(button);
     });
@@ -124,7 +118,7 @@ describe('useKeyedOptics', () => {
     const onArray = createStore([1, 2, 3, 4, 5]);
 
     it('should not rerender the cells when prepending', () => {
-        const { getAllByTestId, getByText } = render(<Numbers onArray={onArray} />, { wrapper: Provider });
+        const { getAllByTestId, getByText } = render(<Numbers onArray={onArray} />);
         const prepend = getByText('prepend');
         fireEvent.click(prepend);
         const elems = getAllByTestId('display');
@@ -136,7 +130,7 @@ describe('useKeyedOptics', () => {
         const onArray: Optic<number[], total, any> = optic<number[]>();
         const {
             result: { error },
-        } = renderHook(() => useKeyedOptics(onArray, (n) => n.toString()), { wrapper: Provider });
+        } = renderHook(() => useKeyedOptics(onArray, (n) => n.toString()));
         expect(error?.message).toBe("This optic isn't linked to a store");
     });
     it('should update if the optic changes', () => {
@@ -145,7 +139,6 @@ describe('useKeyedOptics', () => {
         const { result, rerender } = renderHook(
             ({ optic }: { optic: typeof onEvens }) => useKeyedOptics(optic, (n) => n.toString()),
             {
-                wrapper: Provider,
                 initialProps: { optic: onEvens },
             },
         );
@@ -204,11 +197,9 @@ describe('useOpticReducer', () => {
         }
     };
     it('should dispatch actions', () => {
-        const { result, rerender } = renderHook(
-            ({ initialReducer }: { initialReducer: typeof reducerWithOptic }) =>
-                useOpticReducer(onState, initialReducer),
-            { wrapper: Provider, initialProps: { initialReducer: reducer } },
-        );
+        const { result, rerender } = renderHook(({ initialReducer }) => useOpticReducer(onState, initialReducer), {
+            initialProps: { initialReducer: reducer as typeof reducerWithOptic },
+        });
         const dispatchActions = () => {
             result.current[1]({ type: 'increment' });
             result.current[1]({ type: 'increment' });

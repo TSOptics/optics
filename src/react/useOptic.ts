@@ -1,19 +1,17 @@
-import { useCallback, useContext } from 'react';
+import { useCallback } from 'react';
 import { useSyncExternalStore } from 'use-sync-external-store/shim/';
 import { Optic } from '../Optic';
 import { rootOpticSymbol, Stores, Store } from './createStore';
-import { OpticsStoresContext } from './provider';
-import { OpticType } from '../types';
+import { Lens, OpticType } from '../types';
+import stores from './stores';
 
 function useOptic<T, TOpticType extends OpticType>(optic: Optic<T, TOpticType, Stores>) {
-    const stores = useContext(OpticsStoresContext);
-
-    const storeLens = optic.ˍˍunsafeGetLenses()[0];
+    const storeLens: Lens<Store, Stores> = optic.ˍˍunsafeGetLenses()[0];
     if (storeLens.key !== rootOpticSymbol) {
         throw new Error("This optic isn't linked to a store");
     }
 
-    const store = storeLens.get(stores) as Store;
+    const store = storeLens.get(stores);
 
     const slice = useSyncExternalStore(store.subscribe, () => optic.get(stores));
 
@@ -21,7 +19,7 @@ function useOptic<T, TOpticType extends OpticType>(optic: Optic<T, TOpticType, S
         (value: Parameters<typeof optic.set>[0]) => {
             optic.set(value, stores);
         },
-        [optic, stores],
+        [optic],
     );
 
     return [slice, setter] as [typeof slice, typeof setter];

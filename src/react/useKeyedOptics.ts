@@ -1,9 +1,9 @@
-import { useCallback, useContext, useRef } from 'react';
+import { useCallback, useRef } from 'react';
 import { Optic } from '../Optic';
 import { Lens, OpticType } from '../types';
 import { noop } from '../utils';
 import { rootOpticSymbol, Store, Stores } from './createStore';
-import { OpticsStoresContext } from './provider';
+import stores from './stores';
 
 type KeyedOptics<T, TOpticType extends OpticType, S> = Record<string, Optic<T, TOpticType, S>>;
 
@@ -11,14 +11,12 @@ const useKeyedOptics = <T, TOpticType extends OpticType, S>(
     onArray: Optic<T[], TOpticType>,
     keyExtractor: (t: T) => string,
 ) => {
-    const stores = useContext(OpticsStoresContext);
-
-    const storeLens = onArray.ˍˍunsafeGetLenses()[0];
+    const storeLens: Lens<Store, Stores> = onArray.ˍˍunsafeGetLenses()[0];
     if (storeLens.key !== rootOpticSymbol) {
         throw new Error("This optic isn't linked to a store");
     }
 
-    const store = storeLens.get(stores) as Store;
+    const store = storeLens.get(stores);
 
     const keyExtractorRef = useRef(keyExtractor).current;
 

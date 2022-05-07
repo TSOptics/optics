@@ -38,11 +38,14 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> {
                 }
                 const slice = lens.get(s) as any[];
                 const flattened = isTraversal ? slice.flat() : slice;
-                const filtered = !isFold(tailLenses[0])
-                    ? flattened.filter((x) => x !== undefined && x !== null)
-                    : flattened;
-                const result = filtered.length > 0 ? aux(isTraversal ? filtered : s, tailLenses, true) : undefined;
-                this.cache.set(lens, [s, result]);
+                const filtered =
+                    tailLenses[0] && !isFold(tailLenses[0])
+                        ? flattened.filter((x) => x !== undefined && x !== null)
+                        : flattened;
+                const result = filtered.length > 0 ? aux(filtered, tailLenses, true) : undefined;
+                if (!isTraversal) {
+                    this.cache.set(lens, [s, result]);
+                }
                 return result;
             }
             if (lens.type === 'fold') {
@@ -79,6 +82,7 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> {
                 return aux(a, s, tailLenses);
             }
             const slice = lens.get(s);
+            if (tailLenses.length > 0 && (slice === undefined || slice === null)) return s;
             if (lens.type === 'mapped') {
                 const newSlice = foldTree
                     ? (slice as any[]).map((x, index) => (foldTree[index] ? aux(a, x, tailLenses, foldTree[index]) : x))
@@ -87,10 +91,9 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> {
                               ? x
                               : aux(a, x, tailLenses, foldTree),
                       );
-                return (slice as any[]).some((x, i) => x !== newSlice[i]) ? newSlice : slice;
+                return (slice as any[]).some((x, i) => x !== newSlice[i]) ? lens.set(newSlice, s) : (s as any);
             }
 
-            if (tailLenses.length > 0 && (slice === undefined || slice === null)) return s;
             const newSlice = aux(a, slice, tailLenses, foldTree);
             if (slice === newSlice) return s;
             return lens.set(newSlice, s);
@@ -172,6 +175,44 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> {
 
     map: A extends readonly (infer R)[] ? () => Optic<R, mapped, S> : never = (() => {
         return new Optic([...this.lenses, { get: (s) => s, set: (a) => a, key: 'map', type: 'mapped' }]);
+    }) as any;
+
+    entries: Record<string, any> extends A
+        ? A extends Record<string, infer R>
+            ? () => Optic<[key: string, value: R], mapped, S>
+            : never
+        : never = (() => {
+        return new Optic([
+            ...this.lenses,
+            {
+                get: (s) => Object.entries(s),
+                set: (a) => Object.fromEntries(a),
+                type: 'mapped',
+                key: 'entries',
+            },
+        ]);
+    }) as any;
+
+    values: Record<string, any> extends A
+        ? A extends Record<string, infer R>
+            ? () => Optic<R, mapped, S>
+            : never
+        : never = (() => {
+        return new Optic([
+            ...this.lenses,
+            {
+                get: (s) => Object.values(s),
+                set: (a, s) => {
+                    const keys = Object.keys(s);
+                    return keys.reduce((acc, key, index) => {
+                        acc[key] = a[index];
+                        return acc;
+                    }, {} as Record<string, any>);
+                },
+                type: 'mapped',
+                key: 'values',
+            },
+        ]);
     }) as any;
 
     if: (predicate: (a: A) => boolean) => Optic<A, TOpticType extends total ? partial : TOpticType, S> = (

@@ -1,6 +1,6 @@
 import React, { memo, useCallback, useRef } from 'react';
 import { renderHook } from '@testing-library/react-hooks';
-import createStore from '../src/react/createStore';
+import { createStore, getStore, setStore, subscribe } from '../src/react/Store';
 import { act } from 'react-test-renderer';
 import { Optic } from '../src/Optic';
 import { render, fireEvent } from '@testing-library/react';
@@ -218,4 +218,18 @@ describe('useOpticReducer', () => {
         act(dispatchActions);
         expect(result.current[0]).toEqual({ counter: 17, step: 5 });
     });
+});
+describe('direct store access', () => {
+    const onStore = createStore(42);
+    const store = getStore(onStore);
+    expect(onStore.get(store)).toBe(42);
+
+    const newStore = onStore.set(100, store);
+    expect(onStore.get(newStore)).toBe(100);
+
+    const listener = jest.fn();
+    subscribe(onStore, listener);
+    setStore(onStore.set(42, store));
+    expect(listener).toHaveBeenCalledTimes(1);
+    expect(listener).toHaveBeenCalledWith(42);
 });

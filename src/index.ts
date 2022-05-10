@@ -2,10 +2,8 @@ export type { Optic } from './Optic';
 export { optic, opticPartial } from './constructors';
 export { total, partial, mapped } from './types';
 
-import stores from './react/stores';
-export { stores };
-
 import useOptic from './react/useOptic';
 import useKeyedOptics from './react/useKeyedOptics';
-import createStore from './react/createStore';
-export { useOptic, useKeyedOptics, createStore };
+import { createStore, subscribe, getStore, setStore } from './react/Store';
+import useOpticReducer from './react/useOpticReducer';
+export { useOptic, useKeyedOptics, useOpticReducer, createStore, subscribe, getStore, setStore };

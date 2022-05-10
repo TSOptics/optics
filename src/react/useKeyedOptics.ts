@@ -2,8 +2,7 @@ import { useCallback, useRef } from 'react';
 import { Optic } from '../Optic';
 import { Lens, OpticType } from '../types';
 import { noop } from '../utils';
-import { rootOpticSymbol, Store, Stores } from './createStore';
-import stores from './stores';
+import { getStore, subscribe } from './Store';
 
 type KeyedOptics<T, TOpticType extends OpticType, S> = Record<string, Optic<T, TOpticType, S>>;
 
@@ -11,18 +10,12 @@ const useKeyedOptics = <T, TOpticType extends OpticType, S>(
     onArray: Optic<T[], TOpticType>,
     keyExtractor: (t: T) => string,
 ) => {
-    const storeLens: Lens<Store, Stores> = onArray.ˍˍunsafeGetLenses()[0];
-    if (storeLens.key !== rootOpticSymbol) {
-        throw new Error("This optic isn't linked to a store");
-    }
-
-    const store = storeLens.get(stores);
+    const store = getStore(onArray);
 
     const keyExtractorRef = useRef(keyExtractor).current;
 
     const keyedOptics = useRef<KeyedOptics<T, TOpticType, S>>({});
-    const listener = (stores: Stores) => {
-        const array: any[] | undefined = onArray.get(stores);
+    const listener = (array: any[] | undefined) => {
         keyedOptics.current =
             array?.reduce<KeyedOptics<T, TOpticType, S>>((acc, cv, ci) => {
                 const key = keyExtractorRef(cv);
@@ -50,8 +43,8 @@ const useKeyedOptics = <T, TOpticType extends OpticType, S>(
         keyedOptics.current = {};
         opticRef.current = onArray;
         unsubscribe.current();
-        unsubscribe.current = store.subscribe(listener);
-        listener(stores);
+        unsubscribe.current = subscribe(onArray, listener);
+        listener(onArray.get(store));
     }
 
     const getOpticFromKey = useCallback((key: string) => keyedOptics.current[key], [keyedOptics]);

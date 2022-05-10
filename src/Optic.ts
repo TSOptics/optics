@@ -145,7 +145,7 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> {
     };
 
     getKeys = () => {
-        return this.lenses.map((l) => l.key);
+        return this.lenses.map((l) => l.key.toString());
     };
 
     compose: <B, TOpticTypeB extends OpticType>(

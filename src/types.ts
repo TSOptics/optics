@@ -29,12 +29,12 @@ export type IsNullable<T> = StrictMode extends false
     : false;
 
 type RecursivePath<T, K = Exclude<keyof NonNullable<T>, keyof any[]>> = K extends string
-    ? T extends Record<string, any>
+    ? [T] extends [Record<string, any>]
         ? K | `${K}${IsNullable<T[K]> extends true ? '?.' : '.'}${RecursivePath<NonNullable<T[K]>>}`
         : never
     : never;
 
-export type Path<T> = T extends any[] ? (T extends [any, ...any] ? RecursivePath<T> : number) : RecursivePath<T>;
+export type Path<T> = any[] extends T ? (T extends [any, ...any] ? RecursivePath<T> : number) : RecursivePath<T>;
 
 export type PathType<T, P extends string | number> = P extends keyof NonNullable<T>
     ? NonNullable<T>[P]

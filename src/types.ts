@@ -19,7 +19,14 @@ export interface Lens<A = any, S = any> {
     type?: 'fold' | 'foldMultiple' | 'mapped';
 }
 
-export type IsNullable<T> = null extends T ? true : undefined extends T ? true : false;
+type StrictMode = null extends string ? false : true;
+export type IsNullable<T> = StrictMode extends false
+    ? false
+    : null extends T
+    ? true
+    : undefined extends T
+    ? true
+    : false;
 
 type RecursivePath<T, K = Exclude<keyof NonNullable<T>, keyof any[]>> = K extends string
     ? T extends Record<string, any>

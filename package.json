@@ -49,14 +49,14 @@
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/OptixJs/react-optics.git"
+        "url": "git+https://github.com/TSOptics/react-optics.git"
     },
     "author": "",
     "license": "ISC",
     "bugs": {
-        "url": "https://github.com/OptixJs/react-optics/issues"
+        "url": "https://github.com/TSOptics/react-optics/issues"
     },
-    "homepage": "https://github.com/OptixJs/react-optics#readme",
+    "homepage": "https://github.com/TSOptics/react-optics#readme",
     "dependencies": {
         "use-sync-external-store": "^1.0.0"
     }

@@ -10,6 +10,7 @@ import {
     total,
     mapped,
     OpticType,
+    FocusedValue,
 } from './types';
 import { noop, stabilize } from './utils';
 
@@ -20,7 +21,7 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> {
         this.lenses = lenses;
     }
 
-    get: (s: S) => TOpticType extends mapped ? A[] : TOpticType extends total ? A : A | undefined = (s) => {
+    get: (s: S) => FocusedValue<A, TOpticType> = (s) => {
         const isOpticTraversal = this.lenses.reduce(
             (acc, cv) => (cv.type === 'fold' ? false : acc || cv.type === 'map' || cv.type === 'foldN'),
             false,

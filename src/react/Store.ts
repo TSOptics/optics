@@ -1,5 +1,5 @@
 import { Optic } from '../Optic';
-import { Lens, OpticType, total } from '../types';
+import { FocusedValue, Lens, OpticType, total } from '../types';
 
 export type Store<T = any> = { state: T; key: symbol };
 
@@ -21,7 +21,7 @@ export const setStore = (store: Store) => {
 
 export const subscribe = <T, TOpticType extends OpticType>(
     optic: Optic<T, TOpticType, Store>,
-    listener: (t: ReturnType<typeof optic['get']>) => void,
+    listener: (t: FocusedValue<T, TOpticType>) => void,
 ) => {
     const store = getStore(optic);
     const listeners = stores.get(store.key)?.[1];

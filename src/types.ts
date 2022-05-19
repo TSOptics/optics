@@ -59,3 +59,9 @@ export type ComposedOpticType<TOpticTypeA extends OpticType, TOpticTypeB extends
     : IsNullable<A> extends true
     ? partial
     : total;
+
+export type FocusedValue<T, TOpticType extends OpticType> = TOpticType extends mapped
+    ? T[]
+    : TOpticType extends total
+    ? T
+    : T | undefined;

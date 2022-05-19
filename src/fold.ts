@@ -3,7 +3,7 @@ import { Lens } from './types';
 type IndexTree = IndexTree[] | number;
 type FoldTree = FoldTree[] | undefined;
 
-export const isFold = (lens?: Lens) => lens && (lens.type === 'fold' || lens.type === 'foldMultiple');
+export const isFold = (lens?: Lens) => lens && (lens.type === 'fold' || lens.type === 'foldN');
 
 const filterIndexTree = (indexTree: IndexTree, indexes: Set<number>) => {
     const aux = (indexTree: IndexTree): FoldTree => {
@@ -37,7 +37,7 @@ export const getFoldTree = (lenses: Lens[], s: any) => {
         if ((slice === undefined || slice === null) && !isFold(tailLenses[0])) {
             return -1;
         }
-        if (lens.type === 'mapped') {
+        if (lens.type === 'map') {
             return (slice as any[]).reduce<IndexTree[]>((acc, cv) => {
                 const subTree = getIndexTree(tailLenses, cv);
                 if (subTree !== -1) {

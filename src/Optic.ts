@@ -22,7 +22,7 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> {
 
     get: (s: S) => TOpticType extends mapped ? A[] : TOpticType extends total ? A : A | undefined = (s) => {
         const isOpticTraversal = this.lenses.reduce(
-            (acc, cv) => (cv.type === 'fold' ? false : acc || cv.type === 'mapped' || cv.type === 'foldMultiple'),
+            (acc, cv) => (cv.type === 'fold' ? false : acc || cv.type === 'map' || cv.type === 'foldN'),
             false,
         );
         const aux = (s: any, lenses: Lens[], isTraversal = false): any => {
@@ -30,7 +30,7 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> {
             if (!lens) {
                 return s;
             }
-            if (lens.type === 'mapped') {
+            if (lens.type === 'map') {
                 const traversalCache = this.cache.get(lens);
                 if (!isTraversal && traversalCache) {
                     const [cacheKey, cacheValue] = traversalCache;
@@ -53,7 +53,7 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> {
                 if (index === -1) return undefined;
                 return aux((s as any[])[index], tailLenses, false);
             }
-            if (lens.type === 'foldMultiple') {
+            if (lens.type === 'foldN') {
                 const indexes: number[] = lens.get(s);
                 if (indexes.length === 0) return [];
                 const projection = Array(indexes.length)
@@ -83,7 +83,7 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> {
             }
             const slice = lens.get(s);
             if (tailLenses.length > 0 && (slice === undefined || slice === null)) return s;
-            if (lens.type === 'mapped') {
+            if (lens.type === 'map') {
                 const newSlice = foldTree
                     ? (slice as any[]).map((x, index) => (foldTree[index] ? aux(a, x, tailLenses, foldTree[index]) : x))
                     : (slice as any[]).map((x) =>
@@ -174,7 +174,7 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> {
     };
 
     map: A extends readonly (infer R)[] ? () => Optic<R, mapped, S> : never = (() => {
-        return new Optic([...this.lenses, { get: (s) => s, set: (a) => a, key: 'map', type: 'mapped' }]);
+        return new Optic([...this.lenses, { get: (s) => s, set: (a) => a, key: 'map', type: 'map' }]);
     }) as any;
 
     entries: Record<string, any> extends A
@@ -187,7 +187,7 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> {
             {
                 get: (s) => Object.entries(s),
                 set: (a) => Object.fromEntries(a),
-                type: 'mapped',
+                type: 'map',
                 key: 'entries',
             },
         ]);
@@ -209,7 +209,7 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> {
                         return acc;
                     }, {} as Record<string, any>);
                 },
-                type: 'mapped',
+                type: 'map',
                 key: 'values',
             },
         ]);
@@ -316,7 +316,7 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> {
                         return acc;
                     }, [] as number[]),
                 set: noop,
-                type: 'foldMultiple',
+                type: 'foldN',
                 key: 'filter',
             },
         ]);
@@ -338,7 +338,7 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> {
                         .map((_, i) => i + startAbs);
                 },
                 set: noop,
-                type: 'foldMultiple',
+                type: 'foldN',
                 key: `slice from ${start ?? 0} to ${end ?? 'end'}`,
             },
         ]);
@@ -355,7 +355,7 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> {
                         .sort(([, valueA], [, valueB]) => compareFn(valueA, valueB))
                         .map(([index]) => index),
                 set: noop,
-                type: 'foldMultiple',
+                type: 'foldN',
                 key: 'sort',
             },
         ]);

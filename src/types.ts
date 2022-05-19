@@ -7,7 +7,7 @@ export interface total extends partial {
 }
 
 export interface mapped {
-    map: 'mapped';
+    map: 'map';
 }
 
 export type OpticType = mapped | partial;
@@ -16,7 +16,7 @@ export interface Lens<A = any, S = any> {
     key: string | symbol;
     get: (s: S) => A;
     set: (a: A, s: S) => S;
-    type?: 'fold' | 'foldMultiple' | 'mapped';
+    type?: 'fold' | 'foldN' | 'map';
 }
 
 type StrictMode = null extends string ? false : true;

@@ -125,6 +125,23 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> {
         ]);
     };
 
+    focusWithDefault: <Prop extends keyof NonNullable<A>>(
+        prop: Prop,
+        fallback: (parent: A) => NonNullable<NonNullable<A>[Prop]>,
+    ) => Optic<NonNullable<NonNullable<A>[Prop]>, TOpticType, S> = (key, fallback) => {
+        return new Optic([
+            ...this.lenses,
+            {
+                get: stabilize((s) => {
+                    const slice = s[key];
+                    return slice !== undefined && slice !== null ? slice : fallback(s);
+                }),
+                set: (a, s) => ({ ...s, [key]: a }),
+                key: `focus ${key} with default`,
+            },
+        ]) as any;
+    };
+
     focusMany: <Keys extends keyof NonNullable<A>, Prefix extends string | undefined>(
         props: Keys[],
         prefix?: Prefix,
@@ -163,11 +180,24 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> {
         return new Optic([
             ...this.lenses,
             {
-                get: (s) => (refiner(s) === false ? undefined : s),
-                set: (a, s) => (refiner(s) === false ? s : a),
+                get: (s) => (refiner(s) !== false ? s : undefined),
+                set: (a, s) => (refiner(s) !== false ? a : s),
                 key: 'refine',
             },
         ]) as any;
+    };
+
+    if: (predicate: (a: A) => boolean) => Optic<A, TOpticType extends total ? partial : TOpticType, S> = (
+        predicate,
+    ) => {
+        return new Optic([
+            ...this.lenses,
+            {
+                get: (s) => (predicate(s) === true ? s : undefined),
+                set: (a, s) => (predicate(s) === true ? a : s),
+                key: 'if',
+            },
+        ]);
     };
 
     convert: <B>(get: (a: A) => B, reverseGet: (b: B) => A) => Optic<B, TOpticType, S> = (get, reverseGet) => {
@@ -215,19 +245,6 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> {
             },
         ]);
     }) as any;
-
-    if: (predicate: (a: A) => boolean) => Optic<A, TOpticType extends total ? partial : TOpticType, S> = (
-        predicate,
-    ) => {
-        return new Optic([
-            ...this.lenses,
-            {
-                get: (s) => (predicate(s) === true ? s : undefined),
-                set: (a, s) => (predicate(s) === true ? a : s),
-                key: 'if',
-            },
-        ]);
-    };
 
     // FOLDS
 
@@ -377,23 +394,6 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> {
 
     toPartial: TOpticType extends total ? () => Optic<NonNullable<A>, partial, S> : never = (() =>
         new Optic([...this.lenses])) as any;
-
-    focusWithDefault: <Prop extends keyof NonNullable<A>>(
-        prop: Prop,
-        fallback: (parent: A) => NonNullable<NonNullable<A>[Prop]>,
-    ) => Optic<NonNullable<NonNullable<A>[Prop]>, TOpticType, S> = (key, fallback) => {
-        return new Optic([
-            ...this.lenses,
-            {
-                get: stabilize((s) => {
-                    const slice = s[key];
-                    return slice !== undefined && slice !== null ? slice : fallback(s);
-                }),
-                set: (a, s) => ({ ...s, [key]: a }),
-                key: `focus ${key} with default`,
-            },
-        ]) as any;
-    };
 
     toString() {
         return this.getKeys().toString();

@@ -15,10 +15,14 @@ import {
 import { noop, stabilize } from './utils';
 
 export class Optic<A, TOpticType extends OpticType = total, S = any> {
-    private lenses: Lens[];
+    protected lenses: Lens[];
     private cache: Map<Lens, [key: any[], value: any]> = new Map();
     constructor(lenses: Lens[]) {
         this.lenses = lenses;
+    }
+
+    protected derive(newLenses: Lens[]) {
+        return new Optic([...this.lenses, ...newLenses]);
     }
 
     get: (s: S) => FocusedValue<A, TOpticType> = (s) => {
@@ -105,24 +109,24 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> {
 
     focus: <TPath extends Path<A>>(
         path: TPath,
-    ) => Optic<PathType<A, TPath>, TOpticType extends total ? PathOpticType<A, TPath> : TOpticType, S> = (path) => {
+    ) => Resolve<this, PathType<A, TPath>, TOpticType extends total ? PathOpticType<A, TPath> : TOpticType, S> = (
+        path,
+    ) => {
         if (typeof path === 'number')
-            return new Optic([
-                ...this.lenses,
+            return this.derive([
                 {
                     get: (s) => s[path],
                     set: (a, s) => [...s.slice(0, path), a, ...s.slice(path + 1)],
                     key: 'focus index ' + path,
                 },
             ]);
-        return new Optic([
-            ...this.lenses,
-            ...path.split(/\.|\?\./).map<Lens>((key: any) => ({
+        return this.derive(
+            path.split(/\.|\?\./).map<Lens>((key: any) => ({
                 key: 'focus ' + key,
                 get: (s) => s[key],
                 set: (a, s) => (Array.isArray(s) ? [...s.slice(0, key), a, ...s.slice(key + 1)] : { ...s, [key]: a }),
             })),
-        ]);
+        ) as any;
     };
 
     focusWithDefault: <Prop extends keyof NonNullable<A>>(
@@ -403,3 +407,10 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> {
 
     ˍˍcovariance: () => TOpticType | null = () => null;
 }
+
+export interface ResolveClass<TOptic extends Optic<any, OpticType>, A, TOpticType extends OpticType, S> {
+    (): Optic<A, TOpticType, S>;
+}
+type Resolve<TOptic extends Optic<any, OpticType>, A, TOpticType extends OpticType, S> = ReturnType<
+    ResolveClass<TOptic, A, TOpticType, S>
+>;

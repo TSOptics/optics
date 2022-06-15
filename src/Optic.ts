@@ -137,7 +137,7 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> {
                     return slice !== undefined && slice !== null ? slice : fallback(s);
                 }),
                 set: (a, s) => ({ ...s, [key]: a }),
-                key: `focus ${key} with default`,
+                key: `focus ${key.toString()} with default`,
             },
         ]) as any;
     };

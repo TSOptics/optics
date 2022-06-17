@@ -28,22 +28,6 @@ export type IsNullable<T> = StrictMode extends false
     ? true
     : false;
 
-type Append<T, Path extends string, Key extends string> = Path extends ''
-    ? Key
-    : `${Path}${IsNullable<T> extends true ? '?.' : '.'}${Key}`;
-type IsArray<T> = [T] extends [readonly any[]] ? ('0' extends T ? false : true) : false;
-type TailRecursivePath<T, Acc = never, Path = '', Key = Exclude<keyof NonNullable<T>, keyof any[]>> = Key extends string
-    ? [NonNullable<T>] extends [Record<string, any>]
-        ? [Acc] extends [string]
-            ? [Path] extends [string]
-                ? IsArray<NonNullable<NonNullable<T>[Key]>> extends true
-                    ? Acc | Append<T, Path, Key>
-                    : TailRecursivePath<NonNullable<T>[Key], Acc | Path, Append<T, Path, Key>>
-                : never
-            : never
-        : Acc | Path
-    : never;
-
 type RecursivePath<T, K = Exclude<keyof NonNullable<T>, keyof any[] | keyof Date>> = K extends string
     ? [T] extends [Record<string, any>]
         ?

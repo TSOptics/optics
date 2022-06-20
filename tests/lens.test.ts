@@ -1,10 +1,15 @@
+import { Noop, noop } from '@babel/types';
 import { optic, opticPartial } from '../src/constructors';
 import { Optic } from '../src/Optic';
-import { total } from '../src/types';
-import { noop } from '../src/utils';
+import { mapped, OpticType, partial, total } from '../src/types';
 
-const expectType = <T>(t: T) => noop();
-const expectNotType = <T>(t: T) => noop();
+const expectPartial = <TOpticType extends partial>(
+    optic: Optic<any, TOpticType>,
+    t: TOpticType extends total ? never : true,
+) => noop();
+
+const expectTotal = (optic: Optic<any, total>) => noop();
+const expectMapped = (optic: Optic<any, mapped>) => noop();
 
 describe('lens', () => {
     const obj = { a: { as: [1, 2, 3] } };
@@ -123,6 +128,24 @@ describe('focusWithDefault', () => {
         expect(onA.get(emptyA)).toBe(onA.get(emptyA));
     });
 });
+describe('toPartial', () => {
+    const onA = optic<{ a?: number }>().focus('a').toPartial();
+    expectPartial(onA, true);
+    expect(onA.get({ a: undefined })).toBe(undefined);
+    expect(onA.set((prev) => prev + 10, { a: undefined })).toEqual({ a: undefined });
+    expect(onA.set((prev) => prev + 10, { a: 42 })).toEqual({ a: 52 });
+
+    const onB = optic<{ a?: { b?: number } }>().focus('a?.b').toPartial();
+    expectPartial(onB, true);
+    expect(onB.get({ a: { b: undefined } })).toBe(undefined);
+    expect(onB.set((prev) => prev + 10, { a: { b: undefined } })).toEqual({ a: { b: undefined } });
+    expect(onB.set((prev) => prev + 10, { a: { b: 42 } })).toEqual({ a: { b: 52 } });
+
+    const onAs = optic<{ a?: number }[]>().map().focus('a').toPartial();
+    expectMapped(onAs);
+    expect(onAs.get([{ a: undefined }, { a: 42 }])).toEqual([42]);
+    expect(onAs.set((prev) => prev + 10, [{ a: undefined }, { a: 42 }])).toEqual([{ a: undefined }, { a: 52 }]);
+});
 describe('custom optic', () => {
     const onEvenNums = optic(
         (s: number[]) => s.filter((n) => n % 2 === 0),
@@ -198,9 +221,7 @@ describe('focusMany', () => {
     });
     it('should yield partial optics when parent optic focus on nullable', () => {
         const { onB, onC } = optic<{ a?: { b: boolean; c: number } }>().focus('a').focusMany(['b', 'c']);
-        // @ts-expect-error
-        expectNotType<Optic<any, total>>(onB);
-        // @ts-expect-error
-        expectNotType<Optic<any, total>>(onC);
+        expectPartial(onB, true);
+        expectPartial(onC, true);
     });
 });

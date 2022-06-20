@@ -1,15 +1,37 @@
 import React, { memo, useCallback, useRef } from 'react';
 import { renderHook } from '@testing-library/react-hooks';
-import { createStore, getStore, setStore, subscribe } from '../src/react/Store';
+import { createStore } from './Store';
 import { act } from 'react-test-renderer';
-import { Optic } from '../src/Optic';
 import { render, fireEvent } from '@testing-library/react';
-import useOptic from '../src/react/useOptic';
-import { total } from '../src/types';
-import { optic } from '../src/constructors';
-import useKeyedOptics from '../src/react/useKeyedOptics';
-import useOpticReducer from '../src/react/useOpticReducer';
+import useOptic from './useOptic';
+import { partial, total } from '../types';
+import { optic } from '../constructors';
+import useKeyedOptics from './useKeyedOptics';
+import useOpticReducer from './useOpticReducer';
+import { StoreOptic } from './StoreOptic';
+import { Optic } from '../Optic';
+import { noop } from '../utils';
 
+const expectType = <T extends any>(t: T) => noop();
+
+describe('StoreOptic', () => {
+    it('should be a subtype of Optic', () => {
+        const storeOptic = {} as StoreOptic<number>;
+        const baseOptic: Optic<number> = storeOptic;
+    });
+    it('should be covariant on type param TOpticType', () => {
+        const storeOptic = {} as StoreOptic<number>;
+        const basePartialOptic: Optic<number, partial> = storeOptic;
+        const storePartialOptic: StoreOptic<number, partial> = storeOptic;
+    });
+    it('should compose with plain optics', () => {
+        const onState = createStore({ a: { b: 42 } });
+        const onNumber = optic<{ b: number }>().focus('b');
+        const onNumberFromState = onState.focus('a').compose(onNumber);
+        expectType<StoreOptic<number, total, { a: { b: number } }>>(onNumberFromState);
+        expect(onNumberFromState.getState()).toBe(42);
+    });
+});
 describe('useOptic', () => {
     it('should set state', () => {
         const onRoot = createStore({ test: 42 });
@@ -34,12 +56,10 @@ describe('useOptic', () => {
         expect(result.current).toBe(initialResult);
     });
 
-    it('should only accept optics with the stores as root', () => {
-        const onA: Optic<string, total, any> = optic<{ a: string }>().focus('a');
-        const {
-            result: { error },
-        } = renderHook(() => useOptic(onA));
-        expect(error?.message).toBe("This optic isn't linked to a store");
+    it("shouldn't only accept base optics", () => {
+        const onA: Optic<any> = optic<{ a: string }>().focus('a');
+        // @ts-expect-error
+        renderHook(() => useOptic(onA));
     });
     it('should update state if optic changes', () => {
         const onRoot = createStore({ test: 42 });
@@ -64,7 +84,7 @@ describe('useOptic', () => {
         const onState = createStore<number[]>([42]);
         const onFirst = onState.focus(0);
 
-        const Children = ({ onElem }: { onElem: Optic<number> }) => {
+        const Children = ({ onElem }: { onElem: StoreOptic<number> }) => {
             const [elem] = useOptic(onElem);
             return <>{elem.toString()}</>;
         };
@@ -84,7 +104,7 @@ describe('useOptic', () => {
     });
 });
 describe('useKeyedOptics', () => {
-    const Number = memo(({ onNumber }: { onNumber: Optic<number> }) => {
+    const Number = memo(({ onNumber }: { onNumber: StoreOptic<number> }) => {
         const [n] = useOptic(onNumber);
         const renders = useRef(0);
         renders.current = renders.current + 1;
@@ -97,7 +117,7 @@ describe('useKeyedOptics', () => {
         );
     });
 
-    const Numbers = ({ onArray }: { onArray: Optic<number[]> }) => {
+    const Numbers = ({ onArray }: { onArray: StoreOptic<number[]> }) => {
         const [array, setArray] = useOptic(onArray);
         const getOptic = useKeyedOptics(onArray, (n) => n.toString());
 
@@ -127,11 +147,9 @@ describe('useKeyedOptics', () => {
         expect(renders.map((x) => x.textContent)).toEqual(['1', '1', '1', '1', '1', '1']);
     });
     it('should only accept optics with the stores as root', () => {
-        const onArray: Optic<number[], total, any> = optic<number[]>();
-        const {
-            result: { error },
-        } = renderHook(() => useKeyedOptics(onArray, (n) => n.toString()));
-        expect(error?.message).toBe("This optic isn't linked to a store");
+        const onArray = optic<number[]>();
+        // @ts-expect-error
+        renderHook(() => useKeyedOptics(onArray, (n) => n.toString()));
     });
     it('should update if the optic changes', () => {
         const onEvens = createStore([0, 2, 4, 6]);
@@ -220,16 +238,16 @@ describe('useOpticReducer', () => {
     });
 });
 describe('direct store access', () => {
-    const onStore = createStore(42);
-    const store = getStore(onStore);
-    expect(onStore.get(store)).toBe(42);
+    const onState = createStore({ a: 42 });
+    expect(onState.getState()).toEqual({ a: 42 });
 
-    const newStore = onStore.set(100, store);
-    expect(onStore.get(newStore)).toBe(100);
+    onState.setState({ a: 100 });
+    expect(onState.getState()).toEqual({ a: 100 });
 
+    const onNumber = onState.focus('a');
     const listener = jest.fn();
-    subscribe(onStore, listener);
-    setStore(onStore.set(42, store));
+    onNumber.subscribe(listener);
+    onState.setState({ a: 42 });
     expect(listener).toHaveBeenCalledTimes(1);
     expect(listener).toHaveBeenCalledWith(42);
 });

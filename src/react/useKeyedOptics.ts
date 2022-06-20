@@ -2,16 +2,14 @@ import { useCallback, useRef } from 'react';
 import { Optic } from '../Optic';
 import { Lens, OpticType } from '../types';
 import { noop } from '../utils';
-import { getStore, subscribe } from './Store';
+import { StoreOptic } from './StoreOptic';
 
-type KeyedOptics<T, TOpticType extends OpticType, S> = Record<string, Optic<T, TOpticType, S>>;
+type KeyedOptics<T, TOpticType extends OpticType, S> = Record<string, StoreOptic<T, TOpticType, S>>;
 
 const useKeyedOptics = <T, TOpticType extends OpticType, S>(
-    onArray: Optic<T[], TOpticType>,
+    onArray: StoreOptic<T[], TOpticType, S>,
     keyExtractor: (t: T) => string,
 ) => {
-    const store = getStore(onArray);
-
     const keyExtractorRef = useRef(keyExtractor).current;
 
     const keyedOptics = useRef<KeyedOptics<T, TOpticType, S>>({});
@@ -43,8 +41,8 @@ const useKeyedOptics = <T, TOpticType extends OpticType, S>(
         keyedOptics.current = {};
         opticRef.current = onArray;
         unsubscribe.current();
-        unsubscribe.current = subscribe(onArray, listener);
-        listener(onArray.get(store));
+        unsubscribe.current = onArray.subscribe(listener);
+        listener(onArray.getState());
     }
 
     const getOpticFromKey = useCallback((key: string) => keyedOptics.current[key], [keyedOptics]);

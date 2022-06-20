@@ -13,7 +13,7 @@ export interface mapped {
 export type OpticType = mapped | partial;
 
 export interface Lens<A = any, S = any> {
-    key: string | symbol;
+    key: string;
     get: (s: S) => A;
     set: (a: A, s: S) => S;
     type?: 'fold' | 'foldN' | 'map';

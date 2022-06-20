@@ -21,7 +21,7 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> {
         this.lenses = lenses;
     }
 
-    protected derive(newLenses: Lens[]) {
+    protected derive(newLenses: Lens[]): any {
         return new Optic([...this.lenses, ...newLenses]);
     }
 
@@ -174,8 +174,8 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> {
         other: Optic<B, TOpticTypeB, NonNullable<A>>,
     ) => ComposedOpticType<TOpticType, TOpticTypeB, A> extends never
         ? void
-        : Optic<B, ComposedOpticType<TOpticType, TOpticTypeB, A>, S> = (other) => {
-        return new Optic([...this.lenses, ...other.lenses]) as any;
+        : Resolve<this, B, ComposedOpticType<TOpticType, TOpticTypeB, A>, S> = (other) => {
+        return this.derive(other.lenses);
     };
 
     refine: <B>(
@@ -204,8 +204,8 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> {
         ]);
     };
 
-    convert: <B>(get: (a: A) => B, reverseGet: (b: B) => A) => Optic<B, TOpticType, S> = (get, reverseGet) => {
-        return new Optic([...this.lenses, { get: stabilize(get), set: reverseGet, key: 'convert' }]);
+    convert = <B>(get: (a: A) => B, reverseGet: (b: B) => A): Resolve<this, B, TOpticType, S> => {
+        return this.derive([{ get: stabilize(get), set: reverseGet, key: 'convert' }]);
     };
 
     map: A extends readonly (infer R)[] ? () => Optic<R, mapped, S> : never = (() => {

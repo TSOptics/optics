@@ -132,9 +132,8 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> {
     focusWithDefault: <Prop extends keyof NonNullable<A>>(
         prop: Prop,
         fallback: (parent: A) => NonNullable<NonNullable<A>[Prop]>,
-    ) => Optic<NonNullable<NonNullable<A>[Prop]>, TOpticType, S> = (key, fallback) => {
-        return new Optic([
-            ...this.lenses,
+    ) => Resolve<this, NonNullable<NonNullable<A>[Prop]>, TOpticType, S> = (key, fallback) => {
+        return this.derive([
             {
                 get: stabilize((s) => {
                     const slice = s[key];
@@ -152,7 +151,8 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> {
     ) => {
         [Key in Keys as `${undefined extends Prefix ? 'on' : Prefix}${Key extends number
             ? Key
-            : Capitalize<Key & string>}`]-?: Optic<
+            : Capitalize<Key & string>}`]-?: Resolve<
+            this,
             NonNullable<A>[Key],
             TOpticType extends total ? (IsNullable<A> extends true ? partial : total) : TOpticType,
             S
@@ -180,22 +180,20 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> {
 
     refine: <B>(
         refiner: (a: A) => B | false,
-    ) => B extends false ? never : Optic<B, TOpticType extends total ? partial : TOpticType, S> = (refiner) => {
-        return new Optic([
-            ...this.lenses,
+    ) => B extends false ? never : Resolve<this, B, TOpticType extends total ? partial : TOpticType, S> = (refiner) => {
+        return this.derive([
             {
                 get: (s) => (refiner(s) !== false ? s : undefined),
                 set: (a, s) => (refiner(s) !== false ? a : s),
                 key: 'refine',
             },
-        ]) as any;
+        ]);
     };
 
-    if: (predicate: (a: A) => boolean) => Optic<A, TOpticType extends total ? partial : TOpticType, S> = (
+    if: (predicate: (a: A) => boolean) => Resolve<this, A, TOpticType extends total ? partial : TOpticType, S> = (
         predicate,
     ) => {
-        return new Optic([
-            ...this.lenses,
+        return this.derive([
             {
                 get: (s) => (predicate(s) === true ? s : undefined),
                 set: (a, s) => (predicate(s) === true ? a : s),
@@ -208,17 +206,16 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> {
         return this.derive([{ get: stabilize(get), set: reverseGet, key: 'convert' }]);
     };
 
-    map: A extends readonly (infer R)[] ? () => Optic<R, mapped, S> : never = (() => {
-        return new Optic([...this.lenses, { get: (s) => s, set: (a) => a, key: 'map', type: 'map' }]);
+    map: A extends readonly (infer R)[] ? () => Resolve<this, R, mapped, S> : never = (() => {
+        return this.derive([{ get: (s) => s, set: (a) => a, key: 'map', type: 'map' }]);
     }) as any;
 
     entries: Record<string, any> extends A
         ? A extends Record<string, infer R>
-            ? () => Optic<[key: string, value: R], mapped, S>
+            ? () => Resolve<this, [key: string, value: R], mapped, S>
             : never
         : never = (() => {
-        return new Optic([
-            ...this.lenses,
+        return this.derive([
             {
                 get: (s) => Object.entries(s),
                 set: (a) => Object.fromEntries(a),
@@ -230,11 +227,10 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> {
 
     values: Record<string, any> extends A
         ? A extends Record<string, infer R>
-            ? () => Optic<R, mapped, S>
+            ? () => Resolve<this, R, mapped, S>
             : never
         : never = (() => {
-        return new Optic([
-            ...this.lenses,
+        return this.derive([
             {
                 get: (s) => Object.values(s),
                 set: (a, s) => {
@@ -252,11 +248,10 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> {
 
     // FOLDS
 
-    findFirst: TOpticType extends mapped ? (predicate: (a: A) => boolean) => Optic<A, partial, S> : never = ((
+    findFirst: TOpticType extends mapped ? (predicate: (a: A) => boolean) => Resolve<this, A, partial, S> : never = ((
         predicate: (value: unknown) => boolean,
     ) => {
-        return new Optic([
-            ...this.lenses,
+        return this.derive([
             {
                 get: (s: A[]) => s.findIndex(predicate),
                 set: noop,
@@ -266,11 +261,10 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> {
         ]);
     }) as any;
 
-    maxBy: TOpticType extends mapped ? (f: (a: A) => number) => Optic<A, partial, S> : never = ((
+    maxBy: TOpticType extends mapped ? (f: (a: A) => number) => Resolve<this, A, partial, S> : never = ((
         f: (a: A) => number,
     ) => {
-        return new Optic([
-            ...this.lenses,
+        return this.derive([
             {
                 get: (s: A[]) =>
                     s.reduce<{ maxValue: number; indexOfMax: number }>(
@@ -290,11 +284,10 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> {
         ]);
     }) as any;
 
-    minBy: TOpticType extends mapped ? (f: (a: A) => number) => Optic<A, partial, S> : never = ((
+    minBy: TOpticType extends mapped ? (f: (a: A) => number) => Resolve<this, A, partial, S> : never = ((
         f: (a: A) => number,
     ) => {
-        return new Optic([
-            ...this.lenses,
+        return this.derive([
             {
                 get: (s: A[]) =>
                     s.reduce<{ minValue: number; indexOfMin: number }>(
@@ -314,9 +307,8 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> {
         ]);
     }) as any;
 
-    atIndex: TOpticType extends mapped ? (index: number) => Optic<A, partial, S> : never = ((index: number) => {
-        return new Optic([
-            ...this.lenses,
+    atIndex: TOpticType extends mapped ? (index: number) => Resolve<this, A, partial, S> : never = ((index: number) => {
+        return this.derive([
             {
                 get: (s: A[]) => (index >= 0 && index < s.length ? index : -1),
                 set: noop,
@@ -326,11 +318,10 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> {
         ]);
     }) as any;
 
-    filter: TOpticType extends mapped ? (predicate: (a: A) => boolean) => Optic<A, mapped, S> : never = ((
+    filter: TOpticType extends mapped ? (predicate: (a: A) => boolean) => Resolve<this, A, mapped, S> : never = ((
         predicate: (a: A) => boolean,
     ) => {
-        return new Optic([
-            ...this.lenses,
+        return this.derive([
             {
                 get: (s: A[]) =>
                     s.reduce((acc, cv, ci) => {
@@ -344,12 +335,11 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> {
         ]);
     }) as any;
 
-    slice: TOpticType extends mapped ? (start?: number, end?: number) => Optic<A, mapped, S> : never = ((
+    slice: TOpticType extends mapped ? (start?: number, end?: number) => Resolve<this, A, mapped, S> : never = ((
         start = 0,
         end?: number,
     ) => {
-        return new Optic([
-            ...this.lenses,
+        return this.derive([
             {
                 get: (s: A[]) => {
                     const startAbs = start < 0 ? s.length + start : start;
@@ -366,11 +356,10 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> {
         ]);
     }) as any;
 
-    sort: TOpticType extends mapped ? (compareFn?: (a: A, b: A) => number) => Optic<A, mapped, S> : never = ((
+    sort: TOpticType extends mapped ? (compareFn?: (a: A, b: A) => number) => Resolve<this, A, mapped, S> : never = ((
         compareFn = (a: any, b: any) => (`${a}` < `${b}` ? -1 : 1),
     ) => {
-        return new Optic([
-            ...this.lenses,
+        return this.derive([
             {
                 get: (s: A[]) =>
                     Object.entries(s)
@@ -384,10 +373,9 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> {
     }) as any;
 
     atKey: A extends Record<string, infer R>
-        ? (key: string) => Optic<R, TOpticType extends total ? partial : TOpticType, S>
+        ? (key: string) => Resolve<this, R, TOpticType extends total ? partial : TOpticType, S>
         : never = ((key: string) => {
-        return new Optic([
-            ...this.lenses,
+        return this.derive([
             {
                 get: (s) => s[key],
                 set: (a, s) => (s[key] !== undefined ? { ...s, [key]: a } : s),

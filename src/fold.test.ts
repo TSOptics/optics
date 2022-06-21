@@ -1,4 +1,4 @@
-import { optic } from '../src';
+import { optic } from '.';
 
 describe('map', () => {
     it('should handle consecutive calls to map', () => {

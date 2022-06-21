@@ -1,7 +1,7 @@
-import { Noop, noop } from '@babel/types';
-import { optic, opticPartial } from '../src/constructors';
-import { Optic } from '../src/Optic';
-import { mapped, OpticType, partial, total } from '../src/types';
+import { noop } from '@babel/types';
+import { optic, opticPartial } from './constructors';
+import { Optic } from './Optic';
+import { mapped, partial, total } from './types';
 
 const expectPartial = <TOpticType extends partial>(
     optic: Optic<any, TOpticType>,

@@ -1,7 +1,7 @@
-import { optic } from '../src/constructors';
+import { optic } from './constructors';
 import { Optic } from '../src/Optic';
-import { total, partial, mapped, Path } from '../src/types';
-import { noop } from '../src/utils';
+import { total, partial, mapped, Path } from './types';
+import { noop } from './utils';
 
 const expectTotal: <A = any, S = any>(o: Optic<A, total, S>) => void = noop;
 const expectPartial: <A = any, T extends partial = partial, S = any>(

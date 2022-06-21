@@ -34,11 +34,21 @@ type RecursivePath<T, K = Exclude<keyof NonNullable<T>, keyof any[] | keyof Date
               | K
               | `${K}${IsNullable<T[K]> extends true ? '?.' : '.'}${T[K] extends null | undefined
                     ? never
+                    : unknown extends T[K]
+                    ? never
                     : RecursivePath<NonNullable<T[K]>>}`
         : never
     : never;
 
-export type Path<T> = any[] extends T ? (T extends [any, ...any] ? RecursivePath<T> : number) : RecursivePath<T>;
+export type Path<T> = unknown extends T
+    ? [T] extends [boolean]
+        ? string
+        : never
+    : any[] extends T
+    ? T extends [any, ...any]
+        ? RecursivePath<T>
+        : number
+    : RecursivePath<T>;
 
 export type PathType<T, P extends string | number> = P extends keyof NonNullable<T>
     ? NonNullable<T>[P]

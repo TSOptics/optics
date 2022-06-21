@@ -20,6 +20,18 @@ describe('lens', () => {
         expect(onAsFirst.set((prev) => prev, obj)).toBe(obj);
     });
 });
+describe('focus on top types', () => {
+    it('should allow arbitrary paths when focused on type any', () => {
+        optic<any>().focus('arbitrary.path');
+    });
+    it("should't accept a path when focused on type unknown", () => {
+        optic<unknown>().focus('' as never);
+    });
+    it('should stop searching deeper when encountering any or unknown', () => {
+        const validPath: 'a' | 'a.b' | 'a.c' = 'a.b';
+        optic<{ a: { b: any; c: unknown } }>().focus(validPath);
+    });
+});
 describe('optional', () => {
     type TestObj = { a: { b?: { c: number } } };
     const onC = optic<TestObj>().focus('a.b?.c');

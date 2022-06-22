@@ -132,7 +132,7 @@ describe('focusWithDefault', () => {
     it('should use fallback', () => {
         const test: Test = { a: { b: undefined } };
         expect(onB.get(test)).toBe(42);
-        expect(onB.set(90, test)).toStrictEqual({ a: { b: 90 } });
+        expect(onB.set(90, test)).toEqual({ a: { b: 90 } });
     });
     it('should be referentially stable', () => {
         const onA = optic<Test>().focusWithDefault('a', () => ({ b: 42 }));

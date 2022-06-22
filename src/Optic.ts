@@ -132,7 +132,12 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> {
     focusWithDefault: <Prop extends keyof NonNullable<A>>(
         prop: Prop,
         fallback: (parent: A) => NonNullable<NonNullable<A>[Prop]>,
-    ) => Resolve<this, NonNullable<NonNullable<A>[Prop]>, TOpticType, S> = (key, fallback) => {
+    ) => Resolve<
+        this,
+        NonNullable<NonNullable<A>[Prop]>,
+        TOpticType extends total ? (IsNullable<A> extends true ? partial : TOpticType) : TOpticType,
+        S
+    > = (key, fallback) => {
         return this.derive([
             {
                 get: stabilize((s) => {

@@ -32,6 +32,15 @@ describe('map', () => {
         const newState = onValues.set((x) => x * 2, state);
         expect(newState).toEqual({ a: 84, b: 134, c: 2000, d: 180 });
     });
+    it('should be referentially stable', () => {
+        const ns = [
+            [1, 2],
+            [3, 4],
+        ];
+        const onNs = optic<number[][]>().map().map();
+        const flattenedNs = onNs.get(ns);
+        expect(onNs.get(ns)).toBe(flattenedNs);
+    });
 });
 
 const state: {

@@ -207,8 +207,8 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> {
         ]);
     };
 
-    convert = <B>(get: (a: A) => B, reverseGet: (b: B) => A): Resolve<this, B, TOpticType, S> => {
-        return this.derive([{ get: stabilize(get), set: reverseGet, key: 'convert' }]);
+    convert = <B>(to: (a: A) => B, from: (b: B) => A): Resolve<this, B, TOpticType, S> => {
+        return this.derive([{ get: stabilize(to), set: from, key: 'convert' }]);
     };
 
     map: A extends readonly (infer R)[] ? () => Resolve<this, R, mapped, S> : never = (() => {

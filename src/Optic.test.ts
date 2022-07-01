@@ -120,6 +120,7 @@ describe('focus string key', () => {
     it('should find no key and return undefined', () => {
         const onSpain = onCountryCodes.focus('spain');
         expect(onSpain.get(countryCodes)).toBeUndefined();
+        expect(onSpain.toPartial().set(-1, countryCodes)).toBe(countryCodes);
     });
 });
 describe('focusWithDefault', () => {

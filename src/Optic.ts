@@ -377,18 +377,6 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> {
         ]);
     }) as any;
 
-    atKey: A extends Record<string, infer R>
-        ? (key: string) => Resolve<this, R, TOpticType extends total ? partial : TOpticType, S>
-        : never = ((key: string) => {
-        return this.derive([
-            {
-                get: (s) => s[key],
-                set: (a, s) => (s[key] !== undefined ? { ...s, [key]: a } : s),
-                key: `record key: ${key}`,
-            },
-        ]);
-    }) as any;
-
     toPartial: IsNullable<A> extends true
         ? () => Resolve<this, NonNullable<A>, TOpticType extends total ? partial : TOpticType, S>
         : never = (() => this.derive([{ get: (s) => s, set: (a) => a, key: 'toPartial' }])) as any;

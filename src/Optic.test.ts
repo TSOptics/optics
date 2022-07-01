@@ -108,19 +108,18 @@ describe('if', () => {
         expect(onMajorName.set('Titouan', minor)).toBe(minor);
     });
 });
-describe('atKey', () => {
+describe('focus string key', () => {
     const countryCodes: Record<string, number> = { france: 33, germany: 49, italy: 39 };
     const onCountryCodes = optic<typeof countryCodes>();
 
     it('should focus on the value indexed by the key', () => {
-        const onFrance = onCountryCodes.atKey('france');
+        const onFrance = onCountryCodes.focus('france');
         expect(onFrance.get(countryCodes)).toBe(33);
         expect(onFrance.set(-1, countryCodes)).toStrictEqual({ france: -1, germany: 49, italy: 39 });
     });
     it('should find no key and return undefined', () => {
-        const onSpain = onCountryCodes.atKey('spain');
+        const onSpain = onCountryCodes.focus('spain');
         expect(onSpain.get(countryCodes)).toBeUndefined();
-        expect(onSpain.set(-1, countryCodes)).toBe(countryCodes);
     });
 });
 describe('focusWithDefault', () => {

@@ -25,10 +25,6 @@ export class BaseOptic<A, TOpticType extends OpticType = total, S = any> {
     }
 
     get: (s: S) => FocusedValue<A, TOpticType> = (s) => {
-        const isOpticTraversal = this.lenses.reduce(
-            (acc, cv) => (cv.type === 'fold' ? false : acc || cv.type === 'map' || cv.type === 'foldN'),
-            false,
-        );
         const aux = (s: any, lenses: Lens[], isTraversal = false): any => {
             const [lens, ...tailLenses] = lenses;
             if (!lens) {
@@ -67,7 +63,7 @@ export class BaseOptic<A, TOpticType extends OpticType = total, S = any> {
         };
 
         const result = aux(s, this.lenses);
-        return isOpticTraversal && (result === undefined || result === null) ? [] : result;
+        return (result === undefined || result === null) && this.isMapped() ? [] : result;
     };
 
     set: (a: A | ((prev: A) => A), s: S) => S = (a, s) => {
@@ -370,6 +366,12 @@ export class BaseOptic<A, TOpticType extends OpticType = total, S = any> {
 
     toPartial: () => Resolve<this, NonNullable<A>, TOpticType extends total ? partial : TOpticType, S> = (() =>
         this.derive([{ get: (s) => s, set: (a) => a, key: 'toPartial' }])) as any;
+
+    isMapped: () => this is Resolve<this, A, mapped, S> = () =>
+        this.lenses.reduce(
+            (acc, cv) => (cv.type === 'fold' ? false : acc || cv.type === 'map' || cv.type === 'foldN'),
+            false,
+        );
 
     toString() {
         return this.getKeys().toString();

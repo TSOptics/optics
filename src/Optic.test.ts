@@ -268,3 +268,20 @@ describe('focusMany', () => {
         expectPartial(onC, true);
     });
 });
+describe('isMapped', () => {
+    const onNumbers = optic<number[]>();
+    it('should return false if total optic', () => {
+        expect(onNumbers.isMapped()).toBe(false);
+    });
+    it('should be true if mapped optic', () => {
+        expect(onNumbers.map().isMapped()).toBe(true);
+    });
+    it('should be false if fold optic', () => {
+        expect(
+            onNumbers
+                .map()
+                .findFirst((x) => x % 2 === 0)
+                .isMapped(),
+        ).toBe(false);
+    });
+});

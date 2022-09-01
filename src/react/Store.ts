@@ -1,13 +1,11 @@
-import { total } from '../types';
+import { OpticType, total } from '../types';
 import { StoreOptic } from './StoreOptic';
 
 export type Store<T = any> = { state: T; listeners: Set<(root: T) => void> };
 
-export const stores: Map<object, Store> = new Map();
+export const stores: WeakMap<StoreOptic<any, OpticType>, Store> = new WeakMap();
 
 export function createStore<T>(initialValue: T, key?: string) {
-    const storeId = {};
-
     const rootOptic = new StoreOptic<T, total, T>(
         [
             {
@@ -16,7 +14,6 @@ export function createStore<T>(initialValue: T, key?: string) {
                 set: (a) => a,
             },
         ],
-        storeId,
         initialValue,
     );
     return rootOptic;

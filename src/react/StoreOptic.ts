@@ -3,12 +3,14 @@ import { FocusedValue, Lens, OpticType, total } from '../types';
 import { Store, stores } from './Store';
 
 export class StoreOptic<A, TOpticType extends OpticType = total, S = any> extends Optic<A, TOpticType, S> {
-    constructor(lenses: Lens[], private storeId: object, private initialValue: S) {
+    private storeId: StoreOptic<any, TOpticType, S>;
+    constructor(lenses: Lens[], private initialValue: S, _storeId?: StoreOptic<any, TOpticType, S>) {
         super(lenses);
+        this.storeId = _storeId ?? this;
     }
 
     protected override derive(newLenses: Lens[]) {
-        return new StoreOptic([...this.lenses, ...newLenses], this.storeId, this.initialValue);
+        return new StoreOptic([...this.lenses, ...newLenses], this.initialValue, this.storeId);
     }
 
     private getStore(): Store<S> {

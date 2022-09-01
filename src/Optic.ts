@@ -4,6 +4,9 @@ import { Store, stores } from './Store';
 
 export class Optic<A, TOpticType extends OpticType = total, S = any> extends BaseOptic<A, TOpticType, S> {
     private storeId: Optic<any, TOpticType, S>;
+    private cachedS: any;
+    private cachedA: any;
+
     constructor(lenses: Lens[], private initialValue: S, _storeId?: Optic<any, TOpticType, S>) {
         super(lenses);
         this.storeId = _storeId ?? this;
@@ -25,7 +28,11 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> extends Bas
 
     getState = (): FocusedValue<A, TOpticType> => {
         const store = this.getStore();
-        return this.get(store.state);
+        if (store.state === this.cachedS && this.cachedA !== undefined) return this.cachedA;
+        const a = this.get(store.state);
+        this.cachedS = store.state;
+        this.cachedA = a;
+        return a;
     };
 
     setState = (a: A | ((prev: A) => A)) => {

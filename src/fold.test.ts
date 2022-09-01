@@ -1,4 +1,4 @@
-import { optic } from '.';
+import { createStore, optic } from '.';
 
 describe('map', () => {
     it('should handle consecutive calls to map', () => {
@@ -37,9 +37,9 @@ describe('map', () => {
             [1, 2],
             [3, 4],
         ];
-        const onNs = optic<number[][]>().map().map();
-        const flattenedNs = onNs.get(ns);
-        expect(onNs.get(ns)).toBe(flattenedNs);
+        const onNs = createStore(ns).map().map();
+        const flattenedNs = onNs.getState();
+        expect(onNs.getState()).toBe(flattenedNs);
     });
 });
 

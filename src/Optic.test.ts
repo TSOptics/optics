@@ -116,8 +116,12 @@ describe('convert', () => {
     });
     it('should be referentially stable', () => {
         const tuple: [string, number] = ['Jean', 42];
-        expect(onObject.get(tuple)).toBe(onObject.get(tuple));
-        expect(onObject.set((x) => x, tuple)).toBe(tuple);
+        const onObjectStore = createStore(tuple).compose(onObject);
+        const object = onObjectStore.getState();
+        expect(object).toBe(onObjectStore.getState());
+
+        onObjectStore.setState((x) => x);
+        expect(object).toBe(onObjectStore.getState());
     });
 });
 describe('if', () => {
@@ -170,9 +174,9 @@ describe('focusWithDefault', () => {
         expect(onB.set(90, test)).toEqual({ a: { b: 90 } });
     });
     it('should be referentially stable', () => {
-        const onA = optic<Test>().focusWithDefault('a', () => ({ b: 42 }));
         const emptyA: Test = { a: undefined };
-        expect(onA.get(emptyA)).toBe(onA.get(emptyA));
+        const onAStore = createStore(emptyA).focusWithDefault('a', () => ({ b: 42 }));
+        expect(onAStore.getState()).toBe(onAStore.getState());
     });
 });
 describe('toPartial', () => {
@@ -205,7 +209,8 @@ describe('custom optic', () => {
         expect(onEvenNums.set([42, 84], nums)).toStrictEqual([42, 84]);
     });
     it('should be referentially stable', () => {
-        expect(onEvenNums.get(nums)).toBe(onEvenNums.get(nums));
+        const onEvenNumsStore = createStore(nums).compose(onEvenNums);
+        expect(onEvenNumsStore.getState()).toBe(onEvenNumsStore.getState());
     });
 });
 describe('custom partial optic', () => {
@@ -227,21 +232,6 @@ describe('custom partial optic', () => {
         expect(onSpain.get(countryInfos)?.capital).toBeUndefined();
         expect(onFrance.set({ capital: 'Marseille' }, countryInfos)['france']).toStrictEqual({ capital: 'Marseille' });
         expect(onSpain.set({ capital: 'Barcelona' }, countryInfos)).toBe(countryInfos);
-    });
-    it('should be referentially stable', () => {
-        const onEntriesNoEmpty = opticPartial(
-            (s: typeof countryInfos) => {
-                const values = Object.values(s);
-                return values.length > 0 ? values : undefined;
-            },
-            (a, s) => {
-                const values = Object.values(s);
-                return values.length > 0 ? Object.fromEntries(Object.keys(s).map((k, i) => [k, a[i]])) : s;
-            },
-            'onEntriesNoEmpty',
-        );
-
-        expect(onEntriesNoEmpty.get(countryInfos)).toBe(onEntriesNoEmpty.get(countryInfos));
     });
 });
 describe('focusMany', () => {

@@ -12,11 +12,10 @@ import {
     OpticType,
     FocusedValue,
 } from './types';
-import { noop, stabilize } from './utils';
+import { noop } from './utils';
 
 export class BaseOptic<A, TOpticType extends OpticType = total, S = any> {
     protected lenses: Lens[];
-    private cache: Map<Lens, [key: any[], value: any]> = new Map();
     constructor(lenses: Lens[]) {
         this.lenses = lenses;
     }
@@ -36,11 +35,6 @@ export class BaseOptic<A, TOpticType extends OpticType = total, S = any> {
                 return s;
             }
             if (lens.type === 'map') {
-                const traversalCache = this.cache.get(lens);
-                if (!isTraversal && traversalCache) {
-                    const [cacheKey, cacheValue] = traversalCache;
-                    if (cacheKey === s) return cacheValue;
-                }
                 const slice = lens.get(s) as any[];
                 const flattened = isTraversal ? slice.flat() : slice;
                 const filtered =
@@ -48,9 +42,6 @@ export class BaseOptic<A, TOpticType extends OpticType = total, S = any> {
                         ? flattened.filter((x) => x !== undefined && x !== null)
                         : flattened;
                 const result = filtered.length > 0 ? aux(filtered, tailLenses, true) : undefined;
-                if (!isTraversal) {
-                    this.cache.set(lens, [s, result]);
-                }
                 return result;
             }
             if (lens.type === 'fold') {
@@ -140,10 +131,10 @@ export class BaseOptic<A, TOpticType extends OpticType = total, S = any> {
     > = (key, fallback) => {
         return this.derive([
             {
-                get: stabilize((s) => {
+                get: (s) => {
                     const slice = s[key];
                     return slice !== undefined && slice !== null ? slice : fallback(s);
-                }),
+                },
                 set: (a, s) => ({ ...s, [key]: a }),
                 key: `focus ${key.toString()} with default`,
             },
@@ -208,7 +199,7 @@ export class BaseOptic<A, TOpticType extends OpticType = total, S = any> {
     };
 
     convert: <B>(to: (a: A) => B, from: (b: B) => A) => Resolve<this, B, TOpticType, S> = (to, from) => {
-        return this.derive([{ get: stabilize(to), set: from, key: 'convert' }]);
+        return this.derive([{ get: to, set: from, key: 'convert' }]);
     };
 
     map: A extends readonly (infer R)[] ? () => Resolve<this, R, mapped, S> : never = (() => {

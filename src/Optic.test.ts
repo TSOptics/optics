@@ -1,16 +1,51 @@
 import { noop } from '@babel/types';
 import { optic, opticPartial } from './constructors';
-import { Optic } from './Optic';
+import { BaseOptic } from './BaseOptic';
 import { mapped, partial, total } from './types';
+import { Optic } from './Optic';
+import { createStore } from './Store';
 
+const expectType = <T extends any>(t: T) => noop();
 const expectPartial = <TOpticType extends partial>(
-    optic: Optic<any, TOpticType>,
+    optic: BaseOptic<any, TOpticType>,
     t: TOpticType extends total ? never : true,
 ) => noop();
 
-const expectTotal = (optic: Optic<any, total>) => noop();
-const expectMapped = (optic: Optic<any, mapped>) => noop();
+const expectTotal = (optic: BaseOptic<any, total>) => noop();
+const expectMapped = (optic: BaseOptic<any, mapped>) => noop();
 
+describe('Optic', () => {
+    it('should be a subtype of Optic', () => {
+        const storeOptic = {} as Optic<number>;
+        const baseOptic: BaseOptic<number> = storeOptic;
+    });
+    it('should be covariant on type param TOpticType', () => {
+        const storeOptic = {} as Optic<number>;
+        const basePartialOptic: BaseOptic<number, partial> = storeOptic;
+        const storePartialOptic: Optic<number, partial> = storeOptic;
+    });
+    it('should compose with plain optics', () => {
+        const onState = createStore({ a: { b: 42 } });
+        const onNumber = optic<{ b: number }>().focus('b');
+        const onNumberFromState = onState.focus('a').compose(onNumber);
+        expectType<Optic<number, total, { a: { b: number } }>>(onNumberFromState);
+        expect(onNumberFromState.getState()).toBe(42);
+    });
+    describe('direct store access', () => {
+        const onState = createStore({ a: 42 });
+        expect(onState.getState()).toEqual({ a: 42 });
+
+        onState.setState({ a: 100 });
+        expect(onState.getState()).toEqual({ a: 100 });
+
+        const onNumber = onState.focus('a');
+        const listener = jest.fn();
+        onNumber.subscribe(listener);
+        onState.setState({ a: 42 });
+        expect(listener).toHaveBeenCalledTimes(1);
+        expect(listener).toHaveBeenCalledWith(42);
+    });
+});
 describe('lens', () => {
     const obj = { a: { as: [1, 2, 3] } };
     const onAsFirst = optic<typeof obj>().focus('a.as').focus(0);
@@ -60,14 +95,14 @@ describe('refine', () => {
     });
 });
 describe('convert', () => {
-    const onTuple = optic<[string, number]>().convert(
+    const onObject = optic<[string, number]>().convert(
         ([name, age]) => ({ name, age }),
         ({ name, age }) => [name, age],
     );
 
     it('should convert from tuple to object', () => {
-        expect(onTuple.get(['Jean', 42])).toStrictEqual({ name: 'Jean', age: 42 });
-        expect(onTuple.set({ name: 'Albert', age: 65 }, ['Jean', 34])).toStrictEqual(['Albert', 65]);
+        expect(onObject.get(['Jean', 42])).toStrictEqual({ name: 'Jean', age: 42 });
+        expect(onObject.set({ name: 'Albert', age: 65 }, ['Jean', 34])).toStrictEqual(['Albert', 65]);
     });
     it('should convert from celcius to fahrenheit', () => {
         const onTemp = optic<number>().convert(
@@ -81,8 +116,8 @@ describe('convert', () => {
     });
     it('should be referentially stable', () => {
         const tuple: [string, number] = ['Jean', 42];
-        expect(onTuple.get(tuple)).toBe(onTuple.get(tuple));
-        expect(onTuple.set(onTuple.get(tuple), tuple)).toBe(tuple);
+        expect(onObject.get(tuple)).toBe(onObject.get(tuple));
+        expect(onObject.set((x) => x, tuple)).toBe(tuple);
     });
 });
 describe('if', () => {
@@ -213,23 +248,29 @@ describe('focusMany', () => {
     const onObj = optic<{ a: string[]; b: boolean }>();
     it('should return optics with capitalized names', () => {
         expect(onObj.focusMany(['a', 'b'])).toStrictEqual({
-            onA: expect.any(Optic),
-            onB: expect.any(Optic),
+            onA: expect.any(BaseOptic),
+            onB: expect.any(BaseOptic),
         });
-        expect(optic<number[]>().focusMany([0, 1])).toStrictEqual({ on0: expect.any(Optic), on1: expect.any(Optic) });
+        expect(optic<number[]>().focusMany([0, 1])).toStrictEqual({
+            on0: expect.any(BaseOptic),
+            on1: expect.any(BaseOptic),
+        });
     });
     it('should allow custom prefix', () => {
         expect(onObj.focusMany(['a', 'b'], 'test')).toStrictEqual({
-            testA: expect.any(Optic),
-            testB: expect.any(Optic),
+            testA: expect.any(BaseOptic),
+            testB: expect.any(BaseOptic),
         });
     });
     it('should allow no prefix', () => {
         expect(onObj.focusMany(['a', 'b'], '')).toStrictEqual({
-            a: expect.any(Optic),
-            b: expect.any(Optic),
+            a: expect.any(BaseOptic),
+            b: expect.any(BaseOptic),
         });
-        expect(optic<number[]>().focusMany([0, 1], '')).toStrictEqual({ 0: expect.any(Optic), 1: expect.any(Optic) });
+        expect(optic<number[]>().focusMany([0, 1], '')).toStrictEqual({
+            0: expect.any(BaseOptic),
+            1: expect.any(BaseOptic),
+        });
     });
     it('should yield partial optics when parent optic focus on nullable', () => {
         const { onB, onC } = optic<{ a?: { b: boolean; c: number } }>().focus('a').focusMany(['b', 'c']);

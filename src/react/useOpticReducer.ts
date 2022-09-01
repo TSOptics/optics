@@ -1,13 +1,13 @@
 import { Dispatch, useCallback } from 'react';
 import { optic } from '../constructors';
-import { Optic } from '../Optic';
+import { BaseOptic } from '../BaseOptic';
 import { FocusedValue, OpticType, total } from '../types';
-import { StoreOptic } from './StoreOptic';
+import { Optic } from '../Optic';
 import useOptic from './useOptic';
 
 const useOpticReducer = <T, TOpticType extends OpticType, Action>(
-    onState: StoreOptic<T, TOpticType>,
-    reducer: (state: T, action: Action, onState: Optic<T, total, T>) => T,
+    onState: Optic<T, TOpticType>,
+    reducer: (state: T, action: Action, onState: BaseOptic<T, total, T>) => T,
 ): [FocusedValue<T, TOpticType>, Dispatch<Action>] => {
     const [state, setState] = useOptic(onState);
 

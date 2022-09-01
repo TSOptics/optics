@@ -1,13 +1,13 @@
 import { useCallback, useRef } from 'react';
-import { Optic } from '../Optic';
+import { BaseOptic } from '../BaseOptic';
 import { Lens, OpticType } from '../types';
 import { noop } from '../utils';
-import { StoreOptic } from './StoreOptic';
+import { Optic } from '../Optic';
 
-type KeyedOptics<T, TOpticType extends OpticType, S> = Record<string, StoreOptic<T, TOpticType, S>>;
+type KeyedOptics<T, TOpticType extends OpticType, S> = Record<string, Optic<T, TOpticType, S>>;
 
 const useKeyedOptics = <T, TOpticType extends OpticType, S>(
-    onArray: StoreOptic<T[], TOpticType, S>,
+    onArray: Optic<T[], TOpticType, S>,
     keyExtractor: (t: T) => string,
 ) => {
     const keyExtractorRef = useRef(keyExtractor).current;
@@ -28,7 +28,7 @@ const useKeyedOptics = <T, TOpticType extends OpticType, S>(
                     lenses[lenses.length - 1] = lensOnIndex;
                     acc[key] = opticForKey;
                 } else {
-                    acc[key] = onArray.compose(new Optic([lensOnIndex])) as any;
+                    acc[key] = onArray.compose(new BaseOptic([lensOnIndex])) as any;
                 }
                 return acc;
             }, {}) ?? {};

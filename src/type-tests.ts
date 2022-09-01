@@ -1,13 +1,13 @@
 import { optic } from './constructors';
-import { Optic } from '../src/Optic';
+import { BaseOptic } from './BaseOptic';
 import { total, partial, mapped, Path } from './types';
 import { noop } from './utils';
 
-const expectTotal: <A = any, S = any>(o: Optic<A, total, S>) => void = noop;
+const expectTotal: <A = any, S = any>(o: BaseOptic<A, total, S>) => void = noop;
 const expectPartial: <A = any, T extends partial = partial, S = any>(
-    o: partial extends T ? Optic<A, T, S> : never,
+    o: partial extends T ? BaseOptic<A, T, S> : never,
 ) => void = noop;
-const expectMapped: <A = any, S = any>(o: Optic<A, mapped, S>) => void = noop;
+const expectMapped: <A = any, S = any>(o: BaseOptic<A, mapped, S>) => void = noop;
 
 describe('compose types', () => {
     /**
@@ -16,7 +16,7 @@ describe('compose types', () => {
     expectTotal(
         optic<{ foo: string }>()
             .focus('foo')
-            .compose({} as Optic<boolean>),
+            .compose({} as BaseOptic<boolean>),
     );
 
     /**
@@ -25,7 +25,7 @@ describe('compose types', () => {
     expectPartial(
         optic<{ foo: string | undefined }>()
             .focus('foo')
-            .compose({} as Optic<boolean, total, string>),
+            .compose({} as BaseOptic<boolean, total, string>),
     );
 
     /**
@@ -34,7 +34,7 @@ describe('compose types', () => {
     expectPartial(
         optic<{ foo: string }>()
             .focus('foo')
-            .compose({} as Optic<boolean, partial>),
+            .compose({} as BaseOptic<boolean, partial>),
     );
 
     /**
@@ -43,7 +43,7 @@ describe('compose types', () => {
     expectMapped(
         optic<{ foo: string[] }>()
             .focus('foo')
-            .compose({} as Optic<boolean, mapped>),
+            .compose({} as BaseOptic<boolean, mapped>),
     );
 
     /**
@@ -52,7 +52,7 @@ describe('compose types', () => {
     expectPartial(
         optic<{ foo?: { bar: string } }>()
             .focus('foo?.bar')
-            .compose({} as Optic<boolean>),
+            .compose({} as BaseOptic<boolean>),
     );
 
     /**
@@ -61,7 +61,7 @@ describe('compose types', () => {
     expectPartial(
         optic<{ foo?: { bar: string } }>()
             .focus('foo?.bar')
-            .compose({} as Optic<boolean, partial>),
+            .compose({} as BaseOptic<boolean, partial>),
     );
 
     /**
@@ -70,34 +70,34 @@ describe('compose types', () => {
     expectMapped(
         optic<{ foo?: { bar: string } }>()
             .focus('foo?.bar')
-            .compose({} as Optic<boolean, mapped>),
+            .compose({} as BaseOptic<boolean, mapped>),
     );
 
     /**
      * mapped + total = mapped
      */
-    expectMapped(({} as Optic<string, mapped>).compose({} as Optic<boolean>));
+    expectMapped(({} as BaseOptic<string, mapped>).compose({} as BaseOptic<boolean>));
 
     /**
      * mapped + partial = mapped
      */
-    expectMapped(({} as Optic<string, mapped>).compose({} as Optic<boolean, partial>));
+    expectMapped(({} as BaseOptic<string, mapped>).compose({} as BaseOptic<boolean, partial>));
 
     /**
      * mapped + mapped = mapped
      */
-    expectMapped(({} as Optic<string, mapped>).compose({} as Optic<boolean, mapped>));
+    expectMapped(({} as BaseOptic<string, mapped>).compose({} as BaseOptic<boolean, mapped>));
 });
 
 describe('lens', () => {
     it('shoud be a subtype of partial', () => {
-        const lens: Optic<any, total> = new Optic([]);
-        const partial: Optic<any, partial> = lens;
+        const lens: BaseOptic<any, total> = new BaseOptic([]);
+        const partial: BaseOptic<any, partial> = lens;
     });
     it("should't be a supertype of partial", () => {
-        const partial: Optic<any, partial> = new Optic([]);
+        const partial: BaseOptic<any, partial> = new BaseOptic([]);
         // @ts-expect-error partial isn't assignable to total
-        const total: Optic<any> = partial;
+        const total: BaseOptic<any> = partial;
     });
     it('toPartial should return a partial focusing on the nonnullable type', () => {
         const onNullable = optic<{ a: string | null | undefined }>().focus('a');

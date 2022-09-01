@@ -1,10 +1,10 @@
 import { Dispatch, SetStateAction, useMemo } from 'react';
 import { useSyncExternalStore } from 'use-sync-external-store/shim/';
 import { FocusedValue, OpticType } from '../types';
-import { StoreOptic } from './StoreOptic';
+import { Optic } from '../Optic';
 
 function useOptic<T, TOpticType extends OpticType, S>(
-    optic: StoreOptic<T, TOpticType, S>,
+    optic: Optic<T, TOpticType, S>,
 ): [FocusedValue<T, TOpticType>, Dispatch<SetStateAction<T>>] {
     const slice = useSyncExternalStore(
         (listener) => optic.subscribe(listener),

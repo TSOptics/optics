@@ -56,3 +56,15 @@ declare module './BaseOptic' {
         (): TOptic extends Optic<any, OpticType> ? Optic<A, TOpticType, S> : BaseOptic<A, TOpticType, S>;
     }
 }
+
+type Denormalize<T> = T extends Optic<infer R, infer OpticType>
+    ? FocusedValue<R, OpticType>
+    : T extends Date
+    ? T
+    : T extends Record<string, any>
+    ? { [P in keyof T]: Denormalize<T[P]> } extends infer SubTree
+        ? T extends SubTree
+            ? T
+            : SubTree
+        : never
+    : T;

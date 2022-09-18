@@ -68,3 +68,35 @@ type Denormalize<T> = T extends Optic<infer R, infer OpticType>
             : SubTree
         : never
     : T;
+
+type FlattenOptics<T, Path extends string = '', IsUnion extends boolean = false, OriginalT = T> = T extends Optic<any>
+    ? { [K in Path as `${K}`]: [OriginalT] extends [T] ? IsUnion : true }
+    : T extends Record<string, any>
+    ? Exclude<keyof T, keyof any[]> extends infer Keys
+        ? [Keys] extends [never]
+            ? [T] extends [any[]]
+                ? FlattenOptics<
+                      T[number],
+                      `${Path}${Path extends '' ? '' : '.'}map`,
+                      [OriginalT] extends [T] ? IsUnion : true
+                  >
+                : never
+            : Keys extends string
+            ? FlattenOptics<
+                  T[Keys],
+                  `${Path}${Path extends '' ? '' : '.'}${Keys}`,
+                  [OriginalT] extends [T] ? IsUnion : true
+              >
+            : never
+        : never
+    : never;
+
+type RequiredOptics<T> = FlattenOptics<T> extends infer U
+    ? { [P in keyof U as U[P] extends false ? P : never]: U[P] }
+    : never;
+
+type OptionalOptics<T> = FlattenOptics<T> extends infer U
+    ? { [P in keyof U as U[P] extends true ? P : never]: U[P] }
+    : never;
+
+type UnionToIntersection<T> = (T extends any ? (t: T) => void : never) extends (t: infer U) => void ? U : never;

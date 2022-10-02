@@ -285,3 +285,35 @@ describe('isMapped', () => {
         ).toBe(false);
     });
 });
+describe('denormalize', () => {
+    const onCities = createStore([
+        { name: 'Vienna', inhabitants: 1_897_000, country: 'Österreich' },
+        { name: 'Milan', inhabitants: 1_352_000, country: 'Italia' },
+    ]);
+    const onVienna = onCities.focus(0);
+    const onMilan = onCities.focus(1);
+    const onPeople = createStore([{ name: 'Pierre', age: 25, driver: false, city: onMilan }]);
+
+    it('should get denormalized state', () => {
+        const people = onPeople.getState();
+        expect(people).toEqual([
+            {
+                name: 'Pierre',
+                age: 25,
+                driver: false,
+                city: { name: 'Milan', inhabitants: 1_352_000, country: 'Italia' },
+            },
+        ]);
+    });
+    it('should return normalized state', () => {
+        const people = onPeople.getState({ denormalize: false });
+        expect(people).toEqual([
+            {
+                name: 'Pierre',
+                age: 25,
+                driver: false,
+                city: onMilan,
+            },
+        ]);
+    });
+});

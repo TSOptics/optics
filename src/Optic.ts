@@ -1,5 +1,5 @@
 import { BaseOptic } from './BaseOptic';
-import { FocusedValue, Lens, OpticType, total } from './types';
+import { FocusedValue, GetStateOptions, Lens, OpticType, total } from './types';
 import { Store, stores } from './Store';
 
 export class Optic<A, TOpticType extends OpticType = total, S = any> extends BaseOptic<A, TOpticType, S> {
@@ -13,7 +13,11 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> extends Bas
 
     private sCache: any;
     private aCache: { denormalized: boolean; value: any } | undefined;
-    getState = (options?: { denormalize?: boolean }): Denormalize<FocusedValue<A, TOpticType>> => {
+    getState = <TOptions extends GetStateOptions>(
+        options?: TOptions,
+    ): TOptions extends { denormalize: false }
+        ? FocusedValue<A, TOpticType>
+        : Denormalize<FocusedValue<A, TOpticType>> => {
         const { denormalize = true } = options ?? {};
         const store = this.getStore();
         const denormalized = this.storeDependencies !== undefined && denormalize;

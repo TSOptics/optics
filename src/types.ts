@@ -79,3 +79,7 @@ export type FocusedValue<T, TOpticType extends OpticType> = TOpticType extends m
     : TOpticType extends total
     ? T
     : T | undefined;
+
+export type GetStateOptions = {
+    denormalize?: boolean;
+};

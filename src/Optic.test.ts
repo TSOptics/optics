@@ -296,6 +296,18 @@ describe('denormalize', () => {
 
     it('should get denormalized state', () => {
         const people = onPeople.getState();
+        expectType<
+            {
+                name: string;
+                age: number;
+                driver: boolean;
+                city: {
+                    name: string;
+                    inhabitants: number;
+                    country: string;
+                };
+            }[]
+        >(people);
         expect(people).toEqual([
             {
                 name: 'Pierre',
@@ -307,6 +319,26 @@ describe('denormalize', () => {
     });
     it('should return normalized state', () => {
         const people = onPeople.getState({ denormalize: false });
+        expectType<
+            {
+                name: string;
+                age: number;
+                driver: boolean;
+                city: Optic<
+                    {
+                        name: string;
+                        inhabitants: number;
+                        country: string;
+                    },
+                    total,
+                    {
+                        name: string;
+                        inhabitants: number;
+                        country: string;
+                    }[]
+                >;
+            }[]
+        >(people);
         expect(people).toEqual([
             {
                 name: 'Pierre',

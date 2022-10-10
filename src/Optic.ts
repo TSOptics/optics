@@ -53,7 +53,7 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> extends Bas
         };
     };
 
-    protected override derive(newLenses: Lens[]) {
+    protected override derive(newLenses: Lens[]): any {
         return new Optic([...this.lenses, ...newLenses], this.initialValue, this.storeId);
     }
 

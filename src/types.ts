@@ -83,3 +83,7 @@ export type FocusedValue<T, TOpticType extends OpticType> = TOpticType extends m
 export type GetStateOptions = {
     denormalize?: boolean;
 };
+
+export type SubscribeOptions = {
+    denormalize?: boolean;
+};

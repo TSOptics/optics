@@ -1,6 +1,7 @@
 import { BaseOptic } from './BaseOptic';
-import { FocusedValue, GetStateOptions, Lens, OpticType, total } from './types';
+import { FocusedValue, GetStateOptions, Lens, OpticType, SubscribeOptions, total } from './types';
 import { Store, stores } from './Store';
+import { treeForEach, stateDependenciesMap, StoreDependencies } from './StoreDependencies';
 
 export class Optic<A, TOpticType extends OpticType = total, S = any> extends BaseOptic<A, TOpticType, S> {
     private storeId: Optic<any, TOpticType, S>;
@@ -13,11 +14,12 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> extends Bas
 
     private sCache: any;
     private aCache: { denormalized: boolean; value: any } | undefined;
-    getState = <TOptions extends GetStateOptions>(
+    getState = <
+        TOptions extends GetStateOptions,
+        TDenormalize = undefined extends TOptions['denormalize'] ? true : TOptions['denormalize'],
+    >(
         options?: TOptions,
-    ): TOptions extends { denormalize: false }
-        ? FocusedValue<A, TOpticType>
-        : Denormalize<FocusedValue<A, TOpticType>> => {
+    ): TDenormalize extends false ? FocusedValue<A, TOpticType> : Denormalize<FocusedValue<A, TOpticType>> => {
         const { denormalize = true } = options ?? {};
         const store = this.getStore();
         const denormalized = this.storeDependencies !== undefined && denormalize;
@@ -44,14 +46,40 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> extends Bas
         store.listeners.forEach((listener) => listener(store.state));
     };
 
-    subscribe = (listener: (a: FocusedValue<A, TOpticType>) => void) => {
+    subscribe = <
+        TOptions extends SubscribeOptions,
+        TDenormalize = undefined extends TOptions['denormalize'] ? true : TOptions['denormalize'],
+    >(
+        listener: (
+            a: TDenormalize extends false ? FocusedValue<A, TOpticType> : Denormalize<FocusedValue<A, TOpticType>>,
+        ) => void,
+        options?: TOptions,
+    ) => {
+        const { denormalize = true } = options ?? {};
         const store = this.getStore();
-        const stateListener = (s: S) => listener(this.get(s));
+        const stateListener = () => {
+            const { denormalized, value } = this.aCache ?? {};
+            const state = this.getState({ denormalize });
+            if (state === value && denormalize === denormalized) {
+                return;
+            }
+            listener(state as any);
+        };
         store.listeners.add(stateListener);
+        const dependenciesUnsubscribeFns = this.storeDependencies
+            ? stateDependenciesMap(this.getState({ denormalize: false }), this.storeDependencies, (optic: Optic<any>) =>
+                  optic.subscribe(stateListener),
+              )
+            : [];
         return () => {
             store.listeners.delete(stateListener);
+            treeForEach(dependenciesUnsubscribeFns, (unsubscribe) => unsubscribe());
         };
     };
+
+    reset: TOpticType extends total ? () => void : never = (() => {
+        this.setState(this.get(this.initialValue) as any);
+    }) as any;
 
     protected override derive(newLenses: Lens[]): any {
         return new Optic([...this.lenses, ...newLenses], this.initialValue, this.storeId);
@@ -67,7 +95,7 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> extends Bas
         return store;
     }
 
-    private storeDependencies?: StoreDependencies;
+    private storeDependencies?: StoreDependencies<null>;
     private getStoreDependencies(state: any): StoreDependencies | undefined {
         if (state instanceof Optic) return null;
         let empty = true;
@@ -149,7 +177,7 @@ declare module './BaseOptic' {
 }
 
 export type Denormalize<T> = T extends Optic<infer R, infer OpticType>
-    ? FocusedValue<R, OpticType>
+    ? Denormalize<FocusedValue<R, OpticType>>
     : T extends Date
     ? T
     : T extends Record<string, any>
@@ -159,8 +187,6 @@ export type Denormalize<T> = T extends Optic<infer R, infer OpticType>
             : SubTree
         : never
     : T;
-
-type StoreDependencies = Array<StoreDependencies | undefined> | { [key: string]: StoreDependencies } | null;
 
 type FlattenOptics<T, Path extends string = '', IsUnion extends boolean = false, OriginalT = T> = T extends Optic<any>
     ? { [K in Path as `${K}`]: [OriginalT] extends [T] ? IsUnion : true }

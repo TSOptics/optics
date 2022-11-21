@@ -69,6 +69,16 @@ describe('denormalize', () => {
             },
         ]);
     });
+    it('should have separate cache for normalized and denormalized data', () => {
+        const onFranz = onPeople.focus(0);
+
+        const normalizedFranz = onFranz.getState({ denormalize: false });
+        const denormalizedFranz = onFranz.getState();
+
+        onWien.focus('inhabitants').setState((prev) => prev + 1);
+        expect(onFranz.getState({ denormalize: false })).toBe(normalizedFranz);
+        expect(onFranz.getState()).not.toBe(denormalizedFranz);
+    });
     describe('subscribe', () => {
         const onFranz = onPeople.focus(0);
         it('should subscribe to denormalized state', () => {
@@ -86,7 +96,7 @@ describe('denormalize', () => {
 
             onWien.focus('inhabitants').setState((prev) => prev + 1);
 
-            expect(listener).toHaveBeenCalledWith({
+            expect(listener).lastCalledWith({
                 name: 'Franz',
                 age: 25,
                 driver: true,
@@ -142,6 +152,19 @@ describe('denormalize', () => {
 
             onWien.focus('inhabitants').setState((prev) => prev + 1);
             expect(listener).toHaveBeenCalledTimes(1);
+
+            onCountries.focus(0).focus('name').setState('Repubblica Italiana');
+            expect(listener).toHaveBeenCalledWith({
+                name: 'Franz',
+                age: 25,
+                driver: false,
+                city: {
+                    name: 'Milano',
+                    inhabitants: 1_352_000,
+                    country: { name: 'Repubblica Italiana', language: 'Italiano' },
+                },
+            });
+            expect(listener).toHaveBeenCalledTimes(2);
         });
     });
 });

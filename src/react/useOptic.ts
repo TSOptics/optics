@@ -1,17 +1,14 @@
 import { Dispatch, SetStateAction, useMemo } from 'react';
 import { useSyncExternalStore } from 'use-sync-external-store/shim/';
-import { FocusedValue, GetStateOptions, OpticType } from '../types';
-import { Denormalize, Optic } from '../Optic';
+import { GetStateOptions, OpticType } from '../types';
+import { Optic, ResolvedType } from '../Optic';
 
 export type UseOpticOptions = GetStateOptions;
 
-function useOptic<T, TOpticType extends OpticType, S, TOptions extends UseOpticOptions>(
+function useOptic<T, TOpticType extends OpticType, S, TOptions extends UseOpticOptions | undefined>(
     optic: Optic<T, TOpticType, S>,
     options?: TOptions,
-): [
-    TOptions extends { denormalize: false } ? FocusedValue<T, TOpticType> : Denormalize<FocusedValue<T, TOpticType>>,
-    Dispatch<SetStateAction<T>>,
-] {
+): [ResolvedType<T, TOpticType, TOptions>, Dispatch<SetStateAction<T>>] {
     const optionsWithDefault: UseOpticOptions = { denormalize: true, ...(options ?? {}) };
     const slice = useSyncExternalStore(
         (listener) => optic.subscribe(listener),

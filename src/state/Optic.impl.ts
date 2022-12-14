@@ -1,36 +1,53 @@
-import { BaseOptic } from './BaseOptic';
-import { FocusedValue, GetStateOptions, Lens, OpticType, SubscribeOptions, total } from './types';
-import { Store, stores } from './Store';
+import PureOpticImpl from '../PureOptic.impl';
+import { FocusedValue, Lens, OpticType } from '../types';
+import {
+    Optic,
+    Denormalized,
+    Dependencies,
+    Dependency,
+    GetStateOptions,
+    leafSymbol,
+    OnTotal,
+    OpticInterface,
+    ResolvedType,
+    SubscribeOptions,
+} from './Optic.types';
+import { Store, stores } from './store';
 
-export class Optic<A, TOpticType extends OpticType = total, S = any> extends BaseOptic<A, TOpticType, S> {
-    private storeId: Optic<any, TOpticType, S>;
+class OpticImpl<A, TOpticType extends OpticType, S>
+    extends PureOpticImpl<A, TOpticType, S>
+    implements OpticInterface<A, TOpticType, S>, OnTotal
+{
+    private storeId: OpticImpl<any, OpticType, S>;
     private listenersDenormalized = new Set<() => void>();
 
     private _dependencies?: Dependencies | null;
     private get dependencies() {
         if (this._dependencies === undefined) {
-            this._dependencies = this.getDependencies(this.get(this.getStore().state)) ?? null;
+            this._dependencies = this.getDependencies(super.get(this.getStore().state)) ?? null;
         }
         return this._dependencies === null ? undefined : this._dependencies;
     }
 
-    constructor(lenses: Lens[], private initialValue: S, _storeId?: Optic<any, TOpticType, S>) {
+    constructor(lenses: Lens[], private initialValue: S, _storeId?: OpticImpl<any, OpticType, S>) {
         super(lenses);
-        this.storeId = _storeId ?? this;
+        this.storeId = _storeId ?? (this as any);
+        this.get = this.getState as any;
+        this.set = this.setState as any;
     }
 
     private cache: { s?: any; a?: any } = {};
     private cacheDenormalize: { s?: any; a?: any; denormalizedA?: any } = {};
-    getState = <TOptions extends GetStateOptions | undefined>(
-        options?: TOptions,
-    ): ResolvedType<A, TOpticType, TOptions> => {
+    private getState<TOptions extends GetStateOptions | undefined>(
+        options?: TOptions | undefined,
+    ): ResolvedType<A, TOpticType, TOptions, FocusedValue<A, TOpticType>, Denormalized<FocusedValue<A, TOpticType>>> {
         const denormalize = options?.denormalize === false ? false : !!this.dependencies;
         const store = this.getStore();
         if (denormalize && this.dependencies) {
             const a =
                 store.state === this.cacheDenormalize.s && this.cacheDenormalize.a !== undefined
                     ? this.cacheDenormalize.a
-                    : this.get(store.state);
+                    : super.get(store.state);
             const dependenciesChanged = this.updateDependenciesStates(this.dependencies, a);
             if (
                 a === this.cacheDenormalize.a &&
@@ -47,21 +64,25 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> extends Bas
         if (store.state === this.cache.s && this.cache.a !== undefined) {
             return this.cache.a;
         }
-        const a = this.get(store.state);
+        const a = super.get(store.state);
         this.cache = { s: store.state, a };
         return a as any;
-    };
+    }
 
-    setState = (a: A | ((prev: A) => A)) => {
+    private setState(a: A | ((prev: A) => A)) {
         const store = this.getStore();
-        store.state = this.set(a, store.state);
+        store.state = super.set(a, store.state);
         store.listeners.forEach((listener) => listener(store.state));
-    };
+    }
 
-    subscribe = <TOptions extends SubscribeOptions | undefined>(
+    reset(): void {
+        this.setState(super.get(this.initialValue) as any);
+    }
+
+    subscribe<TOptions extends SubscribeOptions | undefined>(
         listener: (a: ResolvedType<A, TOpticType, TOptions>) => void,
         options?: TOptions,
-    ) => {
+    ): () => void {
         const denormalize = options?.denormalize === false ? false : !!this.dependencies;
         const store = this.getStore();
         let cachedA = this.getState({ denormalize });
@@ -92,14 +113,10 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> extends Bas
                 }
             }
         };
-    };
-
-    reset: TOpticType extends total ? () => void : never = (() => {
-        this.setState(this.get(this.initialValue) as any);
-    }) as any;
+    }
 
     protected override derive(newLenses: Lens[]): any {
-        return new Optic([...this.lenses, ...newLenses], this.initialValue, this.storeId);
+        return new OpticImpl([...this.lenses, ...newLenses], this.initialValue, this.storeId);
     }
 
     private getStore(): Store<S> {
@@ -112,29 +129,10 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> extends Bas
         return store;
     }
 
-    private denormalizeState = (state: any, dependencies: Dependencies): any => {
-        if (isLeaf(dependencies)) {
-            return dependencies.state;
-        }
-        if (Array.isArray(dependencies)) {
-            const stateArray = state as Array<any>;
-            return dependencies.map((x, i) =>
-                x === undefined ? stateArray[i] : this.denormalizeState(stateArray[i], x),
-            );
-        }
-        return Object.entries(dependencies).reduce<Record<string, any>>(
-            (acc, [key, value]) => {
-                acc[key] = this.denormalizeState(acc[key], value);
-                return acc;
-            },
-            { ...state },
-        );
-    };
-
     private getDependencies = (state: any): Dependencies | undefined => {
-        if (state instanceof Optic) {
+        if (state instanceof OpticImpl) {
             const leaf: Dependency = {
-                optic: state,
+                optic: state as OpticInterface<any, OpticType, any>,
                 unsubscribe: state.subscribe(() => {
                     this.listenersDenormalized.forEach((listener) => listener());
                 }),
@@ -165,6 +163,24 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> extends Bas
             return empty ? undefined : subTree;
         }
     };
+    private denormalizeState = (state: any, dependencies: Dependencies): any => {
+        if (isLeaf(dependencies)) {
+            return dependencies.state;
+        }
+        if (Array.isArray(dependencies)) {
+            const stateArray = state as Array<any>;
+            return dependencies.map((x, i) =>
+                x === undefined ? stateArray[i] : this.denormalizeState(stateArray[i], x),
+            );
+        }
+        return Object.entries(dependencies).reduce<Record<string, any>>(
+            (acc, [key, value]) => {
+                acc[key] = this.denormalizeState(acc[key], value);
+                return acc;
+            },
+            { ...state },
+        );
+    };
 
     private updateDependenciesSubscriptions = () => {
         const aux = (dependencies: Dependencies, state: any) => {
@@ -194,7 +210,7 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> extends Bas
         let changed = false;
         const aux = (dependencies: Dependencies, state: any) => {
             if (isLeaf(dependencies)) {
-                const newState = (state as Optic<any>).getState({ denormalize: true });
+                const newState = (state as Optic<any, OpticType, any>).get({ denormalize: true });
                 if (newState !== dependencies.state) {
                     changed = true;
                 }
@@ -216,47 +232,6 @@ export class Optic<A, TOpticType extends OpticType = total, S = any> extends Bas
     };
 }
 
-declare module './BaseOptic' {
-    export interface ResolveClass<TOptic extends BaseOptic<any, OpticType>, A, TOpticType extends OpticType, S> {
-        (): TOptic extends Optic<any, OpticType> ? Optic<A, TOpticType, S> : BaseOptic<A, TOpticType, S>;
-    }
-}
-
 const isLeaf = (dependencies: Dependencies): dependencies is Dependency => dependencies.hasOwnProperty(leafSymbol);
 
-type Denormalized<T> = T extends Optic<infer R, infer OpticType>
-    ? Denormalized<FocusedValue<R, OpticType>>
-    : T extends Date
-    ? T
-    : T extends Record<string, any>
-    ? { [P in keyof T]: Denormalized<T[P]> } extends infer SubTree
-        ? T extends SubTree
-            ? T
-            : SubTree
-        : never
-    : T;
-
-export type ResolvedType<
-    T,
-    TOpticType extends OpticType,
-    TOptions extends { denormalize?: boolean } | undefined,
-    TFocusedValue = FocusedValue<T, TOpticType>,
-    TDenormalized = Denormalized<TFocusedValue>,
-> = undefined extends TOptions
-    ? TDenormalized
-    : NonNullable<TOptions>['denormalize'] extends infer denormalize
-    ? denormalize extends false
-        ? TFocusedValue
-        : TDenormalized
-    : never;
-
-const leafSymbol: unique symbol = Symbol('dependency');
-
-type Dependency = {
-    state?: any;
-    optic: Optic<any, OpticType>;
-    unsubscribe: () => void;
-    readonly [leafSymbol]: 'leaf';
-};
-
-type Dependencies = Array<Dependencies | undefined> | { [key: string]: Dependencies } | Dependency;
+export default OpticImpl;

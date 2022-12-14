@@ -1,15 +1,15 @@
 import React, { memo, useCallback, useRef } from 'react';
 import { renderHook } from '@testing-library/react-hooks';
-import { createStore } from '../Store';
 import { act } from 'react-test-renderer';
 import { render, fireEvent } from '@testing-library/react';
 import useOptic from './useOptic';
-import { total } from '../types';
-import { optic } from '../constructors';
+import { total } from '../../types';
 import useKeyedOptics from './useKeyedOptics';
 import useOpticReducer from './useOpticReducer';
-import { Optic } from '../Optic';
-import { BaseOptic } from '../BaseOptic';
+import { pureOptic } from '../../pureOptic';
+import { PureOptic } from '../../PureOptic.types';
+import { createStore } from '../store';
+import { Optic } from '../Optic.types';
 
 describe('useOptic', () => {
     it('should set state', () => {
@@ -35,8 +35,8 @@ describe('useOptic', () => {
         expect(result.current).toBe(initialResult);
     });
 
-    it("shouldn't only accept base optics", () => {
-        const onA: BaseOptic<any> = optic<{ a: string }>().focus('a');
+    it("shouldn't accept pure optics", () => {
+        const onA: PureOptic<any> = pureOptic<{ a: string }>().focus('a');
         // @ts-expect-error
         renderHook(() => useOptic(onA));
     });
@@ -126,7 +126,7 @@ describe('useKeyedOptics', () => {
         expect(renders.map((x) => x.textContent)).toEqual(['1', '1', '1', '1', '1', '1']);
     });
     it('should only accept optics with the stores as root', () => {
-        const onArray = optic<number[]>();
+        const onArray = pureOptic<number[]>();
         // @ts-expect-error
         renderHook(() => useKeyedOptics(onArray, (n) => n.toString()));
     });
@@ -179,7 +179,7 @@ describe('useOpticReducer', () => {
                 return initialValue;
         }
     };
-    const reducerWithOptic = (state: State, action: Action, onState: BaseOptic<State, total, State>): State => {
+    const reducerWithOptic = (state: State, action: Action, onState: PureOptic<State, total, State>): State => {
         const onCounter = onState.focus('counter');
         const onStep = onState.focus('step');
         switch (action.type) {

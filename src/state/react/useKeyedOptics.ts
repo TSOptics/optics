@@ -1,8 +1,8 @@
 import { useCallback, useRef } from 'react';
-import { BaseOptic } from '../BaseOptic';
-import { Lens, OpticType } from '../types';
-import { noop } from '../utils';
-import { Optic } from '../Optic';
+import PureOpticImpl from '../../PureOptic.impl';
+import { Lens, OpticType } from '../../types';
+import { noop } from '../../utils';
+import { Optic } from '../Optic.types';
 
 type KeyedOptics<T, TOpticType extends OpticType, S> = Record<string, Optic<T, TOpticType, S>>;
 
@@ -24,11 +24,11 @@ const useKeyedOptics = <T, TOpticType extends OpticType, S>(
                 };
                 const opticForKey = keyedOptics.current[key];
                 if (opticForKey) {
-                    const lenses = opticForKey.ˍˍunsafeGetLenses();
+                    const lenses = (opticForKey as any)['lenses'];
                     lenses[lenses.length - 1] = lensOnIndex;
                     acc[key] = opticForKey;
                 } else {
-                    acc[key] = onArray.compose(new BaseOptic([lensOnIndex])) as any;
+                    acc[key] = onArray.compose(new PureOpticImpl<any, OpticType, T[]>([lensOnIndex])) as any;
                 }
                 return acc;
             }, {}) ?? {};
@@ -42,7 +42,7 @@ const useKeyedOptics = <T, TOpticType extends OpticType, S>(
         opticRef.current = onArray;
         unsubscribe.current();
         unsubscribe.current = onArray.subscribe(listener);
-        listener(onArray.getState());
+        listener(onArray.get());
     }
 
     const getOpticFromKey = useCallback((key: string) => keyedOptics.current[key], [keyedOptics]);

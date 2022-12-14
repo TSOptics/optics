@@ -1,33 +1,40 @@
 import { getFoldTree, isFold } from './fold';
 import {
+    Base,
+    FocusToPartial,
+    Mapped,
+    OnArray,
+    OnNullable,
+    OnRecord,
+    PureOptic,
+    Resolve,
+    ToPartial,
+} from './PureOptic.types';
+import {
     ComposedOpticType,
-    IsNullable,
+    FocusedValue,
     Lens,
+    mapped,
+    OpticType,
     partial,
     Path,
     PathOpticType,
     PathType,
-    total,
-    mapped,
-    OpticType,
-    FocusedValue,
 } from './types';
 import { noop } from './utils';
 
-export class BaseOptic<A, TOpticType extends OpticType = total, S = any> {
+class PureOpticImpl<A, TOpticType extends OpticType, S>
+    implements Base<A, TOpticType, S>, OnArray<A, S>, OnRecord<A, S>, OnNullable<A, TOpticType, S>, Mapped<A, S>
+{
     protected lenses: Lens[];
     constructor(lenses: Lens[]) {
         this.lenses = lenses;
     }
 
-    protected derive(newLenses: Lens[]): any {
-        return new BaseOptic([...this.lenses, ...newLenses]);
-    }
-
-    get: (s: S) => FocusedValue<A, TOpticType> = (s) => {
+    get(s: S): FocusedValue<A, TOpticType> {
         const aux = (s: any, lenses: Lens[], isTraversal = false): any => {
             const [lens, ...tailLenses] = lenses;
-            if (!lens) {
+            if (!lens || ((s === undefined || s === null) && lens.type !== 'nullable')) {
                 return s;
             }
             if (lens.type === 'map') {
@@ -59,14 +66,14 @@ export class BaseOptic<A, TOpticType extends OpticType = total, S = any> {
                 return filtered.length > 0 ? aux(filtered, tailLenses, isTraversal) : undefined;
             }
             const slice = lens.get(s);
-            return slice === undefined || slice === null ? slice : aux(slice, tailLenses, isTraversal);
+            return aux(slice, tailLenses, isTraversal);
         };
 
         const result = aux(s, this.lenses);
         return (result === undefined || result === null) && this.isMapped() ? [] : result;
-    };
+    }
 
-    set: (a: A | ((prev: A) => A), s: S) => S = (a, s) => {
+    set(a: A | ((prev: A) => A), s: S): S {
         const aux = (a: A | ((prev: A) => A), s: S, lenses = this.lenses, foldTree = getFoldTree(lenses, s)): S => {
             const [lens, ...tailLenses] = lenses;
             if (!lens) return typeof a === 'function' ? (a as (prev: any) => A)(s) : (a as any);
@@ -74,7 +81,8 @@ export class BaseOptic<A, TOpticType extends OpticType = total, S = any> {
                 return aux(a, s, tailLenses);
             }
             const slice = lens.get(s);
-            if (tailLenses.length > 0 && (slice === undefined || slice === null)) return s;
+            if ((slice === undefined || slice === null) && tailLenses.length > 0 && tailLenses[0].type !== 'nullable')
+                return s;
             if (lens.type === 'map') {
                 const newSlice = foldTree
                     ? (slice as any[]).map((x, index) => (foldTree[index] ? aux(a, x, tailLenses, foldTree[index]) : x))
@@ -92,13 +100,10 @@ export class BaseOptic<A, TOpticType extends OpticType = total, S = any> {
         };
 
         return aux(a, s);
-    };
-
-    focus: <TPath extends Path<A>>(
+    }
+    focus<TPath extends Path<A>>(
         path: TPath,
-    ) => Resolve<this, PathType<A, TPath>, TOpticType extends total ? PathOpticType<A, TPath> : TOpticType, S> = (
-        path,
-    ) => {
+    ): Resolve<this, PathType<A, TPath>, FocusToPartial<TOpticType, PathOpticType<A, TPath>>, S> {
         if (typeof path === 'number')
             return this.derive([
                 {
@@ -114,65 +119,15 @@ export class BaseOptic<A, TOpticType extends OpticType = total, S = any> {
                 set: (a, s) => (Array.isArray(s) ? [...s.slice(0, key), a, ...s.slice(key + 1)] : { ...s, [key]: a }),
             })),
         ) as any;
-    };
-
-    focusWithDefault: <Prop extends keyof NonNullable<A>>(
-        prop: Prop,
-        fallback: (parent: A) => NonNullable<NonNullable<A>[Prop]>,
-    ) => Resolve<
-        this,
-        NonNullable<NonNullable<A>[Prop]>,
-        TOpticType extends total ? (IsNullable<A> extends true ? partial : TOpticType) : TOpticType,
-        S
-    > = (key, fallback) => {
-        return this.derive([
-            {
-                get: (s) => {
-                    const slice = s[key];
-                    return slice !== undefined && slice !== null ? slice : fallback(s);
-                },
-                set: (a, s) => ({ ...s, [key]: a }),
-                key: `focus ${key.toString()} with default`,
-            },
-        ]) as any;
-    };
-
-    focusMany: <Keys extends keyof NonNullable<A>, Prefix extends string | undefined>(
-        props: Keys[],
-        prefix?: Prefix,
-    ) => {
-        [Key in Keys as `${undefined extends Prefix ? 'on' : Prefix}${Key extends number
-            ? Key
-            : Capitalize<Key & string>}`]-?: Resolve<
-            this,
-            NonNullable<A>[Key],
-            TOpticType extends total ? (IsNullable<A> extends true ? partial : total) : TOpticType,
-            S
-        >;
-    } = (props, prefix) => {
-        return props.reduce((acc, prop) => {
-            const propName = prop.toString();
-            const firstLetter = prefix !== '' ? propName.charAt(0).toUpperCase() : propName.charAt(0);
-            acc[(prefix ?? 'on') + firstLetter + propName.slice(1)] = this.focus(prop as any);
-            return acc;
-        }, {} as any);
-    };
-
-    getKeys = () => {
-        return this.lenses.map((l) => l.key.toString());
-    };
-
-    compose: <B, TOpticTypeB extends OpticType>(
-        other: BaseOptic<B, TOpticTypeB, NonNullable<A>>,
-    ) => ComposedOpticType<TOpticType, TOpticTypeB, A> extends never
-        ? void
-        : Resolve<this, B, ComposedOpticType<TOpticType, TOpticTypeB, A>, S> = (other) => {
-        return this.derive(other.lenses);
-    };
-
-    refine: <B>(
-        refiner: (a: A) => B | false,
-    ) => B extends false ? never : Resolve<this, B, TOpticType extends total ? partial : TOpticType, S> = (refiner) => {
+    }
+    compose<B, TOpticTypeB extends OpticType>(
+        other: PureOptic<B, TOpticTypeB, NonNullable<A>>,
+    ): Resolve<this, B, ComposedOpticType<TOpticType, TOpticTypeB, A>, S> {
+        return this.derive((other as PureOpticImpl<B, TOpticTypeB, NonNullable<A>>).lenses);
+    }
+    refine<B>(
+        refiner: (a: NonNullable<A>) => false | B,
+    ): B extends false ? never : Resolve<this, B, ToPartial<TOpticType>, S> {
         return this.derive([
             {
                 get: (s) => (refiner(s) !== false ? s : undefined),
@@ -180,11 +135,8 @@ export class BaseOptic<A, TOpticType extends OpticType = total, S = any> {
                 key: 'refine',
             },
         ]);
-    };
-
-    if: (predicate: (a: A) => boolean) => Resolve<this, A, TOpticType extends total ? partial : TOpticType, S> = (
-        predicate,
-    ) => {
+    }
+    if(predicate: (a: NonNullable<A>) => boolean): Resolve<this, A, ToPartial<TOpticType>, S> {
         return this.derive([
             {
                 get: (s) => (predicate(s) === true ? s : undefined),
@@ -192,36 +144,16 @@ export class BaseOptic<A, TOpticType extends OpticType = total, S = any> {
                 key: 'if',
             },
         ]);
-    };
-
-    convert: <B>(to: (a: A) => B, from: (b: B) => A) => Resolve<this, B, TOpticType, S> = (to, from) => {
+    }
+    convert<B>(to: (a: NonNullable<A>) => B, from: (b: B) => A): Resolve<this, B, TOpticType, S> {
         return this.derive([{ get: to, set: from, key: 'convert' }]);
-    };
+    }
 
-    map: A extends readonly (infer R)[] ? () => Resolve<this, R, mapped, S> : never = (() => {
+    map(): A extends (infer R)[] ? Resolve<this, R, mapped, S> : never {
         return this.derive([{ get: (s) => s, set: (a) => a, key: 'map', type: 'map' }]);
-    }) as any;
+    }
 
-    entries: Record<string, any> extends A
-        ? A extends Record<string, infer R>
-            ? () => Resolve<this, [key: string, value: R], mapped, S>
-            : never
-        : never = (() => {
-        return this.derive([
-            {
-                get: (s) => Object.entries(s),
-                set: (a) => Object.fromEntries(a),
-                type: 'map',
-                key: 'entries',
-            },
-        ]);
-    }) as any;
-
-    values: Record<string, any> extends A
-        ? A extends Record<string, infer R>
-            ? () => Resolve<this, R, mapped, S>
-            : never
-        : never = (() => {
+    values(): A extends Record<string, infer R> ? Resolve<this, R, mapped, S> : never {
         return this.derive([
             {
                 get: (s) => Object.values(s),
@@ -236,13 +168,19 @@ export class BaseOptic<A, TOpticType extends OpticType = total, S = any> {
                 key: 'values',
             },
         ]);
-    }) as any;
+    }
+    entries(): A extends Record<string, infer R> ? Resolve<this, [key: string, value: R], mapped, S> : never {
+        return this.derive([
+            {
+                get: (s) => Object.entries(s),
+                set: (a) => Object.fromEntries(a),
+                type: 'map',
+                key: 'entries',
+            },
+        ]);
+    }
 
-    // FOLDS
-
-    findFirst: TOpticType extends mapped ? (predicate: (a: A) => boolean) => Resolve<this, A, partial, S> : never = ((
-        predicate: (value: unknown) => boolean,
-    ) => {
+    findFirst(predicate: (a: A) => boolean): Resolve<this, A, partial, S> {
         return this.derive([
             {
                 get: (s: A[]) => s.findIndex(predicate),
@@ -251,11 +189,8 @@ export class BaseOptic<A, TOpticType extends OpticType = total, S = any> {
                 key: 'findFirst',
             },
         ]);
-    }) as any;
-
-    maxBy: TOpticType extends mapped ? (f: (a: A) => number) => Resolve<this, A, partial, S> : never = ((
-        f: (a: A) => number,
-    ) => {
+    }
+    maxBy(f: (a: A) => number): Resolve<this, A, partial, S> {
         return this.derive([
             {
                 get: (s: A[]) =>
@@ -274,11 +209,8 @@ export class BaseOptic<A, TOpticType extends OpticType = total, S = any> {
                 key: 'maxBy',
             },
         ]);
-    }) as any;
-
-    minBy: TOpticType extends mapped ? (f: (a: A) => number) => Resolve<this, A, partial, S> : never = ((
-        f: (a: A) => number,
-    ) => {
+    }
+    minBy(f: (a: A) => number): Resolve<this, A, partial, S> {
         return this.derive([
             {
                 get: (s: A[]) =>
@@ -297,9 +229,8 @@ export class BaseOptic<A, TOpticType extends OpticType = total, S = any> {
                 key: 'minBy',
             },
         ]);
-    }) as any;
-
-    atIndex: TOpticType extends mapped ? (index: number) => Resolve<this, A, partial, S> : never = ((index: number) => {
+    }
+    atIndex(index: number): Resolve<this, A, partial, S> {
         return this.derive([
             {
                 get: (s: A[]) => (index >= 0 && index < s.length ? index : -1),
@@ -308,11 +239,8 @@ export class BaseOptic<A, TOpticType extends OpticType = total, S = any> {
                 key: 'atIndex',
             },
         ]);
-    }) as any;
-
-    filter: TOpticType extends mapped ? (predicate: (a: A) => boolean) => Resolve<this, A, mapped, S> : never = ((
-        predicate: (a: A) => boolean,
-    ) => {
+    }
+    filter(predicate: (a: A) => boolean): Resolve<this, A, mapped, S> {
         return this.derive([
             {
                 get: (s: A[]) =>
@@ -325,12 +253,8 @@ export class BaseOptic<A, TOpticType extends OpticType = total, S = any> {
                 key: 'filter',
             },
         ]);
-    }) as any;
-
-    slice: TOpticType extends mapped ? (start?: number, end?: number) => Resolve<this, A, mapped, S> : never = ((
-        start = 0,
-        end?: number,
-    ) => {
+    }
+    slice(start = 0, end?: number | undefined): Resolve<this, A, mapped, S> {
         return this.derive([
             {
                 get: (s: A[]) => {
@@ -346,11 +270,8 @@ export class BaseOptic<A, TOpticType extends OpticType = total, S = any> {
                 key: `slice from ${start ?? 0} to ${end ?? 'end'}`,
             },
         ]);
-    }) as any;
-
-    sort: TOpticType extends mapped ? (compareFn?: (a: A, b: A) => number) => Resolve<this, A, mapped, S> : never = ((
-        compareFn = (a: any, b: any) => (`${a}` < `${b}` ? -1 : 1),
-    ) => {
+    }
+    sort(compareFn = (a: any, b: any) => (`${a}` < `${b}` ? -1 : 1)): Resolve<this, A, mapped, S> {
         return this.derive([
             {
                 get: (s: A[]) =>
@@ -362,29 +283,36 @@ export class BaseOptic<A, TOpticType extends OpticType = total, S = any> {
                 key: 'sort',
             },
         ]);
-    }) as any;
+    }
+    toPartial(): Resolve<this, NonNullable<A>, ToPartial<TOpticType>, S> {
+        return this.derive([{ get: (s) => s, set: (a) => a, key: 'toPartial' }]);
+    }
+    default(fallback: () => NonNullable<A>): Resolve<this, NonNullable<A>, TOpticType, S> {
+        return this.derive([
+            {
+                key: 'default',
+                type: 'nullable',
+                get: (s) => {
+                    return s === null || s === undefined ? fallback() : s;
+                },
+                set: (a) => a,
+            },
+        ]);
+    }
 
-    toPartial: () => Resolve<this, NonNullable<A>, TOpticType extends total ? partial : TOpticType, S> = (() =>
-        this.derive([{ get: (s) => s, set: (a) => a, key: 'toPartial' }])) as any;
+    keys(): string[] {
+        return this.lenses.map((l) => l.key.toString());
+    }
 
-    isMapped: () => this is Resolve<this, A, mapped, S> = () =>
-        this.lenses.reduce(
+    protected derive(newLenses: Lens[]): any {
+        return new PureOpticImpl([...this.lenses, ...newLenses]);
+    }
+    private isMapped(): boolean {
+        return this.lenses.reduce(
             (acc, cv) => (cv.type === 'fold' ? false : acc || cv.type === 'map' || cv.type === 'foldN'),
             false,
         );
-
-    toString() {
-        return this.getKeys().toString();
     }
-
-    ˍˍunsafeGetLenses = () => this.lenses;
-
-    ˍˍcovariance: () => TOpticType | null = () => null;
 }
 
-export interface ResolveClass<TOptic extends BaseOptic<any, OpticType>, A, TOpticType extends OpticType, S> {
-    (): BaseOptic<A, TOpticType, S>;
-}
-type Resolve<TOptic extends BaseOptic<any, OpticType>, A, TOpticType extends OpticType, S> = ReturnType<
-    ResolveClass<TOptic, A, TOpticType, S>
->;
+export default PureOpticImpl;

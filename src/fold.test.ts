@@ -1,20 +1,21 @@
-import { createStore, optic } from '.';
+import { pureOptic } from './pureOptic';
+import { createStore } from './state/store';
 
 describe('map', () => {
     it('should handle consecutive calls to map', () => {
         type State = (number[] | undefined)[];
         const state: State = [[1, 2, 3], undefined, [4, 5, 6], undefined];
-        const onNumbers = optic<State>().map().map();
+        const onNumbers = pureOptic<State>().map().map();
         expect(onNumbers.get(state)).toEqual([1, 2, 3, 4, 5, 6]);
         expect(onNumbers.set((x) => x * 2, state)).toEqual([[2, 4, 6], undefined, [8, 10, 12], undefined]);
     });
     it('should focus undefined or null values', () => {
         const state = [32, undefined, 89, null, 1000];
-        const onState = optic<typeof state>().map();
+        const onState = pureOptic<typeof state>().map();
         expect(onState.get(state)).toBe(state);
     });
     const state: Record<string, number> = { a: 42, b: 67, c: 1000, d: 90 };
-    const onState = optic<typeof state>();
+    const onState = pureOptic<typeof state>();
     it('should map over object entries', () => {
         const onEntries = onState.entries();
         expect(onEntries.get(state)).toEqual([
@@ -38,8 +39,8 @@ describe('map', () => {
             [3, 4],
         ];
         const onNs = createStore(ns).map().map();
-        const flattenedNs = onNs.getState();
-        expect(onNs.getState()).toBe(flattenedNs);
+        const flattenedNs = onNs.get();
+        expect(onNs.get()).toBe(flattenedNs);
     });
 });
 
@@ -66,7 +67,7 @@ const state: {
         },
     ],
 };
-const onState = optic<typeof state>();
+const onState = pureOptic<typeof state>();
 const onItems = onState.focus('playerList').map().focus('inventory').map();
 const onDurabilities = onItems.focus('durability');
 const onFires = onItems.focus('enchantement?.fire');
@@ -88,7 +89,7 @@ describe('fold', () => {
     });
     it("should return empty array if a partial doesn't resolve", () => {
         // map
-        const onNullableArray = optic<number[] | undefined>().map();
+        const onNullableArray = pureOptic<number[] | undefined>().map();
         expect(onNullableArray.get(undefined)).toEqual([]);
         // fold to multiple
         expect(onNullableArray.filter((x) => x % 2 === 0).get(undefined)).toEqual([]);
@@ -135,7 +136,7 @@ describe('fold', () => {
             [5, 6, 7, 8],
             [12, 0],
         ];
-        const onState = optic<typeof state>();
+        const onState = pureOptic<typeof state>();
         const onEvens = onState
             .map()
             .map()

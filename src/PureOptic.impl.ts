@@ -1,6 +1,6 @@
 import { getFoldTree, isFold } from './fold';
 import {
-    Base,
+    PureOpticInterface,
     FocusToPartial,
     Mapped,
     OnArray,
@@ -24,7 +24,12 @@ import {
 import { noop } from './utils';
 
 class PureOpticImpl<A, TOpticType extends OpticType, S>
-    implements Base<A, TOpticType, S>, OnArray<A, S>, OnRecord<A, S>, OnNullable<A, TOpticType, S>, Mapped<A, S>
+    implements
+        PureOpticInterface<A, TOpticType, S>,
+        OnArray<A, S>,
+        OnRecord<A, S>,
+        OnNullable<A, TOpticType, S>,
+        Mapped<A, S>
 {
     protected lenses: Lens[];
     constructor(lenses: Lens[]) {
@@ -300,10 +305,6 @@ class PureOpticImpl<A, TOpticType extends OpticType, S>
         ]);
     }
 
-    keys(): string[] {
-        return this.lenses.map((l) => l.key.toString());
-    }
-
     protected derive(newLenses: Lens[]): any {
         return new PureOpticImpl([...this.lenses, ...newLenses]);
     }
@@ -312,6 +313,9 @@ class PureOpticImpl<A, TOpticType extends OpticType, S>
             (acc, cv) => (cv.type === 'fold' ? false : acc || cv.type === 'map' || cv.type === 'foldN'),
             false,
         );
+    }
+    private toString(): string {
+        return this.lenses.map((l) => l.key.toString()).toString();
     }
 }
 

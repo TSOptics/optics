@@ -12,9 +12,11 @@ import {
 } from './types';
 export type ToPartial<TOpticType extends OpticType> = TOpticType extends total ? partial : TOpticType;
 export type FocusToPartial<TOpticType extends OpticType, T> = TOpticType extends total ? T : TOpticType;
-export interface Base<A, TOpticType extends OpticType, S> {
+interface PureOpticAccessors<A, TOpticType extends OpticType, S> {
     get(s: S): FocusedValue<A, TOpticType>;
     set(a: A | ((prev: A) => A), s: S): S;
+}
+export interface PureOpticInterface<A, TOpticType extends OpticType, S> {
     focus<TPath extends Path<A>>(
         path: TPath,
     ): Resolve<this, PathType<A, TPath>, FocusToPartial<TOpticType, PathOpticType<A, TPath>>, S>;
@@ -67,9 +69,9 @@ type ResolveFromOpticType<A, TOpticType extends OpticType, S> = TOpticType exten
 
 type IsAny<T> = boolean extends (T extends never ? true : false) ? true : false;
 
-export type PureOptic<A, TOpticType extends OpticType = total, S = any> = Base<A, TOpticType, S> & {
-    keys(): string[];
-} & (IsAny<A> extends true ? {} : ResolveFromType<A, TOpticType, S>) &
+export type PureOptic<A, TOpticType extends OpticType = total, S = any> = PureOpticInterface<A, TOpticType, S> &
+    PureOpticAccessors<A, TOpticType, S> &
+    (IsAny<A> extends true ? {} : ResolveFromType<A, TOpticType, S>) &
     ResolveFromOpticType<A, TOpticType, S>;
 
 export interface ResolveClass<TOptic, A, TOpticType extends OpticType, S> {

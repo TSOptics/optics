@@ -68,9 +68,9 @@ const state: {
     ],
 };
 const onState = pureOptic<typeof state>();
-const onItems = onState.focus('playerList').map().focus('inventory').map();
-const onDurabilities = onItems.focus('durability');
-const onFires = onItems.focus('enchantement?.fire');
+const onItems = onState.playerList.map().inventory.map();
+const onDurabilities = onItems.durability;
+const onFires = onItems.enchantement.fire;
 
 describe('fold', () => {
     it('should return the original root when calling set with the the same reference', () => {

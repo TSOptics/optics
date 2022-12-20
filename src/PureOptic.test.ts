@@ -14,28 +14,16 @@ const expectMapped = (optic: PureOptic<any, mapped>) => noop();
 
 describe('lens', () => {
     const obj = { a: { as: [1, 2, 3] } };
-    const onAsFirst = pureOptic<typeof obj>().focus('a.as').focus(0);
+    const onAsFirst = pureOptic<typeof obj>().a.as[0];
 
     it('should be referentially stable', () => {
         expect(onAsFirst.set(1, obj)).toBe(obj);
         expect(onAsFirst.set((prev) => prev, obj)).toBe(obj);
     });
 });
-describe('focus on top types', () => {
-    it('should allow arbitrary paths when focused on type any', () => {
-        pureOptic<any>().focus('arbitrary.path');
-    });
-    it("should't accept a path when focused on type unknown", () => {
-        pureOptic<unknown>().focus('' as never);
-    });
-    it('should stop searching deeper when encountering any or unknown', () => {
-        const validPath: 'a' | 'a.b' | 'a.c' = 'a.b';
-        pureOptic<{ a: { b: any; c: unknown } }>().focus(validPath);
-    });
-});
 describe('optional', () => {
     type TestObj = { a: { b?: { c: number } } };
-    const onC = pureOptic<TestObj>().focus('a.b?.c');
+    const onC = pureOptic<TestObj>().a.b.c;
     const testObj: TestObj = { a: { b: undefined } };
     it('should return undefined', () => {
         expect(onC.get(testObj)).toBeUndefined();
@@ -84,9 +72,7 @@ describe('convert', () => {
 describe('if', () => {
     const onEvenNumber = pureOptic<number>().if((n) => n % 2 === 0);
 
-    const onMajorName = pureOptic<{ age: number; name: string }>()
-        .if(({ age }) => age >= 18)
-        .focus('name');
+    const onMajorName = pureOptic<{ age: number; name: string }>().if(({ age }) => age >= 18).name;
     const major = { age: 42, name: 'Louis' };
     const minor = { age: 15, name: 'Killian' };
     it('should get result with predicate true', () => {
@@ -109,24 +95,22 @@ describe('focus string key', () => {
     const onCountryCodes = pureOptic<typeof countryCodes>();
 
     it('should focus on the value indexed by the key', () => {
-        const onFrance = onCountryCodes.focus('france');
+        const onFrance = onCountryCodes['france'];
         expect(onFrance.get(countryCodes)).toBe(33);
         expect(onFrance.set(-1, countryCodes)).toStrictEqual({ france: -1, germany: 49, italy: 39 });
     });
     it('should find no key and return undefined', () => {
-        const onSpain = onCountryCodes.focus('spain');
+        const onSpain = onCountryCodes['spain'];
         expect(onSpain.get(countryCodes)).toBeUndefined();
     });
     it("should allow to set a key if it doesn't exist yet", () => {
-        const onSpain = onCountryCodes.focus('spain');
+        const onSpain = onCountryCodes['spain'];
         expect(onSpain.set(34, countryCodes)).toEqual({ france: 33, germany: 49, italy: 39, spain: 34 });
     });
 });
 describe('default', () => {
     type Test = { a?: { b?: number } };
-    const onB = pureOptic<Test>()
-        .focus('a?.b')
-        .default(() => 42);
+    const onB = pureOptic<Test>().a.b.default(() => 42);
 
     it('should use fallback', () => {
         const test: Test = { a: { b: undefined } };
@@ -135,19 +119,19 @@ describe('default', () => {
     });
 });
 describe('toPartial', () => {
-    const onA = pureOptic<{ a?: number }>().focus('a').toPartial();
+    const onA = pureOptic<{ a?: number }>().a.toPartial();
     expectPartial(onA, true);
     expect(onA.get({ a: undefined })).toBe(undefined);
     expect(onA.set((prev) => prev + 10, { a: undefined })).toEqual({ a: undefined });
     expect(onA.set((prev) => prev + 10, { a: 42 })).toEqual({ a: 52 });
 
-    const onB = pureOptic<{ a?: { b?: number } }>().focus('a?.b').toPartial();
+    const onB = pureOptic<{ a?: { b?: number } }>().a.b.toPartial();
     expectPartial(onB, true);
     expect(onB.get({ a: { b: undefined } })).toBe(undefined);
     expect(onB.set((prev) => prev + 10, { a: { b: undefined } })).toEqual({ a: { b: undefined } });
     expect(onB.set((prev) => prev + 10, { a: { b: 42 } })).toEqual({ a: { b: 52 } });
 
-    const onAs = pureOptic<{ a?: number }[]>().map().focus('a').toPartial();
+    const onAs = pureOptic<{ a?: number }[]>().map().a.toPartial();
     expectMapped(onAs);
     expect(onAs.get([{ a: undefined }, { a: 42 }])).toEqual([42]);
     expect(onAs.set((prev) => prev + 10, [{ a: undefined }, { a: 42 }])).toEqual([{ a: undefined }, { a: 52 }]);

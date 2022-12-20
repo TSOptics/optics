@@ -1,7 +1,6 @@
 import { getFoldTree, isFold } from './fold';
 import {
     PureOpticInterface,
-    FocusToPartial,
     Mapped,
     OnArray,
     OnNullable,
@@ -10,17 +9,7 @@ import {
     Resolve,
     ToPartial,
 } from './PureOptic.types';
-import {
-    ComposedOpticType,
-    FocusedValue,
-    Lens,
-    mapped,
-    OpticType,
-    partial,
-    Path,
-    PathOpticType,
-    PathType,
-} from './types';
+import { ComposedOpticType, FocusedValue, Lens, mapped, OpticType, partial } from './types';
 import { noop } from './utils';
 
 class PureOpticImpl<A, TOpticType extends OpticType, S>
@@ -34,6 +23,22 @@ class PureOpticImpl<A, TOpticType extends OpticType, S>
     protected lenses: Lens[];
     constructor(lenses: Lens[]) {
         this.lenses = lenses;
+        return new Proxy(this, {
+            get(target: any, prop: any) {
+                if (target[prop] !== undefined) {
+                    return target[prop];
+                }
+                if (typeof prop === 'symbol') return;
+                return (target as PureOpticImpl<any, OpticType, any>).derive([
+                    {
+                        key: 'focus ' + prop,
+                        get: (s) => s[prop],
+                        set: (a, s) =>
+                            Array.isArray(s) ? [...s.slice(0, prop), a, ...s.slice(prop + 1)] : { ...s, [prop]: a },
+                    },
+                ]);
+            },
+        });
     }
 
     get(s: S): FocusedValue<A, TOpticType> {
@@ -106,25 +111,7 @@ class PureOpticImpl<A, TOpticType extends OpticType, S>
 
         return aux(a, s);
     }
-    focus<TPath extends Path<A>>(
-        path: TPath,
-    ): Resolve<this, PathType<A, TPath>, FocusToPartial<TOpticType, PathOpticType<A, TPath>>, S> {
-        if (typeof path === 'number')
-            return this.derive([
-                {
-                    get: (s) => s[path],
-                    set: (a, s) => [...s.slice(0, path), a, ...s.slice(path + 1)],
-                    key: 'focus index ' + path,
-                },
-            ]);
-        return this.derive(
-            path.split(/\.|\?\./).map<Lens>((key: any) => ({
-                key: 'focus ' + key,
-                get: (s) => s[key],
-                set: (a, s) => (Array.isArray(s) ? [...s.slice(0, key), a, ...s.slice(key + 1)] : { ...s, [key]: a }),
-            })),
-        ) as any;
-    }
+
     compose<B, TOpticTypeB extends OpticType>(
         other: PureOptic<B, TOpticTypeB, NonNullable<A>>,
     ): Resolve<this, B, ComposedOpticType<TOpticType, TOpticTypeB, A>, S> {

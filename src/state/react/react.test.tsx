@@ -36,7 +36,7 @@ describe('useOptic', () => {
     });
 
     it("shouldn't accept pure optics", () => {
-        const onA: PureOptic<any> = pureOptic<{ a: string }>().focus('a');
+        const onA: PureOptic<any> = pureOptic<{ a: string }>().a;
         // @ts-expect-error
         renderHook(() => useOptic(onA));
     });
@@ -61,7 +61,7 @@ describe('useOptic', () => {
     });
     it('should not exhibit the zombie child problem', () => {
         const onState = createStore<number[]>([42]);
-        const onFirst = onState.focus(0);
+        const onFirst = onState[0];
 
         const Children = ({ onElem }: { onElem: Optic<number> }) => {
             const [elem] = useOptic(onElem);
@@ -180,8 +180,8 @@ describe('useOpticReducer', () => {
         }
     };
     const reducerWithOptic = (state: State, action: Action, onState: PureOptic<State, total, State>): State => {
-        const onCounter = onState.focus('counter');
-        const onStep = onState.focus('step');
+        const onCounter = onState.counter;
+        const onStep = onState.step;
         switch (action.type) {
             case 'increment':
                 return onCounter.set((prev) => prev + state.step, state);

@@ -1,6 +1,6 @@
 import { pureOptic } from './pureOptic';
 import { PureOptic } from './PureOptic.types';
-import { total, partial, mapped, Path } from './types';
+import { total, partial, mapped } from './types';
 import { noop } from './utils';
 
 const expectTotal: <A = any, S = any>(o: PureOptic<A, total, S>) => void = noop;
@@ -13,65 +13,37 @@ describe('compose types', () => {
     /**
      * total on non nullable + total = total
      */
-    expectTotal(
-        pureOptic<{ foo: string }>()
-            .focus('foo')
-            .compose({} as PureOptic<boolean>),
-    );
+    expectTotal(pureOptic<{ foo: string }>().foo.compose({} as PureOptic<boolean>));
 
     /**
      * total on nullable + total = partial
      */
-    expectPartial(
-        pureOptic<{ foo: string | undefined }>()
-            .focus('foo')
-            .compose({} as PureOptic<boolean, total, string>),
-    );
+    expectPartial(pureOptic<{ foo: string | undefined }>().foo.compose({} as PureOptic<boolean, total, string>));
 
     /**
      * total + partial = partial
      */
-    expectPartial(
-        pureOptic<{ foo: string }>()
-            .focus('foo')
-            .compose({} as PureOptic<boolean, partial>),
-    );
+    expectPartial(pureOptic<{ foo: string }>().foo.compose({} as PureOptic<boolean, partial>));
 
     /**
      * total + mapped = mapped
      */
-    expectMapped(
-        pureOptic<{ foo: string[] }>()
-            .focus('foo')
-            .compose({} as PureOptic<boolean, mapped>),
-    );
+    expectMapped(pureOptic<{ foo: string[] }>().foo.compose({} as PureOptic<boolean, mapped>));
 
     /**
      * partial + total = partial
      */
-    expectPartial(
-        pureOptic<{ foo?: { bar: string } }>()
-            .focus('foo?.bar')
-            .compose({} as PureOptic<boolean>),
-    );
+    expectPartial(pureOptic<{ foo?: { bar: string } }>().foo.bar.compose({} as PureOptic<boolean>));
 
     /**
      * partial + partial = partial
      */
-    expectPartial(
-        pureOptic<{ foo?: { bar: string } }>()
-            .focus('foo?.bar')
-            .compose({} as PureOptic<boolean, partial>),
-    );
+    expectPartial(pureOptic<{ foo?: { bar: string } }>().foo.bar.compose({} as PureOptic<boolean, partial>));
 
     /**
      * partial + mapped = mapped
      */
-    expectMapped(
-        pureOptic<{ foo?: { bar: string } }>()
-            .focus('foo?.bar')
-            .compose({} as PureOptic<boolean, mapped>),
-    );
+    expectMapped(pureOptic<{ foo?: { bar: string } }>().foo.bar.compose({} as PureOptic<boolean, mapped>));
 
     /**
      * mapped + total = mapped
@@ -100,17 +72,7 @@ describe('lens', () => {
         const total: PureOptic<string> = partial;
     });
     it('toPartial should return a partial focusing on the nonnullable type', () => {
-        const onNullable = pureOptic<{ a: string | null | undefined }>().focus('a');
+        const onNullable = pureOptic<{ a: string | null | undefined }>().a;
         expectPartial<string>(onNullable.toPartial());
-    });
-});
-describe('paths', () => {
-    type NestedRecord<Depth, Levels extends any[] = []> = Levels['length'] extends Depth
-        ? string
-        : { [P in Levels['length'] as `level${P}`]: NestedRecord<Depth, [any, ...Levels]> };
-
-    it('should handle big objects without reaching the type instantiation depth limit', () => {
-        type Record30Deep = NestedRecord<30>;
-        type AllPaths = Path<Record30Deep>;
     });
 });

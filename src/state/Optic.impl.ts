@@ -26,7 +26,7 @@ class OpticImpl<A, TOpticType extends OpticType, S>
         if (this._dependencies === undefined) {
             this._dependencies = this.getDependencies(super.get(this.getStore().state)) ?? null;
         }
-        return this._dependencies === null ? undefined : this._dependencies;
+        return this._dependencies;
     }
 
     constructor(lenses: Lens[], private initialValue: S, _storeId?: OpticImpl<any, OpticType, S>) {

@@ -35,6 +35,7 @@ module.exports = {
             {
                 types: {
                     '{}': false,
+                    Function: false,
                 },
                 extendDefaults: true,
             },

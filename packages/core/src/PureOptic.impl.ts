@@ -10,7 +10,6 @@ import {
     ToPartial,
 } from './PureOptic.types';
 import { ComposedOpticType, FocusedValue, Lens, mapped, OpticType, partial } from './types';
-import { noop } from './utils';
 
 class PureOpticImpl<A, TOpticType extends OpticType, S>
     implements
@@ -305,5 +304,7 @@ class PureOpticImpl<A, TOpticType extends OpticType, S>
         return this.lenses.map((l) => l.key.toString()).toString();
     }
 }
+
+const noop = () => {};
 
 export default PureOpticImpl;

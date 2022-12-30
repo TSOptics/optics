@@ -1,5 +1,4 @@
 import { pureOptic } from './pureOptic';
-import { createStore } from './state/store';
 
 describe('map', () => {
     it('should handle consecutive calls to map', () => {
@@ -32,15 +31,6 @@ describe('map', () => {
         expect(onValues.get(state)).toEqual([42, 67, 1000, 90]);
         const newState = onValues.set((x) => x * 2, state);
         expect(newState).toEqual({ a: 84, b: 134, c: 2000, d: 180 });
-    });
-    it('should be referentially stable', () => {
-        const ns = [
-            [1, 2],
-            [3, 4],
-        ];
-        const onNs = createStore(ns).map().map();
-        const flattenedNs = onNs.get();
-        expect(onNs.get()).toBe(flattenedNs);
     });
 });
 

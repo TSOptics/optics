@@ -79,6 +79,3 @@ export interface ResolveClass<TOptic, A, TOpticType extends OpticType, S> {
     (): PureOptic<A, TOpticType, S>;
 }
 export type Resolve<TOptic, A, TOpticType extends OpticType, S> = ReturnType<ResolveClass<TOptic, A, TOpticType, S>>;
-
-declare const o: PureOptic<{ a: string; b: boolean; d: () => void; e?: { f: boolean } }>;
-declare const o2: PureOptic<string[], total, string>;

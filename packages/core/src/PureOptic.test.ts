@@ -1,16 +1,15 @@
 import { mapped, partial, total } from './types';
 import { pureOptic } from './pureOptic';
 import { PureOptic } from './PureOptic.types';
-import { noop } from './utils';
 
-const expectType = <T extends any>(t: T) => noop();
+const expectType = <T extends any>(t: T) => {};
 const expectPartial = <TOpticType extends partial>(
     optic: PureOptic<any, TOpticType>,
     t: TOpticType extends total ? never : true,
-) => noop();
+) => {};
 
-const expectTotal = (optic: PureOptic<any, total>) => noop();
-const expectMapped = (optic: PureOptic<any, mapped>) => noop();
+const expectTotal = (optic: PureOptic<any, total>) => {};
+const expectMapped = (optic: PureOptic<any, mapped>) => {};
 
 describe('lens', () => {
     const obj = { a: { as: [1, 2, 3] } };

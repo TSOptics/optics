@@ -1,5 +1,5 @@
-import PureOpticImpl from '../PureOptic.impl';
-import { FocusedValue, Lens, OpticType } from '../types';
+import PureOpticImpl from '@optix/core/src/PureOptic.impl';
+import { FocusedValue, Lens, OpticType } from '@optix/core/src/types';
 import {
     Optic,
     Denormalized,
@@ -12,7 +12,7 @@ import {
     ResolvedType,
     SubscribeOptions,
 } from './Optic.types';
-import { Store, stores } from './store';
+import { Store, stores } from './stores';
 
 class OpticImpl<A, TOpticType extends OpticType, S>
     extends PureOpticImpl<A, TOpticType, S>

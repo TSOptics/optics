@@ -1,11 +1,10 @@
 import { Dispatch, SetStateAction, useMemo } from 'react';
 import { useSyncExternalStore } from 'use-sync-external-store/shim/';
-import { GetStateOptions, OpticType } from '../../types';
-import { Optic, ResolvedType } from '../Optic.types';
+import { OpticType, GetStateOptions, Optic, ResolvedType } from '@optix/state';
 
 export type UseOpticOptions = GetStateOptions;
 
-function useOptic<T, TOpticType extends OpticType, S, TOptions extends UseOpticOptions | undefined>(
+export function useOptic<T, TOpticType extends OpticType, S, TOptions extends UseOpticOptions | undefined>(
     optic: Optic<T, TOpticType, S>,
     options?: TOptions,
 ): [ResolvedType<T, TOpticType, TOptions>, Dispatch<SetStateAction<T>>] {
@@ -15,9 +14,7 @@ function useOptic<T, TOpticType extends OpticType, S, TOptions extends UseOpticO
         () => optic.get(optionsWithDefault as TOptions),
     );
 
-    const setSlice = useMemo(() => optic.set.bind(optic), []);
+    const setSlice = useMemo(() => optic.set.bind(optic), [optic]);
 
     return [slice, setSlice];
 }
-
-export default useOptic;

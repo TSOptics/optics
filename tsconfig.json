@@ -3,15 +3,11 @@
         "module": "commonjs",
         "target": "ES6",
         "lib": ["ESNext", "DOM"],
-        "jsx": "react-jsx",
         "strict": true,
         "outDir": "dist",
         "esModuleInterop": true,
-        "declaration": true,
+        "declaration": true
     },
-    "exclude": [
-        "node_modules",
-        "**/node_modules/*",
-        "dist",
-    ]
+    "exclude": ["node_modules", "**/node_modules/*", "**/dist/**"],
+    "references": [{ "path": "./packages/core" }, { "path": "./packages/state" }, { "path": "./packages/react" }]
 }

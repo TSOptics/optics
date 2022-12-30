@@ -1,11 +1,10 @@
-import { pureOptic } from '../pureOptic';
-import { PureOptic } from '../PureOptic.types';
-import { partial, total } from '../types';
-import { noop } from '../utils';
+import { pureOptic } from '@optix/core/src/pureOptic';
+import { PureOptic } from '@optix/core/src/PureOptic.types';
+import { partial, total } from '@optix/core/src/types';
+import { createState } from './createState';
 import { Optic } from './Optic.types';
-import { createStore } from './store';
 
-const expectType = <T extends any>(t: T) => noop();
+const expectType = <T extends any>(t: T) => {};
 
 describe('Optic', () => {
     describe('types', () => {
@@ -19,14 +18,14 @@ describe('Optic', () => {
             const storePartialOptic: Optic<number, partial> = storeOptic;
         });
         it('should compose with plain optics', () => {
-            const onState = createStore({ a: { b: 42 } });
+            const onState = createState({ a: { b: 42 } });
             const onNumber = pureOptic<{ b: number }>().b;
             const onNumberFromState = onState.a.compose(onNumber);
             expectType<Optic<number, total, { a: { b: number } }>>(onNumberFromState);
             expect(onNumberFromState.get()).toBe(42);
         });
         describe('get and set state', () => {
-            const onState = createStore({ a: 42 });
+            const onState = createState({ a: 42 });
             expect(onState.get()).toEqual({ a: 42 });
 
             onState.set({ a: 100 });
@@ -41,18 +40,18 @@ describe('Optic', () => {
         });
     });
     describe('denormalize', () => {
-        const onCountries = createStore([
+        const onCountries = createState([
             { name: 'Italia', language: 'Italiano' },
             { name: 'Österreich', language: 'Deutsch' },
         ]);
         const onÖsterreich = onCountries[1];
-        const onCities = createStore([
+        const onCities = createState([
             { name: 'Wien', inhabitants: 1_897_000, country: onCountries[1] },
             { name: 'Milano', inhabitants: 1_352_000, country: onCountries[0] },
         ]);
         const onWien = onCities[0];
         const onMilano = onCities[1];
-        const onPeople = createStore([{ name: 'Franz', age: 25, driver: false, city: onWien }]);
+        const onPeople = createState([{ name: 'Franz', age: 25, driver: false, city: onWien }]);
         beforeEach(() => {
             onCountries.reset();
             onCities.reset();

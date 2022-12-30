@@ -1,22 +1,17 @@
 {
-    "name": "react-optics",
+    "name": "optix",
     "version": "0.1.2",
     "description": "",
-    "main": "dist/index.js",
-    "types": "dist/index.d.ts",
-    "files": [
-        "dist/**/*"
+    "private": true,
+    "workspaces": [
+        "packages/*"
     ],
     "devDependencies": {
         "@babel/core": "^7.14.5",
         "@babel/preset-env": "^7.14.5",
         "@babel/preset-react": "^7.14.5",
         "@babel/preset-typescript": "^7.14.5",
-        "@testing-library/react": "^12.1.0",
-        "@testing-library/react-hooks": "^7.0.1",
-        "@types/jest": "^26.0.23",
-        "@types/react": "^17.0.17",
-        "@types/use-sync-external-store": "0.0.3",
+        "@types/jest": "^29.2.4",
         "@typescript-eslint/eslint-plugin": "^5.28.0",
         "@typescript-eslint/parser": "^5.28.0",
         "babel-jest": "^27.0.2",
@@ -25,27 +20,16 @@
         "eslint-plugin-prettier": "^4.0.0",
         "eslint-plugin-react": "^7.21.2",
         "eslint-plugin-react-hooks": "^4.2.0",
-        "jest": "^27.0.4",
+        "jest": "^29.3.1",
         "prettier": "^2.7.0",
-        "react": "^17.0.2",
-        "react-dom": "^17.0.2",
-        "react-test-renderer": "^17.0.2",
         "ts-essentials": "^7.0.0",
-        "typescript": "^4.8.4"
-    },
-    "peerDependencies": {
-        "react": ">=16.8"
-    },
-    "peerDependenciesMeta": {
-        "react": {
-            "optional": true
-        }
+        "ts-jest": "^29.0.3",
+        "typescript": "~4.8.4"
     },
     "scripts": {
-        "test": "jest",
-        "type-check": "tsc --skipLibCheck --noEmit",
-        "build": "tsc -p tsconfig-build.json",
-        "rebuild": "rm -rf dist && npm run build"
+        "g:test": "cd $INIT_CWD && jest",
+        "g:type-check": "cd $INIT_CWD && tsc --skipLibCheck --noEmit",
+        "g:build": "cd $INIT_CWD && tsc"
     },
     "repository": {
         "type": "git",
@@ -59,5 +43,12 @@
     "homepage": "https://github.com/TSOptics/react-optics#readme",
     "dependencies": {
         "use-sync-external-store": "^1.0.0"
+    },
+    "jest": {
+        "projects": [
+            "<rootDir>/packages/core/jest.config.js",
+            "<rootDir>/packages/state/jest.config.js",
+            "<rootDir>/packages/react/jest.config.js"
+        ]
     }
 }

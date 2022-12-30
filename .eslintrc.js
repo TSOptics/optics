@@ -30,6 +30,7 @@ module.exports = {
         'react/prop-types': 'off',
         '@typescript-eslint/ban-ts-comment': 'off',
         '@typescript-eslint/no-unnecessary-type-constraint': 'off',
+        '@typescript-eslint/no-empty-function': 'off',
         '@typescript-eslint/ban-types': [
             'error',
             {

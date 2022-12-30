@@ -2,24 +2,20 @@ import React, { memo, useCallback, useRef } from 'react';
 import { renderHook } from '@testing-library/react-hooks';
 import { act } from 'react-test-renderer';
 import { render, fireEvent } from '@testing-library/react';
-import useOptic from './useOptic';
-import { total } from '../../types';
-import useKeyedOptics from './useKeyedOptics';
-import useOpticReducer from './useOpticReducer';
-import { pureOptic } from '../../pureOptic';
-import { PureOptic } from '../../PureOptic.types';
-import { createStore } from '../store';
-import { Optic } from '../Optic.types';
+import { useOptic } from './useOptic';
+import { useKeyedOptics } from './useKeyedOptics';
+import { useOpticReducer } from './useOpticReducer';
+import { pureOptic, PureOptic, Optic, total, createState } from '@optix/state';
 
 describe('useOptic', () => {
     it('should set state', () => {
-        const onRoot = createStore({ test: 42 });
+        const onRoot = createState({ test: 42 });
         const { result } = renderHook(() => useOptic(onRoot));
         act(() => result.current[1]((prev) => ({ test: prev.test * 2 })));
         expect(result.current[0]).toStrictEqual({ test: 84 });
     });
     it('should return referentially stable state and setter', () => {
-        const onRoot = createStore({ test: 42 });
+        const onRoot = createState({ test: 42 });
         const { result, rerender } = renderHook(() => useOptic(onRoot));
         const [prevState, prevSetState] = result.current;
         rerender();
@@ -28,7 +24,7 @@ describe('useOptic', () => {
         expect(prevSetState).toBe(setState);
     });
     it('should not rerender when calling setter with the same reference', () => {
-        const onRoot = createStore({ test: 42 });
+        const onRoot = createState({ test: 42 });
         const { result } = renderHook(() => useOptic(onRoot));
         const initialResult = result.current;
         act(() => initialResult[1]((prev) => prev));
@@ -41,7 +37,7 @@ describe('useOptic', () => {
         renderHook(() => useOptic(onA));
     });
     it('should update state if optic changes', () => {
-        const onRoot = createStore({ test: 42 });
+        const onRoot = createState({ test: 42 });
         const timesTwo = onRoot.convert(
             (a) => ({
                 test: a.test * 2,
@@ -60,7 +56,7 @@ describe('useOptic', () => {
         expect(result.current[0]).toEqual({ test: 84 });
     });
     it('should not exhibit the zombie child problem', () => {
-        const onState = createStore<number[]>([42]);
+        const onState = createState<number[]>([42]);
         const onFirst = onState[0];
 
         const Children = ({ onElem }: { onElem: Optic<number> }) => {
@@ -114,7 +110,7 @@ describe('useKeyedOptics', () => {
             </div>
         );
     };
-    const onArray = createStore([1, 2, 3, 4, 5]);
+    const onArray = createState([1, 2, 3, 4, 5]);
 
     it('should not rerender the cells when prepending', () => {
         const { getAllByTestId, getByText } = render(<Numbers onArray={onArray} />);
@@ -131,8 +127,8 @@ describe('useKeyedOptics', () => {
         renderHook(() => useKeyedOptics(onArray, (n) => n.toString()));
     });
     it('should update if the optic changes', () => {
-        const onEvens = createStore([0, 2, 4, 6]);
-        const onOdds = createStore([1, 3, 5, 7]);
+        const onEvens = createState([0, 2, 4, 6]);
+        const onOdds = createState([1, 3, 5, 7]);
         const { result, rerender } = renderHook(
             ({ optic }: { optic: typeof onEvens }) => useKeyedOptics(optic, (n) => n.toString()),
             {
@@ -166,7 +162,7 @@ describe('useOpticReducer', () => {
         | { type: 'changeStep'; step: number }
         | { type: 'reset' };
     const initialValue: State = { counter: 0, step: 1 };
-    const onState = createStore(initialValue);
+    const onState = createState(initialValue);
     const reducer = (state: State, action: Action): State => {
         switch (action.type) {
             case 'increment':

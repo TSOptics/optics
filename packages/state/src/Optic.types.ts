@@ -1,5 +1,5 @@
-import { DeriveOpticType, _PureOptic } from '../PureOptic.types';
-import { FocusedValue, OpticType, total } from '../types';
+import { DeriveOpticType, _PureOptic } from '@optix/core/src/PureOptic.types';
+import { FocusedValue, OpticType, total } from '@optix/core/src/types';
 
 export interface GetSet<A, TOpticType extends OpticType> {
     set(a: A | ((prev: A) => A)): void;
@@ -76,7 +76,7 @@ export type Optic<A, TOpticType extends OpticType = total, S = any> = Omit<_Opti
     GetSet<A, TOpticType> &
     DeriveFromProps<A, TOpticType, S>;
 
-declare module '../PureOptic.types' {
+declare module '@optix/core/src/PureOptic.types' {
     export interface ResolveClass<TOptic, A, TOpticType extends OpticType, S> {
         (): [TOptic] extends [{ subscribe: any }] ? Optic<A, TOpticType, S> : PureOptic<A, TOpticType, S>;
     }

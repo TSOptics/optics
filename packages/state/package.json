@@ -1,0 +1,16 @@
+{
+    "name": "@optix/state",
+    "version": "0.0.1",
+    "packageManager": "yarn@3.3.1",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "files": [
+        "dist/**/*"
+    ],
+    "scripts": {
+        "build": "yarn g:build"
+    },
+    "dependencies": {
+        "@optix/core": "workspace:*"
+    }
+}

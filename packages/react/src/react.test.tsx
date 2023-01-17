@@ -34,7 +34,7 @@ describe('useOptic', () => {
     it("shouldn't accept pure optics", () => {
         const onA: PureOptic<any> = pureOptic<{ a: string }>().a;
         // @ts-expect-error
-        renderHook(() => useOptic(onA));
+        () => renderHook(() => useOptic(onA));
     });
     it('should update state if optic changes', () => {
         const onRoot = createState({ test: 42 });

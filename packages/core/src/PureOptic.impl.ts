@@ -40,11 +40,15 @@ class PureOpticImpl<A, TOpticType extends OpticType, S>
         });
     }
 
-    get(s: S): FocusedValue<A, TOpticType> {
+    protected _get(s: S, earlyReturn?: (s: any, lens: Lens) => any | undefined): FocusedValue<A, TOpticType> {
         const aux = (s: any, lenses: Lens[], isTraversal = false): any => {
             const [lens, ...tailLenses] = lenses;
             if (!lens || ((s === undefined || s === null) && lens.type !== 'nullable')) {
                 return s;
+            }
+            const a = earlyReturn?.(s, lens);
+            if (a !== undefined) {
+                return a;
             }
             if (lens.type === 'map') {
                 const slice = lens.get(s) as any[];
@@ -81,6 +85,9 @@ class PureOpticImpl<A, TOpticType extends OpticType, S>
         const result = aux(s, this.lenses);
         return (result === undefined || result === null) && this.isMapped() ? [] : result;
     }
+    get(s: S): FocusedValue<A, TOpticType> {
+        return this._get(s);
+    }
 
     set(a: A | ((prev: A) => A), s: S): S {
         const aux = (a: A | ((prev: A) => A), s: S, lenses = this.lenses, foldTree = getFoldTree(lenses, s)): S => {
@@ -114,7 +121,10 @@ class PureOpticImpl<A, TOpticType extends OpticType, S>
     compose<B, TOpticTypeB extends OpticType>(
         other: PureOptic<B, TOpticTypeB, NonNullable<A>>,
     ): Resolve<this, B, ComposedOpticType<TOpticType, TOpticTypeB, A>, S> {
-        return this.derive((other as PureOpticImpl<B, TOpticTypeB, NonNullable<A>>).lenses);
+        return this.derive([
+            { get: (s) => s, set: (a) => a, key: 'compose' },
+            ...(other as PureOpticImpl<B, TOpticTypeB, NonNullable<A>>).lenses,
+        ]);
     }
     refine<B>(
         refiner: (a: NonNullable<A>) => false | B,

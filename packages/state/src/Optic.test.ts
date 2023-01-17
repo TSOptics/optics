@@ -215,4 +215,38 @@ describe('Optic', () => {
             });
         });
     });
+    describe('Referential stability', () => {
+        it("should return the same value if the array didn't change", () => {
+            const onState = createState({ a: 42, b: [1, 2, 3, 4] });
+            const onB = onState.b.map().filter((x) => x % 2 === 0);
+
+            const b = onB.get();
+            onState.a.set((prev) => prev + 1);
+            expect(b).toBe(onB.get());
+        });
+        it("should return the same converted value if the source didn't change", () => {
+            const onState = createState({ obj: { b1: true, b2: false }, a: 42 });
+            const onTuple = onState.obj.convert(
+                ({ b1, b2 }) => [b1, b2] as const,
+                ([b1, b2]) => ({ b1, b2 }),
+            );
+            const tuple = onTuple.get();
+
+            onState.a.set((prev) => prev + 1);
+            expect(onTuple.get()).toBe(tuple);
+        });
+        it("should return the same value fed to the pure optic didn't change", () => {
+            const onState = createState({ obj: { b1: true, b2: false }, a: 42 });
+            const onTuple = onState.obj.compose(
+                pureOptic(
+                    ({ b1, b2 }: { b1: boolean; b2: boolean }) => [b1, b2] as const,
+                    ([b1, b2]) => ({ b1, b2 }),
+                ),
+            );
+            const tuple = onTuple.get();
+
+            onState.a.set((prev) => prev + 1);
+            expect(onTuple.get()).toBe(tuple);
+        });
+    });
 });

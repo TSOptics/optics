@@ -50,5 +50,6 @@
             "<rootDir>/packages/state/jest.config.js",
             "<rootDir>/packages/react/jest.config.js"
         ]
-    }
+    },
+    "packageManager": "yarn@3.3.1"
 }

@@ -36,37 +36,38 @@ class OpticImpl<A, TOpticType extends OpticType, S>
         this.set = this.setState as any;
     }
 
-    private cache: { s?: any; a?: any } = {};
-    private cacheDenormalize: { s?: any; a?: any; denormalizedA?: any } = {};
+    private cacheByLenses = new Map<Lens, any>();
+    private cache: {
+        a?: FocusedValue<A, TOpticType>;
+        normalized?: FocusedValue<A, TOpticType>;
+        denormalized?: Denormalized<FocusedValue<A, TOpticType>>;
+    } = {};
+
     private getState<TOptions extends GetStateOptions | undefined>(
         options?: TOptions | undefined,
     ): ResolvedType<A, TOpticType, TOptions, FocusedValue<A, TOpticType>, Denormalized<FocusedValue<A, TOpticType>>> {
         const denormalize = options?.denormalize === false ? false : !!this.dependencies;
         const store = this.getStore();
-        if (denormalize && this.dependencies) {
-            const a =
-                store.state === this.cacheDenormalize.s && this.cacheDenormalize.a !== undefined
-                    ? this.cacheDenormalize.a
-                    : super.get(store.state);
-            const dependenciesChanged = this.updateDependenciesStates(this.dependencies, a);
-            if (
-                a === this.cacheDenormalize.a &&
-                !dependenciesChanged &&
-                this.cacheDenormalize.denormalizedA !== undefined
-            ) {
-                return this.cacheDenormalize.denormalizedA;
+        const a = super._get(store.state, (s, lens) => {
+            if (['map', 'convert', 'compose'].includes(lens.key)) {
+                if (this.cacheByLenses.get(lens) === s && this.cache.a !== undefined) {
+                    return this.cache.a;
+                }
+                this.cacheByLenses.set(lens, s);
             }
-            const denormalizedA = this.denormalizeState(a, this.dependencies);
-            this.cacheDenormalize = { s: store.state, a, denormalizedA };
-            return denormalizedA;
+            return undefined;
+        });
+        if (!denormalize || !this.dependencies) {
+            this.cache.a = a;
+            return a as any;
         }
-
-        if (store.state === this.cache.s && this.cache.a !== undefined) {
-            return this.cache.a;
+        const dependenciesChanged = this.updateDependenciesStates(this.dependencies, a);
+        if (!dependenciesChanged && this.cache.normalized === a && this.cache.denormalized !== undefined) {
+            return this.cache.denormalized as any;
         }
-        const a = super.get(store.state);
-        this.cache = { s: store.state, a };
-        return a as any;
+        const denormalizedA = this.denormalizeState(a, this.dependencies);
+        this.cache = { normalized: a, denormalized: denormalizedA };
+        return denormalizedA;
     }
 
     private setState(a: A | ((prev: A) => A)) {

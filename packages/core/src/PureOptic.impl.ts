@@ -15,7 +15,7 @@ class PureOpticImpl<A, TOpticType extends OpticType, S>
     implements
         PureOpticInterface<A, TOpticType, S>,
         OnArray<A, S>,
-        OnRecord<A, S>,
+        OnRecord<A, TOpticType, S>,
         OnNullable<A, TOpticType, S>,
         Mapped<A, S>
 {
@@ -154,7 +154,7 @@ class PureOpticImpl<A, TOpticType extends OpticType, S>
         return this.derive([{ get: (s) => s, set: (a) => a, key: 'map', type: 'map' }]);
     }
 
-    values(): A extends Record<string, infer R> ? Resolve<this, R, mapped, S> : never {
+    values(): A extends Record<string, infer R> ? Resolve<this, Array<R>, TOpticType, S> : never {
         return this.derive([
             {
                 get: (s) => Object.values(s),
@@ -165,17 +165,15 @@ class PureOpticImpl<A, TOpticType extends OpticType, S>
                         return acc;
                     }, {} as Record<string, any>);
                 },
-                type: 'map',
                 key: 'values',
             },
         ]);
     }
-    entries(): A extends Record<string, infer R> ? Resolve<this, [key: string, value: R], mapped, S> : never {
+    entries(): A extends Record<string, infer R> ? Resolve<this, Array<readonly [string, R]>, TOpticType, S> : never {
         return this.derive([
             {
                 get: (s) => Object.entries(s),
                 set: (a) => Object.fromEntries(a),
-                type: 'map',
                 key: 'entries',
             },
         ]);

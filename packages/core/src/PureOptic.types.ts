@@ -20,9 +20,9 @@ export interface OnArray<A, S> {
     map(): A extends (infer R)[] ? Resolve<this, R, mapped, S> : never;
 }
 
-export interface OnRecord<A, S> {
-    values(): A extends Record<string, infer R> ? Resolve<this, R, mapped, S> : never;
-    entries(): A extends Record<string, infer R> ? Resolve<this, [key: string, value: R], mapped, S> : never;
+export interface OnRecord<A, TOpticType extends OpticType, S> {
+    values(): A extends Record<string, infer R> ? Resolve<this, Array<R>, TOpticType, S> : never;
+    entries(): A extends Record<string, infer R> ? Resolve<this, Array<readonly [string, R]>, TOpticType, S> : never;
 }
 
 export interface OnNullable<A, TOpticType extends OpticType, S> {
@@ -47,7 +47,7 @@ type ResolveFromType<A, TOpticType extends OpticType, S> = (IsNullable<A> extend
         ? OnArray<A, S>
         : Record<string, any> extends A
         ? NonNullable<A> extends Record<string, any>
-            ? OnRecord<A, S>
+            ? OnRecord<A, TOpticType, S>
             : {}
         : {});
 

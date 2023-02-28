@@ -13,25 +13,6 @@ describe('map', () => {
         const onState = pureOptic<typeof state>().map();
         expect(onState.get(state)).toBe(state);
     });
-    const state: Record<string, number> = { a: 42, b: 67, c: 1000, d: 90 };
-    const onState = pureOptic<typeof state>();
-    it('should map over object entries', () => {
-        const onEntries = onState.entries();
-        expect(onEntries.get(state)).toEqual([
-            ['a', 42],
-            ['b', 67],
-            ['c', 1000],
-            ['d', 90],
-        ]);
-        const newState = onEntries.set(([k, v]) => [k.toUpperCase(), v * 2], state);
-        expect(newState).toEqual({ A: 84, B: 134, C: 2000, D: 180 });
-    });
-    it('should map over object values', () => {
-        const onValues = onState.values();
-        expect(onValues.get(state)).toEqual([42, 67, 1000, 90]);
-        const newState = onValues.set((x) => x * 2, state);
-        expect(newState).toEqual({ a: 84, b: 134, c: 2000, d: 180 });
-    });
 });
 
 const state: {

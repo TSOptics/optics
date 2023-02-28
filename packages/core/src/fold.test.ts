@@ -79,14 +79,18 @@ describe('fold', () => {
         const onDurabilityOf2 = onDurabilities.findFirst((x) => x === 2);
         expect(onDurabilityOf2.get(onDurabilityOf2.set((x) => x + 1, state))).toBe(undefined);
     });
-    it('maxBy', () => {
-        const onMaxDurability = onDurabilities.maxBy((x) => x);
+    it('max', () => {
+        const onMaxDurability = onDurabilities.max();
         expect(onMaxDurability.get(state)).toBe(12);
+        expect(onItems.max((item) => item.durability).get(state)).toMatchObject({ durability: 12, name: 'weapon1' });
+
         expect(onMaxDurability.get(onMaxDurability.set(0, state))).toBe(7);
     });
-    it('minBy', () => {
-        const onMinDurability = onDurabilities.minBy((x) => x);
+    it('min', () => {
+        const onMinDurability = onDurabilities.min();
         expect(onMinDurability.get(state)).toBe(2);
+        expect(onItems.min((item) => item.durability).get(state)).toMatchObject({ durability: 2, name: 'weapon3' });
+
         expect(onMinDurability.get(onMinDurability.set(1000, state))).toBe(6);
     });
     it('atIndex', () => {

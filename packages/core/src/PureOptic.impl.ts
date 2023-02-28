@@ -189,13 +189,13 @@ class PureOpticImpl<A, TOpticType extends OpticType, S>
             },
         ]);
     }
-    maxBy(f: (a: A) => number): Resolve<this, A, partial, S> {
+    max(...arg: A extends number ? [f?: undefined] : [f: (a: A) => number]): Resolve<this, A, partial, S> {
         return this.derive([
             {
                 get: (s: A[]) =>
                     s.reduce<{ maxValue: number; indexOfMax: number }>(
                         ({ maxValue, indexOfMax }, cv: A, ci) => {
-                            const numValue = f(cv);
+                            const numValue = arg[0]?.(cv) ?? (cv as number);
                             return {
                                 maxValue: numValue > maxValue ? numValue : maxValue,
                                 indexOfMax: numValue > maxValue ? ci : indexOfMax,
@@ -209,13 +209,13 @@ class PureOpticImpl<A, TOpticType extends OpticType, S>
             },
         ]);
     }
-    minBy(f: (a: A) => number): Resolve<this, A, partial, S> {
+    min(...f: A extends number ? [undefined?] : [(a: A) => number]): Resolve<this, A, partial, S> {
         return this.derive([
             {
                 get: (s: A[]) =>
                     s.reduce<{ minValue: number; indexOfMin: number }>(
                         ({ minValue, indexOfMin }, cv: A, ci) => {
-                            const numValue = f(cv);
+                            const numValue = f[0]?.(cv) ?? (cv as number);
                             return {
                                 minValue: numValue < minValue ? numValue : minValue,
                                 indexOfMin: numValue < minValue ? ci : indexOfMin,

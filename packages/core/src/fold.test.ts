@@ -93,10 +93,12 @@ describe('fold', () => {
 
         expect(onMinDurability.get(onMinDurability.set(1000, state))).toBe(6);
     });
-    it('atIndex', () => {
-        expect(onDurabilities.atIndex(3).get(state)).toBe(7);
-        expect(onDurabilities.atIndex(4).get(state)).toBe(undefined);
-        expect(onDurabilities.get(onDurabilities.atIndex(3).set(42, state))).toEqual([12, 6, 2, 42]);
+    it('at', () => {
+        expect(onDurabilities.at(3).get(state)).toBe(7);
+        expect(onDurabilities.at(-3).get(state)).toBe(6);
+        expect(onDurabilities.at(4).get(state)).toBe(undefined);
+        expect(onDurabilities.at(-5).get(state)).toBe(undefined);
+        expect(onDurabilities.get(onDurabilities.at(3).set(42, state))).toEqual([12, 6, 2, 42]);
     });
     it('filter', () => {
         const onEvenDurabilities = onDurabilities.filter((d) => d % 2 === 0);

@@ -229,10 +229,10 @@ class PureOpticImpl<A, TOpticType extends OpticType, S>
             },
         ]);
     }
-    atIndex(index: number): Resolve<this, A, partial, S> {
+    at(index: number): Resolve<this, A, partial, S> {
         return this.derive([
             {
-                get: (s: A[]) => (index >= 0 && index < s.length ? index : -1),
+                get: (s: A[]) => (index < 0 ? index + s.length : index),
                 set: noop,
                 type: 'fold',
                 key: 'atIndex',

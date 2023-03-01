@@ -218,7 +218,7 @@ describe('Optic', () => {
     describe('Referential stability', () => {
         it("should return the same value if the array didn't change", () => {
             const onState = createState({ a: 42, b: [1, 2, 3, 4] });
-            const onB = onState.b.map().filter((x) => x % 2 === 0);
+            const onB = onState.b.map().reduceFilter((x) => x % 2 === 0);
 
             const b = onB.get();
             onState.a.set((prev) => prev + 1);

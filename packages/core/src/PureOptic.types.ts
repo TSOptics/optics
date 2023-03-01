@@ -31,13 +31,13 @@ export interface OnNullable<A, TOpticType extends OpticType, S> {
 }
 
 export interface Mapped<A, S> {
-    findFirst(predicate: (a: A) => boolean): Resolve<this, A, partial, S>;
-    max(...arg: A extends number ? [f?: (a: A) => number] : [f: (a: A) => number]): Resolve<this, A, partial, S>;
-    min(...arg: A extends number ? [f?: (a: A) => number] : [f: (a: A) => number]): Resolve<this, A, partial, S>;
-    at(index: number): Resolve<this, A, partial, S>;
-    filter(predicate: (a: A) => boolean): Resolve<this, A, mapped, S>;
-    slice(start?: number, end?: number): Resolve<this, A, mapped, S>;
-    sort(compareFn?: (a: A, b: A) => number): Resolve<this, A, mapped, S>;
+    reduceFindFirst(predicate: (a: A) => boolean): Resolve<this, A, partial, S>;
+    reduceMax(...arg: A extends number ? [f?: (a: A) => number] : [f: (a: A) => number]): Resolve<this, A, partial, S>;
+    reduceMin(...arg: A extends number ? [f?: (a: A) => number] : [f: (a: A) => number]): Resolve<this, A, partial, S>;
+    reduceAt(index: number): Resolve<this, A, partial, S>;
+    reduceFilter(predicate: (a: A) => boolean): Resolve<this, A, mapped, S>;
+    reduceSlice(start?: number, end?: number): Resolve<this, A, mapped, S>;
+    reduceSort(compareFn?: (a: A, b: A) => number): Resolve<this, A, mapped, S>;
 }
 
 type ResolveFromType<A, TOpticType extends OpticType, S> = (IsNullable<A> extends true

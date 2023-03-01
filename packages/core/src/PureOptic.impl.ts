@@ -179,7 +179,7 @@ class PureOpticImpl<A, TOpticType extends OpticType, S>
         ]);
     }
 
-    findFirst(predicate: (a: A) => boolean): Resolve<this, A, partial, S> {
+    reduceFindFirst(predicate: (a: A) => boolean): Resolve<this, A, partial, S> {
         return this.derive([
             {
                 get: (s: A[]) => s.findIndex(predicate),
@@ -189,7 +189,7 @@ class PureOpticImpl<A, TOpticType extends OpticType, S>
             },
         ]);
     }
-    max(...arg: A extends number ? [f?: undefined] : [f: (a: A) => number]): Resolve<this, A, partial, S> {
+    reduceMax(...arg: A extends number ? [f?: undefined] : [f: (a: A) => number]): Resolve<this, A, partial, S> {
         return this.derive([
             {
                 get: (s: A[]) =>
@@ -209,7 +209,7 @@ class PureOpticImpl<A, TOpticType extends OpticType, S>
             },
         ]);
     }
-    min(...f: A extends number ? [undefined?] : [(a: A) => number]): Resolve<this, A, partial, S> {
+    reduceMin(...f: A extends number ? [undefined?] : [(a: A) => number]): Resolve<this, A, partial, S> {
         return this.derive([
             {
                 get: (s: A[]) =>
@@ -229,7 +229,7 @@ class PureOpticImpl<A, TOpticType extends OpticType, S>
             },
         ]);
     }
-    at(index: number): Resolve<this, A, partial, S> {
+    reduceAt(index: number): Resolve<this, A, partial, S> {
         return this.derive([
             {
                 get: (s: A[]) => (index < 0 ? index + s.length : index),
@@ -239,7 +239,7 @@ class PureOpticImpl<A, TOpticType extends OpticType, S>
             },
         ]);
     }
-    filter(predicate: (a: A) => boolean): Resolve<this, A, mapped, S> {
+    reduceFilter(predicate: (a: A) => boolean): Resolve<this, A, mapped, S> {
         return this.derive([
             {
                 get: (s: A[]) =>
@@ -253,7 +253,7 @@ class PureOpticImpl<A, TOpticType extends OpticType, S>
             },
         ]);
     }
-    slice(start = 0, end?: number | undefined): Resolve<this, A, mapped, S> {
+    reduceSlice(start = 0, end?: number | undefined): Resolve<this, A, mapped, S> {
         return this.derive([
             {
                 get: (s: A[]) => {
@@ -270,7 +270,7 @@ class PureOpticImpl<A, TOpticType extends OpticType, S>
             },
         ]);
     }
-    sort(compareFn = (a: any, b: any) => (`${a}` < `${b}` ? -1 : 1)): Resolve<this, A, mapped, S> {
+    reduceSort(compareFn = (a: any, b: any) => (`${a}` < `${b}` ? -1 : 1)): Resolve<this, A, mapped, S> {
         return this.derive([
             {
                 get: (s: A[]) =>

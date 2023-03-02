@@ -16,8 +16,9 @@ export interface PureOpticInterface<A, TOpticType extends OpticType, S> {
     convert<B>(to: (a: NonNullable<A>) => B, from: (b: B) => NonNullable<A>): Resolve<this, B, TOpticType, S>;
 }
 
-export interface OnArray<A, S> {
+export interface OnArray<A, TOpticType extends OpticType, S> {
     map(): A extends (infer R)[] ? Resolve<this, R, mapped, S> : never;
+    at(index: number): A extends (infer R)[] ? Resolve<this, R, ToPartial<TOpticType>, S> : never;
 }
 
 export interface OnRecord<A, TOpticType extends OpticType, S> {
@@ -44,7 +45,7 @@ type ResolveFromType<A, TOpticType extends OpticType, S> = (IsNullable<A> extend
     ? OnNullable<A, TOpticType, S>
     : {}) &
     (NonNullable<A> extends any[]
-        ? OnArray<A, S>
+        ? OnArray<A, TOpticType, S>
         : Record<string, any> extends A
         ? NonNullable<A> extends Record<string, any>
             ? OnRecord<A, TOpticType, S>

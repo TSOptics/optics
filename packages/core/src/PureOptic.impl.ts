@@ -14,7 +14,7 @@ import { ComposedOpticType, FocusedValue, Lens, mapped, OpticType, partial } fro
 class PureOpticImpl<A, TOpticType extends OpticType, S>
     implements
         PureOpticInterface<A, TOpticType, S>,
-        OnArray<A, S>,
+        OnArray<A, TOpticType, S>,
         OnRecord<A, TOpticType, S>,
         OnNullable<A, TOpticType, S>,
         Mapped<A, S>
@@ -152,6 +152,19 @@ class PureOpticImpl<A, TOpticType extends OpticType, S>
 
     map(): A extends (infer R)[] ? Resolve<this, R, mapped, S> : never {
         return this.derive([{ get: (s) => s, set: (a) => a, key: 'map', type: 'map' }]);
+    }
+
+    at(index: number): A extends (infer R)[] ? Resolve<this, R, ToPartial<TOpticType>, S> : never {
+        return this.derive([
+            {
+                get: (s: any[]) => s[index < 0 ? index + s.length : index],
+                set: (a, s: any[]) => {
+                    const absIndex = index < 0 ? index + s.length : index;
+                    return s.map((x, i) => (i === absIndex ? a : x));
+                },
+                key: 'at',
+            },
+        ]);
     }
 
     values(): A extends Record<string, infer R> ? Resolve<this, Array<R>, TOpticType, S> : never {

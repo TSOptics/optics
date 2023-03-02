@@ -135,6 +135,24 @@ describe('toPartial', () => {
     expect(onAs.get([{ a: undefined }, { a: 42 }])).toEqual([42]);
     expect(onAs.set((prev) => prev + 10, [{ a: undefined }, { a: 42 }])).toEqual([{ a: undefined }, { a: 52 }]);
 });
+describe('array methods', () => {
+    describe('at', () => {
+        const state = [0, 1, 2, 3];
+        const onState = pureOptic<typeof state>();
+        it('should focus the element at index', () => {
+            expect(onState.at(3).get(state)).toBe(3);
+            expect(onState.at(3).set(42, state)).toEqual([0, 1, 2, 42]);
+        });
+        it('should focus undefined if out of range', () => {
+            expect(onState.at(4).get(state)).toBe(undefined);
+            expect(onState.at(4).set(42, state)).toEqual([0, 1, 2, 3]);
+        });
+        it('should count from the end with negative index', () => {
+            expect(onState.at(-4).get(state)).toBe(0);
+            expect(onState.at(-4).set(42, state)).toEqual([42, 1, 2, 3]);
+        });
+    });
+});
 describe('entries', () => {
     const state: Record<string, number> = { a: 42, b: 67, c: 1000, d: 90 };
     const onState = pureOptic<typeof state>();

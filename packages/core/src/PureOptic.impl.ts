@@ -167,6 +167,31 @@ class PureOpticImpl<A, TOpticType extends OpticType, S>
         ]);
     }
 
+    indexBy<Key extends string | number, Elem = A extends (infer R)[] ? R : never>(
+        getKey: (a: Elem) => Key,
+    ): Resolve<this, Record<Key, Elem>, TOpticType, S> {
+        return this.derive([
+            {
+                get: (s: any[]) => {
+                    return s.reduce((acc, cv) => {
+                        acc[getKey(cv)] = cv;
+                        return acc;
+                    }, {} as Record<Key, any>);
+                },
+                set: (a: Record<Key, any>, s: any[]) => {
+                    const keys = { ...a };
+                    return s.reduceRight<any[]>((acc, cv) => {
+                        const key = getKey(cv);
+                        acc.unshift(keys[key] ?? cv);
+                        delete keys[key];
+                        return acc;
+                    }, []);
+                },
+                key: 'indexBy',
+            },
+        ]);
+    }
+
     values(): A extends Record<string, infer R> ? Resolve<this, Array<R>, TOpticType, S> : never {
         return this.derive([
             {

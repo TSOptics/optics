@@ -152,6 +152,17 @@ describe('array methods', () => {
             expect(onState.at(-4).set(42, state)).toEqual([42, 1, 2, 3]);
         });
     });
+    describe('indexBy', () => {
+        const state = ['earth', 'wind', 'fire', 'water'];
+        const onState = pureOptic<typeof state>();
+        const onIndexedState = onState.indexBy((x) => x[0]);
+        it('should take last element in case of collision', () => {
+            expect(onIndexedState.get(state)).toEqual({ e: 'earth', f: 'fire', w: 'water' });
+            const newState = onIndexedState.set({ e: 'terre', f: 'feu', w: 'eau' }, state);
+            expect(newState).toEqual(['terre', 'wind', 'feu', 'eau']);
+            expect(onIndexedState.get(newState)).toEqual({ t: 'terre', w: 'wind', f: 'feu', e: 'eau' });
+        });
+    });
 });
 describe('entries', () => {
     const state: Record<string, number> = { a: 42, b: 67, c: 1000, d: 90 };

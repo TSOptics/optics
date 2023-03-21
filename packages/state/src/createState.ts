@@ -1,6 +1,6 @@
 import { total } from '@optix/core';
 import OpticImpl from './Optic.impl';
-import { Optic } from './Optic.types';
+import { Optic } from './Optics/Optic';
 
 export function createState<T>(initialValue: T, key?: string): Optic<T, total, T> {
     const rootOptic = new OpticImpl<T, total, T>(

@@ -40,8 +40,8 @@ export const useKeyedOptics = <T, TOpticType extends OpticType, S>(
         keyedOptics.current = {};
         opticRef.current = onArray;
         unsubscribe.current();
-        unsubscribe.current = onArray.subscribe(listener);
-        listener(onArray.get());
+        unsubscribe.current = onArray.subscribe(listener, { denormalize: false });
+        listener(onArray.get({ denormalize: false }));
     }
 
     const getOpticFromKey = useCallback((key: string) => keyedOptics.current[key], [keyedOptics]);

@@ -1,6 +1,7 @@
 import { Dispatch, useCallback } from 'react';
-import { pureOptic, PureOptic, OpticType, total, Optic, ResolvedType } from '@optix/state';
+import { pureOptic, PureOptic, OpticType, total, Optic } from '@optix/state';
 import { useOptic, UseOpticOptions } from './useOptic';
+import { ResolvedType } from '@optix/state/src/Optics/ReadOptic';
 
 type UseOpticReducerOptions = UseOpticOptions;
 

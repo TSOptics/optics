@@ -1,3 +1,4 @@
-export { GetStateOptions, Lens, OpticType, PureOptic, mapped, partial, pureOptic, total } from '@optix/core';
+export { Lens, OpticType, PureOptic, mapped, partial, pureOptic, total } from '@optix/core';
 export { createState } from './createState';
-export { Optic, ResolvedType } from './Optic.types';
+export { Optic } from './Optics/Optic';
+export { GetStateOptions, SubscribeOptions } from './types';

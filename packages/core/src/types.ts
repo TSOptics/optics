@@ -44,10 +44,13 @@ export type FocusedValue<T, TOpticType extends OpticType> = TOpticType extends m
     ? T
     : T | undefined;
 
-export type GetStateOptions = {
-    denormalize?: boolean;
-};
+export type ToPartial<TOpticType extends OpticType> = TOpticType extends total ? partial : TOpticType;
+export type FocusToPartial<TOpticType extends OpticType, T> = TOpticType extends total ? T : TOpticType;
 
-export type SubscribeOptions = {
-    denormalize?: boolean;
-};
+export type IsAny<T> = boolean extends (T extends never ? true : false) ? true : false;
+
+export type DeriveOpticType<T, TOpticType extends OpticType> = IsNullable<T> extends true
+    ? TOpticType extends partial
+        ? partial
+        : TOpticType
+    : TOpticType;

@@ -1,21 +1,45 @@
+import { PureOptic } from '@optix/core';
 import { pureOptic } from '@optix/core/src/pureOptic';
-import { PureOptic } from '@optix/core/src/PureOptic.types';
 import { partial, total } from '@optix/core/src/types';
 import { createState } from './createState';
-import { Optic } from './Optic.types';
+import { AsyncOptic } from './Optics/AsyncOptic';
+import { AsyncReadOptic } from './Optics/AsyncReadOptic';
+import { Optic } from './Optics/Optic';
+import { ReadOptic } from './Optics/ReadOptic';
 
 const expectType = <T extends any>(t: T) => {};
 
 describe('Optic', () => {
     describe('types', () => {
-        it('should be a subtype of Optic', () => {
-            const storeOptic = {} as Optic<number>;
-            const baseOptic: PureOptic<number> = storeOptic;
+        it('Optic should be a subtype of Optic', () => {
+            const o = {} as Optic<number>;
+            const ro: ReadOptic<number> = o;
         });
-        it('should be covariant on type param TOpticType', () => {
-            const storeOptic = {} as Optic<number>;
-            const basePartialOptic: PureOptic<number, partial> = storeOptic;
-            const storePartialOptic: Optic<number, partial> = storeOptic;
+        it('AsyncReadOptic should be a subtype of ReadOptic', () => {
+            const aro = {} as AsyncReadOptic<number>;
+            const ro: ReadOptic<number> = aro;
+        });
+        it('AsyncOptic should be a subtype of Optic', () => {
+            const ao = {} as AsyncOptic<number>;
+            const ro: Optic<number> = ao;
+        });
+        it('Optics should not be subtypes of PureOptic', () => {
+            const ro = {} as ReadOptic<number>;
+            // @ts-expect-error
+            const po: PureOptic<number> = ro;
+        });
+        it('should be invariant on focused type', () => {
+            let onStringOrNumber = {} as Optic<number | string>;
+            // @ts-expect-error
+            const onNumber: Optic<string> = onStringOrNumber;
+            // @ts-expect-error
+            onStringOrNumber = onNumber;
+        });
+        it('should be covariant on optic type', () => {
+            let onNumberTotal = {} as Optic<number>;
+            const onNumberPartial: Optic<number, partial> = onNumberTotal;
+            // @ts-expect-error
+            onNumberTotal = onNumberPartial;
         });
         it('should compose with plain optics', () => {
             const onState = createState({ a: { b: 42 } });
@@ -24,20 +48,20 @@ describe('Optic', () => {
             expectType<Optic<number, total, { a: { b: number } }>>(onNumberFromState);
             expect(onNumberFromState.get()).toBe(42);
         });
-        describe('get and set state', () => {
-            const onState = createState({ a: 42 });
-            expect(onState.get()).toEqual({ a: 42 });
+    });
+    describe('get and set state', () => {
+        const onState = createState({ a: 42 });
+        expect(onState.get()).toEqual({ a: 42 });
 
-            onState.set({ a: 100 });
-            expect(onState.get()).toEqual({ a: 100 });
+        onState.set({ a: 100 });
+        expect(onState.get()).toEqual({ a: 100 });
 
-            const onNumber = onState.a;
-            const listener = jest.fn();
-            onNumber.subscribe(listener);
-            onState.set({ a: 42 });
-            expect(listener).toHaveBeenCalledTimes(1);
-            expect(listener).toHaveBeenCalledWith(42);
-        });
+        const onNumber = onState.a;
+        const listener = jest.fn();
+        onNumber.subscribe(listener);
+        onState.set({ a: 42 });
+        expect(listener).toHaveBeenCalledTimes(1);
+        expect(listener).toHaveBeenCalledWith(42);
     });
     describe('denormalize', () => {
         const onCountries = createState([

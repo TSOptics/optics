@@ -5,8 +5,8 @@ import { ResolvedType } from '@optix/state/src/Optics/ReadOptic';
 
 export type UseOpticOptions = GetStateOptions;
 
-export function useOptic<T, TOpticType extends OpticType, S, TOptions extends UseOpticOptions | undefined>(
-    optic: Optic<T, TOpticType, S>,
+export function useOptic<T, TOpticType extends OpticType, TOptions extends UseOpticOptions | undefined>(
+    optic: Optic<T, TOpticType>,
     options?: TOptions,
 ): [ResolvedType<T, TOpticType, TOptions>, Dispatch<SetStateAction<T>>] {
     const optionsWithDefault: UseOpticOptions = { denormalize: true, ...(options ?? {}) };

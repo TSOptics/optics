@@ -8,12 +8,12 @@ import { _Optic } from './Optics/Optic';
 import { Denormalized, Dependencies, Dependency, leafSymbol, ResolvedType, tag } from './Optics/ReadOptic';
 import { Store, stores } from './stores';
 import { GetStateOptions, SubscribeOptions } from './types';
-class OpticImpl<A, TOpticType extends OpticType, S>
-    extends CombinatorsImpl<A, TOpticType, S>
-    implements Omit<_Optic<A, TOpticType, S>, typeof tag>, TotalCombinators
+class OpticImpl<A, TOpticType extends OpticType>
+    extends CombinatorsImpl<A, TOpticType, any>
+    implements Omit<_Optic<A, TOpticType>, typeof tag>, TotalCombinators
 {
     protected lenses: Lens<any, any>[];
-    private storeId: OpticImpl<any, OpticType, S>;
+    private storeId: OpticImpl<any, OpticType>;
     private listenersDenormalized = new Set<() => void>();
 
     private _dependencies?: Dependencies | null;
@@ -24,7 +24,7 @@ class OpticImpl<A, TOpticType extends OpticType, S>
         return this._dependencies;
     }
 
-    constructor(lenses: Lens[], private initialValue: S, _storeId?: OpticImpl<any, OpticType, S>) {
+    constructor(lenses: Lens[], private initialValue: any, _storeId?: OpticImpl<any, OpticType>) {
         super();
         this.lenses = lenses;
         this.storeId = _storeId ?? (this as any);
@@ -115,10 +115,10 @@ class OpticImpl<A, TOpticType extends OpticType, S>
         return new OpticImpl([...this.lenses, ...newLenses], this.initialValue, this.storeId);
     }
 
-    private getStore(): Store<S> {
+    private getStore(): Store {
         const store = stores.get(this.storeId);
         if (!store) {
-            const newStore: Store<S> = { state: this.initialValue, listeners: new Set() };
+            const newStore: Store = { state: this.initialValue, listeners: new Set() };
             stores.set(this.storeId, newStore);
             return newStore;
         }
@@ -206,7 +206,7 @@ class OpticImpl<A, TOpticType extends OpticType, S>
         let changed = false;
         const aux = (dependencies: Dependencies, state: any) => {
             if (isLeaf(dependencies)) {
-                const newState = (state as _Optic<any, OpticType, any>).get({ denormalize: true });
+                const newState = (state as _Optic<any, OpticType>).get({ denormalize: true });
                 if (newState !== dependencies.state) {
                     changed = true;
                 }

@@ -45,7 +45,7 @@ describe('Optic', () => {
             const onState = createState({ a: { b: 42 } });
             const onNumber = pureOptic<{ b: number }>().b;
             const onNumberFromState = onState.a.compose(onNumber);
-            expectType<Optic<number, total, { a: { b: number } }>>(onNumberFromState);
+            expectType<Optic<number, total>>(onNumberFromState);
             expect(onNumberFromState.get()).toBe(42);
         });
     });

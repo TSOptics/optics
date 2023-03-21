@@ -1,18 +1,18 @@
 import { useCallback, useRef } from 'react';
 import { Optic, OpticType, Lens, pureOptic } from '@optix/state';
 
-type KeyedOptics<T, TOpticType extends OpticType, S> = Record<string, Optic<T, TOpticType, S>>;
+type KeyedOptics<T, TOpticType extends OpticType> = Record<string, Optic<T, TOpticType>>;
 
-export const useKeyedOptics = <T, TOpticType extends OpticType, S>(
-    onArray: Optic<T[], TOpticType, S>,
+export const useKeyedOptics = <T, TOpticType extends OpticType>(
+    onArray: Optic<T[], TOpticType>,
     keyExtractor: (t: T) => string,
 ) => {
     const keyExtractorRef = useRef(keyExtractor).current;
 
-    const keyedOptics = useRef<KeyedOptics<T, TOpticType, S>>({});
+    const keyedOptics = useRef<KeyedOptics<T, TOpticType>>({});
     const listener = (array: any[] | undefined) => {
         keyedOptics.current =
-            array?.reduce<KeyedOptics<T, TOpticType, S>>((acc, cv, ci) => {
+            array?.reduce<KeyedOptics<T, TOpticType>>((acc, cv, ci) => {
                 const key = keyExtractorRef(cv);
                 const lensOnIndex: Lens<T, T[]> = {
                     get: (s) => s[ci],

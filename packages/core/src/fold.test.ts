@@ -79,25 +79,60 @@ describe('fold', () => {
         const onDurabilityOf2 = onDurabilities.reduceFindFirst((x) => x === 2);
         expect(onDurabilityOf2.get(onDurabilityOf2.set((x) => x + 1, state))).toBe(undefined);
     });
-    it('max', () => {
+    describe('reduceMax', () => {
         const onMaxDurability = onDurabilities.reduceMax();
-        expect(onMaxDurability.get(state)).toBe(12);
-        expect(onItems.reduceMax((item) => item.durability).get(state)).toMatchObject({
-            durability: 12,
-            name: 'weapon1',
-        });
+        it('should reduce on the max value', () => {
+            expect(onMaxDurability.get(state)).toBe(12);
+            expect(onItems.reduceMax((item) => item.durability).get(state)).toMatchObject({
+                durability: 12,
+                name: 'weapon1',
+            });
 
-        expect(onMaxDurability.get(onMaxDurability.set(0, state))).toBe(7);
+            const newState = onMaxDurability.set(0, state);
+            expect(onMaxDurability.get(newState)).toBe(7);
+        });
+        it('should use the custom number getter if provided', () => {
+            const onMostDurableItem = onItems.reduceMax((item) => item.durability);
+            expect(onMostDurableItem.get(state)).toEqual({
+                name: 'weapon1',
+                durability: 12,
+                enchantement: { fire: 32 },
+            });
+
+            const newState = onMostDurableItem.set({ name: 'cursed weapon', durability: 0 }, state);
+            expect(onMostDurableItem.get(newState)).toEqual({
+                name: 'weapon4',
+                durability: 7,
+                enchantement: { fire: 54 },
+            });
+        });
     });
-    it('min', () => {
-        const onMinDurability = onDurabilities.reduceMin();
-        expect(onMinDurability.get(state)).toBe(2);
-        expect(onItems.reduceMin((item) => item.durability).get(state)).toMatchObject({
-            durability: 2,
-            name: 'weapon3',
-        });
+    describe('min', () => {
+        it('should reduce on the min value', () => {
+            const onMinDurability = onDurabilities.reduceMin();
+            expect(onMinDurability.get(state)).toBe(2);
+            expect(onItems.reduceMin((item) => item.durability).get(state)).toMatchObject({
+                durability: 2,
+                name: 'weapon3',
+            });
 
-        expect(onMinDurability.get(onMinDurability.set(1000, state))).toBe(6);
+            const newState = onMinDurability.set(1000, state);
+            expect(onMinDurability.get(newState)).toBe(6);
+        });
+        it('should use the custom number getter if provided', () => {
+            const onLeastDurableItem = onItems.reduceMin((item) => item.durability);
+            expect(onLeastDurableItem.get(state)).toEqual({
+                name: 'weapon3',
+                durability: 2,
+            });
+
+            const newState = onLeastDurableItem.set({ name: 'legendary weapon', durability: 1000 }, state);
+            expect(onLeastDurableItem.get(newState)).toEqual({
+                name: 'weapon2',
+                durability: 6,
+                enchantement: { fire: undefined },
+            });
+        });
     });
     it('at', () => {
         expect(onDurabilities.reduceAt(3).get(state)).toBe(7);

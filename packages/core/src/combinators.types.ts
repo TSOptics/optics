@@ -12,12 +12,19 @@ export interface BaseCombinators<A, TOpticType extends OpticType, S> {
     ): Resolve<this, B, ComposedOpticType<TOpticType, TOpticTypeB, A>, S>;
 }
 
-export interface ArrayCombinators<A, TOpticType extends OpticType, S> {
-    map(): A extends (infer R)[] ? Resolve<this, R, mapped, S> : never;
-    at(index: number): A extends (infer R)[] ? Resolve<this, R, ToPartial<TOpticType>, S> : never;
-    indexBy<Key extends string | number, Elem = A extends (infer R)[] ? R : never>(
-        f: (a: Elem) => Key,
-    ): Resolve<this, Record<Key, Elem>, TOpticType, S>;
+export interface ArrayCombinators<A, TOpticType extends OpticType, S, Elem = A extends (infer R)[] ? R : never> {
+    map(): Resolve<this, Elem, mapped, S>;
+    at(index: number): Resolve<this, Elem, ToPartial<TOpticType>, S>;
+    indexBy<Key extends string | number>(f: (a: Elem) => Key): Resolve<this, Record<Key, Elem>, TOpticType, S>;
+    findFirst(predicate: (a: Elem) => boolean): Resolve<this, Elem, ToPartial<TOpticType>, S>;
+    min(
+        ...arg: Elem extends number ? [f?: (a: Elem) => number] : [f: (a: Elem) => number]
+    ): Resolve<this, Elem, ToPartial<TOpticType>, S>;
+    max(
+        ...arg: Elem extends number ? [f?: (a: Elem) => number] : [f: (a: Elem) => number]
+    ): Resolve<this, Elem, ToPartial<TOpticType>, S>;
+    reverse(): Resolve<this, A, TOpticType, S>;
+    slice(start?: number, end?: number): Resolve<this, A, TOpticType, S>;
 }
 
 export interface RecordCombinators<A, TOpticType extends OpticType, S> {

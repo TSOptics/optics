@@ -163,6 +163,101 @@ describe('array methods', () => {
             expect(onIndexedState.get(newState)).toEqual({ t: 'terre', w: 'wind', f: 'feu', e: 'eau' });
         });
     });
+    describe('findFirst', () => {
+        const state = [0, 1, 2, 3];
+        const onState = pureOptic<typeof state>();
+        it('should focus the first element matching predicate', () => {
+            const onFirstEven = onState.findFirst((x) => x % 2 === 0);
+            expect(onFirstEven.get(state)).toBe(0);
+
+            const newState = onFirstEven.set(43, state);
+            expect(newState).toEqual([43, 1, 2, 3]);
+            expect(onFirstEven.get(newState)).toBe(2);
+        });
+        it('should focus undefined if no element matches', () => {
+            const onOver10 = onState.findFirst((x) => x > 10);
+            expect(onOver10.get(state)).toBe(undefined);
+            expect(onOver10.set(42, state)).toEqual([0, 1, 2, 3]);
+        });
+    });
+    describe('max', () => {
+        const state = [0, 1, 2, 3];
+        const onState = pureOptic<typeof state>();
+        it('should focus the maximum element', () => {
+            const onMax = onState.max();
+            expect(onMax.get(state)).toBe(3);
+
+            const newState = onMax.set(-1, state);
+            expect(newState).toEqual([0, 1, 2, -1]);
+            expect(onMax.get(newState)).toBe(2);
+        });
+        it('should focus undefined if empty', () => {
+            const onMax = onState.max();
+            expect(onMax.get([])).toBe(undefined);
+            expect(onMax.set(42, [])).toEqual([]);
+        });
+        it('should use custom number getter if provided', () => {
+            const state = [{ a: 0 }, { a: 1 }, { a: 2 }, { a: 3 }];
+            const onState = pureOptic<typeof state>();
+            const onMax = onState.max((x) => x.a);
+            expect(onMax.get(state)).toEqual({ a: 3 });
+
+            const newState = onMax.set({ a: -1 }, state);
+            expect(newState).toEqual([{ a: 0 }, { a: 1 }, { a: 2 }, { a: -1 }]);
+            expect(onMax.get(newState)).toEqual({ a: 2 });
+        });
+    });
+    describe('min', () => {
+        const state = [0, 1, 2, 3];
+        const onState = pureOptic<typeof state>();
+        it('should focus the minimum element', () => {
+            const onMin = onState.min();
+            expect(onMin.get(state)).toBe(0);
+
+            const newState = onMin.set(42, state);
+            expect(newState).toEqual([42, 1, 2, 3]);
+            expect(onMin.get(newState)).toBe(1);
+        });
+        it('should focus undefined if empty', () => {
+            const onMin = onState.min();
+            expect(onMin.get([])).toBe(undefined);
+            expect(onMin.set(42, [])).toEqual([]);
+        });
+        it('should use custom number getter if provided', () => {
+            const state = [{ a: 0 }, { a: 1 }, { a: 2 }, { a: 3 }];
+            const onState = pureOptic<typeof state>();
+            const onMin = onState.min((x) => x.a);
+            expect(onMin.get(state)).toEqual({ a: 0 });
+
+            const newState = onMin.set({ a: 42 }, state);
+            expect(newState).toEqual([{ a: 42 }, { a: 1 }, { a: 2 }, { a: 3 }]);
+            expect(onMin.get(newState)).toEqual({ a: 1 });
+        });
+    });
+    describe('reverse', () => {
+        const state = [0, 1, 2, 3];
+        const onState = pureOptic<typeof state>();
+        it('should reverse the array', () => {
+            expect(onState.reverse().get(state)).toEqual([3, 2, 1, 0]);
+            expect(onState.reverse().set([3, 2, 1, 0], state)).toEqual(state);
+        });
+    });
+    describe('slice', () => {
+        const state = [0, 1, 2, 3];
+        const onState = pureOptic<typeof state>();
+        it('should slice the array', () => {
+            expect(onState.slice(1, 3).get(state)).toEqual([1, 2]);
+            expect(onState.slice(1, 3).set([42, 43], state)).toEqual([0, 42, 43, 3]);
+        });
+        it('should slice the array from start', () => {
+            expect(onState.slice(1).get(state)).toEqual([1, 2, 3]);
+            expect(onState.slice(1).set([42, 43, 44], state)).toEqual([0, 42, 43, 44]);
+        });
+        it('should get the whole array if not bounds are provided', () => {
+            expect(onState.slice().get(state)).toEqual(state);
+            expect(onState.slice().set([42, 43, 44, 45], state)).toEqual([42, 43, 44, 45]);
+        });
+    });
 });
 describe('entries', () => {
     const state: Record<string, number> = { a: 42, b: 67, c: 1000, d: 90 };

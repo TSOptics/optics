@@ -49,11 +49,11 @@ abstract class CombinatorsImpl<A, TOpticType extends OpticType, S>
         return this.derive([{ get: (s) => s, set: (a) => a, key: 'compose' }, ...(other as unknown as this).lenses]);
     }
 
-    map(): A extends (infer R)[] ? Resolve<this, R, mapped, S> : never {
+    map<Elem = A extends (infer R)[] ? R : never>(): Resolve<this, Elem, mapped, S> {
         return this.derive([{ get: (s) => s, set: (a) => a, key: 'map', type: 'map' }]);
     }
 
-    at(index: number): A extends (infer R)[] ? Resolve<this, R, ToPartial<TOpticType>, S> : never {
+    at<Elem = A extends (infer R)[] ? R : never>(index: number): Resolve<this, Elem, ToPartial<TOpticType>, S> {
         return this.derive([
             {
                 get: (s: any[]) => s[index < 0 ? index + s.length : index],
@@ -87,6 +87,97 @@ abstract class CombinatorsImpl<A, TOpticType extends OpticType, S>
                     }, []);
                 },
                 key: 'indexBy',
+            },
+        ]);
+    }
+
+    findFirst<Elem = A extends (infer R)[] ? R : never>(
+        predicate: (a: Elem) => boolean,
+    ): PureOptic<Elem, ToPartial<TOpticType>, S> {
+        return this.derive([
+            {
+                key: 'findFirst',
+                get: (s: any[]) => s.find(predicate),
+                set: (a, s: any[]) => {
+                    const index = s.findIndex(predicate);
+                    return index === -1 ? s : s.map((x, i) => (i === index ? a : x));
+                },
+            },
+        ]);
+    }
+
+    min<Elem = A extends (infer R)[] ? R : never>(
+        ...f: Elem extends number ? [f?: ((a: Elem) => number) | undefined] : [f: (a: Elem) => number]
+    ): PureOptic<Elem, ToPartial<TOpticType>, S> {
+        const getIndexOfMin = (s: any[]) => {
+            if (s.length === 0) {
+                return undefined;
+            }
+            const ns = f[0] ? s.map(f[0]) : s;
+            return ns.reduce<number>(
+                (indexOfMin, cv, currentIndex) => (cv < ns[indexOfMin] ? currentIndex : indexOfMin),
+                0,
+            );
+        };
+        return this.derive([
+            {
+                key: 'min',
+                get: (s: any[]) => {
+                    const index = getIndexOfMin(s);
+                    return index !== undefined ? s[index] : undefined;
+                },
+                set: (a, s: any[]) => {
+                    const index = getIndexOfMin(s);
+                    return s.map((x, i) => (i === index ? a : x));
+                },
+            },
+        ]);
+    }
+
+    max<Elem = A extends (infer R)[] ? R : never>(
+        ...f: Elem extends number ? [f?: ((a: Elem) => number) | undefined] : [f: (a: Elem) => number]
+    ): PureOptic<Elem, ToPartial<TOpticType>, S> {
+        const getIndexOfMax = (s: any[]) => {
+            if (s.length === 0) {
+                return undefined;
+            }
+            const ns = f[0] ? s.map(f[0]) : s;
+            return ns.reduce<number>(
+                (indexOfMax, cv, currentIndex) => (cv > ns[indexOfMax] ? currentIndex : indexOfMax),
+                0,
+            );
+        };
+        return this.derive([
+            {
+                key: 'max',
+                get: (s: any[]) => {
+                    const index = getIndexOfMax(s);
+                    return index !== undefined ? s[index] : undefined;
+                },
+                set: (a, s: any[]) => {
+                    const index = getIndexOfMax(s);
+                    return s.map((x, i) => (i === index ? a : x));
+                },
+            },
+        ]);
+    }
+
+    reverse(): PureOptic<A, TOpticType, S> {
+        return this.derive([
+            {
+                key: 'reverse',
+                get: (s: any[]) => s.reverse(),
+                set: (a: any[]) => a.reverse(),
+            },
+        ]);
+    }
+
+    slice(start = 0, end?: number | undefined): PureOptic<A, TOpticType, S> {
+        return this.derive([
+            {
+                key: 'slice',
+                get: (s: any[]) => s.slice(start, end),
+                set: (a: any[], s: any[]) => [...s.slice(0, start), ...a, ...s.slice(end ?? s.length)],
             },
         ]);
     }

@@ -41,12 +41,15 @@ abstract class CombinatorsImpl<A, TOpticType extends OpticType, S>
         ]);
     }
     convert<B>(to: (a: NonNullable<A>) => B, from: (b: B) => A): Resolve<this, B, TOpticType, S> {
-        return this.derive([{ get: to, set: from, key: 'convert' }]);
+        return this.derive([{ get: to, set: from, key: 'convert', type: 'unstable' }]);
     }
     compose<B, TOpticTypeB extends OpticType>(
         other: PureOptic<B, TOpticTypeB, NonNullable<A>>,
     ): PureOptic<B, ComposedOpticType<TOpticType, TOpticTypeB, A>, S> {
-        return this.derive([{ get: (s) => s, set: (a) => a, key: 'compose' }, ...(other as unknown as this).lenses]);
+        return this.derive([
+            { get: (s) => s, set: (a) => a, key: 'compose', type: 'unstable' },
+            ...(other as unknown as this).lenses,
+        ]);
     }
 
     map<Elem = A extends (infer R)[] ? R : never>(): Resolve<this, Elem, mapped, S> {
@@ -87,6 +90,7 @@ abstract class CombinatorsImpl<A, TOpticType extends OpticType, S>
                     }, []);
                 },
                 key: 'indexBy',
+                type: 'unstable',
             },
         ]);
     }
@@ -166,8 +170,9 @@ abstract class CombinatorsImpl<A, TOpticType extends OpticType, S>
         return this.derive([
             {
                 key: 'reverse',
-                get: (s: any[]) => s.reverse(),
-                set: (a: any[]) => a.reverse(),
+                type: 'unstable',
+                get: (s: any[]) => [...s].reverse(),
+                set: (a: any[]) => [...a].reverse(),
             },
         ]);
     }
@@ -176,6 +181,7 @@ abstract class CombinatorsImpl<A, TOpticType extends OpticType, S>
         return this.derive([
             {
                 key: 'slice',
+                type: 'unstable',
                 get: (s: any[]) => s.slice(start, end),
                 set: (a: any[], s: any[]) => [...s.slice(0, start), ...a, ...s.slice(end ?? s.length)],
             },
@@ -194,6 +200,7 @@ abstract class CombinatorsImpl<A, TOpticType extends OpticType, S>
                     }, {} as Record<string, any>);
                 },
                 key: 'values',
+                type: 'unstable',
             },
         ]);
     }
@@ -203,6 +210,7 @@ abstract class CombinatorsImpl<A, TOpticType extends OpticType, S>
                 get: (s) => Object.entries(s),
                 set: (a) => Object.fromEntries(a),
                 key: 'entries',
+                type: 'unstable',
             },
         ]);
     }

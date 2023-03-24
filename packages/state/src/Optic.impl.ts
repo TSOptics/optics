@@ -44,7 +44,7 @@ class OpticImpl<A, TOpticType extends OpticType>
         const denormalize = options?.denormalize === false ? false : !!this.dependencies;
         const store = this.getStore();
         const a = get<A, TOpticType>(store.state, this.lenses, (s, lens) => {
-            if (['map', 'convert', 'compose'].includes(lens.key)) {
+            if (lens.type === 'unstable' || lens.type === 'map') {
                 if (this.cacheByLenses.get(lens) === s && this.cache.a !== undefined) {
                     return this.cache.a;
                 }

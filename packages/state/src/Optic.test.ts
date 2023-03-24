@@ -240,15 +240,79 @@ describe('Optic', () => {
         });
     });
     describe('Referential stability', () => {
-        it("should return the same value if the array didn't change", () => {
-            const onState = createState({ a: 42, b: [1, 2, 3, 4] });
-            const onB = onState.b.map().reduceFilter((x) => x % 2 === 0);
-
-            const b = onB.get();
-            onState.a.set((prev) => prev + 1);
-            expect(b).toBe(onB.get());
+        const state = createState({ n: 42, array: [1, 2, 3, 4] });
+        const array = state.array;
+        const n = state.n;
+        describe('map reduce', () => {
+            const numbers = array.map();
+            it('map', () => {
+                const value = numbers.get();
+                n.set((prev) => prev + 1);
+                expect(value).toBe(numbers.get());
+            });
+            it('reduceFilter', () => {
+                const evenNumbers = numbers.reduceFilter((x) => x % 2 === 0);
+                const value = evenNumbers.get();
+                n.set((prev) => prev + 1);
+                expect(value).toBe(evenNumbers.get());
+            });
+            it('reduceFindFirst', () => {
+                const firstEvenNumber = numbers.reduceFindFirst((x) => x % 2 === 0);
+                const value = firstEvenNumber.get();
+                n.set((prev) => prev + 1);
+                expect(value).toBe(firstEvenNumber.get());
+            });
+            it('reduceSort', () => {
+                const descNumbers = numbers.reduceSort((a, b) => b - a);
+                const value = descNumbers.get();
+                n.set((prev) => prev + 1);
+                expect(value).toBe(descNumbers.get());
+            });
+            it('reduceSlice', () => {
+                const firstTwoNumbers = numbers.reduceSlice(0, 2);
+                const value = firstTwoNumbers.get();
+                n.set((prev) => prev + 1);
+                expect(value).toBe(firstTwoNumbers.get());
+            });
         });
-        it("should return the same converted value if the source didn't change", () => {
+        describe('array combinators', () => {
+            it('slice', () => {
+                const firstTwoNumbers = array.slice(0, 2);
+                const value = firstTwoNumbers.get();
+                n.set((prev) => prev + 1);
+                expect(value).toBe(firstTwoNumbers.get());
+            });
+            it('reverse', () => {
+                const reversedArray = array.reverse();
+                const value = reversedArray.get();
+                n.set((prev) => prev + 1);
+                expect(value).toBe(reversedArray.get());
+            });
+            it('indexBy', () => {
+                const indexed = array.indexBy((x) => `${x}`);
+                const value = indexed.get();
+                n.set((prev) => prev + 1);
+                expect(value).toBe(indexed.get());
+            });
+        });
+        describe('record combinators', () => {
+            const state = createState({ obj: { b1: true, b2: false } as Record<string, boolean>, a: 42 });
+            it('values', () => {
+                const values = state.obj.values();
+                const value = values.get();
+
+                state.a.set((prev) => prev + 1);
+                expect(values.get()).toBe(value);
+            });
+            it('entries', () => {
+                const entries = state.obj.entries();
+                const value = entries.get();
+
+                state.a.set((prev) => prev + 1);
+                expect(entries.get()).toBe(value);
+            });
+        });
+        it('convert', () => {
             const onState = createState({ obj: { b1: true, b2: false }, a: 42 });
             const onTuple = onState.obj.convert(
                 ({ b1, b2 }) => [b1, b2] as const,
@@ -259,7 +323,7 @@ describe('Optic', () => {
             onState.a.set((prev) => prev + 1);
             expect(onTuple.get()).toBe(tuple);
         });
-        it("should return the same value fed to the pure optic didn't change", () => {
+        it('compose', () => {
             const onState = createState({ obj: { b1: true, b2: false }, a: 42 });
             const onTuple = onState.obj.compose(
                 pureOptic(

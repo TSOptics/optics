@@ -20,12 +20,21 @@ export interface TotalCombinators {
     reset(): void;
 }
 
-export interface ArrayCombinators<A, TOpticType extends OpticType> {
+export interface ArrayCombinators<A, TOpticType extends OpticType, Elem = A extends (infer R)[] ? R : never> {
     map(): A extends (infer R)[] ? Resolve<this, R, mapped> : never;
     at(index: number): A extends (infer R)[] ? Resolve<this, R, ToPartial<TOpticType>> : never;
     indexBy<Key extends string | number, Elem = A extends (infer R)[] ? R : never>(
         f: (a: Elem) => Key,
     ): Resolve<this, Record<Key, Elem>, TOpticType>;
+    findFirst(predicate: (a: Elem) => boolean): Resolve<this, Elem, ToPartial<TOpticType>>;
+    min(
+        ...arg: Elem extends number ? [f?: (a: Elem) => number] : [f: (a: Elem) => number]
+    ): Resolve<this, Elem, ToPartial<TOpticType>>;
+    max(
+        ...arg: Elem extends number ? [f?: (a: Elem) => number] : [f: (a: Elem) => number]
+    ): Resolve<this, Elem, ToPartial<TOpticType>>;
+    reverse(): Resolve<this, A, TOpticType>;
+    slice(start?: number, end?: number): Resolve<this, A, TOpticType>;
 }
 
 export interface RecordCombinators<A, TOpticType extends OpticType> {

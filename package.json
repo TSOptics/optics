@@ -24,7 +24,7 @@
         "prettier": "^2.7.0",
         "ts-essentials": "^7.0.0",
         "ts-jest": "^29.0.3",
-        "typescript": "~4.8.4"
+        "typescript": "^5.0.3"
     },
     "scripts": {
         "g:test": "cd $INIT_CWD && jest",

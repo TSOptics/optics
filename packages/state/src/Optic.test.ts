@@ -63,7 +63,7 @@ describe('Optic', () => {
         expect(listener).toHaveBeenCalledTimes(1);
         expect(listener).toHaveBeenCalledWith(42);
     });
-    describe('denormalize', () => {
+    describe('references', () => {
         const onCountries = createState([
             { name: 'Italia', language: 'Italiano' },
             { name: 'Österreich', language: 'Deutsch' },
@@ -236,6 +236,28 @@ describe('Optic', () => {
                     },
                 });
                 expect(listener).toHaveBeenCalledTimes(2);
+            });
+        });
+        describe('references in arrays', () => {
+            const onParis = createState({ name: 'Paris', inhabitants: 2_148_000 });
+            const onLyon = createState({ name: 'Lyon', inhabitants: 513_000 });
+            const onFrance = createState({ name: 'France', cities: [onParis, onLyon] });
+            it('should denormalize references', () => {
+                const onCities = onFrance.cities;
+                expect(onCities.get()).toEqual([
+                    { name: 'Paris', inhabitants: 2_148_000 },
+                    { name: 'Lyon', inhabitants: 513_000 },
+                ]);
+            });
+            it('should subscribe to reference changes', () => {
+                const onCities = onFrance.cities;
+                const listener = jest.fn();
+                onCities.subscribe(listener);
+                onParis.inhabitants.set((prev) => prev + 1);
+                expect(listener).toHaveBeenCalledWith([
+                    { name: 'Paris', inhabitants: 2_148_001 },
+                    { name: 'Lyon', inhabitants: 513_000 },
+                ]);
             });
         });
     });

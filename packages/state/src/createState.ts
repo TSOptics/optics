@@ -1,4 +1,4 @@
-import { total } from '@optix/core';
+import { total } from '@optics/core';
 import OpticImpl from './Optic.impl';
 import { Optic } from './Optics/Optic';
 

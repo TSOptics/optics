@@ -1,5 +1,5 @@
-import { OpticType } from '@optix/core';
-import { DeriveOpticType, FocusedValue, total } from '@optix/core/src/types';
+import { OpticType } from '@optics/core';
+import { DeriveOpticType, FocusedValue, total } from '@optics/core/src/types';
 import { CombinatorsForOptic } from '../combinators';
 import { GetStateOptions, SubscribeOptions } from '../types';
 

@@ -1,5 +1,5 @@
 import { useCallback, useRef } from 'react';
-import { Optic, OpticType, Lens, pureOptic } from '@optix/state';
+import { Optic, OpticType, Lens, pureOptic } from '@optics/state';
 
 type KeyedOptics<T, TOpticType extends OpticType> = Record<string, Optic<T, TOpticType>>;
 

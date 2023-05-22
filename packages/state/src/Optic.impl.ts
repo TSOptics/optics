@@ -1,8 +1,8 @@
-import CombinatorsImpl from '@optix/core/src/combinators.impl';
-import get from '@optix/core/src/get';
-import proxify from '@optix/core/src/proxify';
-import set from '@optix/core/src/set';
-import { FocusedValue, Lens, OpticType } from '@optix/core/src/types';
+import CombinatorsImpl from '@optics/core/src/combinators.impl';
+import get from '@optics/core/src/get';
+import proxify from '@optics/core/src/proxify';
+import set from '@optics/core/src/set';
+import { FocusedValue, Lens, OpticType } from '@optics/core/src/types';
 import { TotalCombinators } from './combinators';
 import { _Optic } from './Optics/Optic';
 import { Denormalized, Dependencies, Dependency, leafSymbol, ResolvedType, tag } from './Optics/ReadOptic';

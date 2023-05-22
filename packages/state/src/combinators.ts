@@ -1,5 +1,5 @@
-import { OpticType, PureOptic } from '@optix/core';
-import { ComposedOpticType, IsAny, IsNullable, mapped, partial, ToPartial, total } from '@optix/core/src/types';
+import { OpticType, PureOptic } from '@optics/core';
+import { ComposedOpticType, IsAny, IsNullable, mapped, partial, ToPartial, total } from '@optics/core/src/types';
 import { AsyncOptic } from './Optics/AsyncOptic';
 import { AsyncReadOptic } from './Optics/AsyncReadOptic';
 import { Optic } from './Optics/Optic';

@@ -4,7 +4,7 @@ Scalable state and cache management for modern TypeScript applications.
 
 ## Documentation
 
-https://tsoptics.github.io/react-optics-docs/
+https://tsoptics.github.io/optics-docs/
 
 ## Installation
 

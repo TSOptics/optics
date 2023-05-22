@@ -5,7 +5,7 @@ import { render, fireEvent } from '@testing-library/react';
 import { useOptic } from './useOptic';
 import { useKeyedOptics } from './useKeyedOptics';
 import { useOpticReducer } from './useOpticReducer';
-import { pureOptic, PureOptic, Optic, total, createState } from '@optix/state';
+import { pureOptic, PureOptic, Optic, total, createState } from '@optics/state';
 
 describe('useOptic', () => {
     it('should set state', () => {

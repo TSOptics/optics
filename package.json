@@ -1,6 +1,6 @@
 {
-    "name": "optix",
-    "version": "0.1.2",
+    "name": "optics",
+    "version": "0.0.0",
     "description": "",
     "private": true,
     "workspaces": [
@@ -33,14 +33,14 @@
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/TSOptics/react-optics.git"
+        "url": "git+https://github.com/TSOptics/optics.git"
     },
     "author": "",
     "license": "ISC",
     "bugs": {
-        "url": "https://github.com/TSOptics/react-optics/issues"
+        "url": "https://github.com/TSOptics/optics/issues"
     },
-    "homepage": "https://github.com/TSOptics/react-optics#readme",
+    "homepage": "https://github.com/TSOptics/optics#readme",
     "dependencies": {
         "use-sync-external-store": "^1.0.0"
     },

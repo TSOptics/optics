@@ -1,7 +1,7 @@
 import { CombinatorsForOptic } from './combinators.types';
 import { DeriveOpticType, FocusedValue, OpticType, total } from './types';
 
-export const tag: unique symbol = Symbol('tag');
+const tag: unique symbol = Symbol('tag');
 
 export interface _PureOptic<A, TOpticType extends OpticType = total, S = any> {
     get(s: S): FocusedValue<A, TOpticType>;

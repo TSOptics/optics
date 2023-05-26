@@ -1,8 +1,8 @@
 import CombinatorsImpl from './combinators.impl';
-import get from './get';
-import proxify from './proxify';
+import { get } from './get';
+import { proxify } from './proxify';
 import { _PureOptic } from './PureOptic.types';
-import set from './set';
+import { set } from './set';
 import { FocusedValue, Lens, OpticType } from './types';
 
 class PureOpticImpl<A, TOpticType extends OpticType, S>

@@ -1,4 +1,4 @@
-import { DeriveOpticType, OpticType, total } from '@optics/core/src/types';
+import { OpticType, total, DeriveOpticType } from '@optics/core';
 import { CombinatorsForOptic } from '../combinators';
 import { _ReadOptic } from './ReadOptic';
 

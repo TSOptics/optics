@@ -1,6 +1,6 @@
 import { Lens } from './types';
 
-const proxify = (target: any) => {
+export const proxify = (target: any) => {
     return new Proxy(target, {
         get(target: { derive: (lens: Lens[]) => any } & Record<string, any>, prop: any) {
             if (target[prop] !== undefined) {
@@ -18,5 +18,3 @@ const proxify = (target: any) => {
         },
     });
 };
-
-export default proxify;

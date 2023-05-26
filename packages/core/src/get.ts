@@ -2,7 +2,7 @@ import { isFold } from './fold';
 import isMapped from './isMapped';
 import { FocusedValue, Lens, OpticType } from './types';
 
-const get = <A, TOpticType extends OpticType>(
+export const get = <A, TOpticType extends OpticType>(
     s: any,
     lenses: Lens[],
     earlyReturn?: (s: any, lens: Lens) => any | undefined,
@@ -51,5 +51,3 @@ const get = <A, TOpticType extends OpticType>(
     const result = aux(s, lenses);
     return (result === undefined || result === null) && isMapped(lenses) ? [] : result;
 };
-
-export default get;

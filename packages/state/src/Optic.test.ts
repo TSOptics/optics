@@ -1,6 +1,4 @@
-import { PureOptic } from '@optics/core';
-import { pureOptic } from '@optics/core/src/pureOptic';
-import { partial, total } from '@optics/core/src/types';
+import { PureOptic, pureOptic, partial, total } from '@optics/core';
 import { createState } from './createState';
 import { AsyncOptic } from './Optics/AsyncOptic';
 import { AsyncReadOptic } from './Optics/AsyncReadOptic';

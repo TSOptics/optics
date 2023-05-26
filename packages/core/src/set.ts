@@ -1,7 +1,7 @@
 import { getFoldTree, isFold } from './fold';
 import { Lens } from './types';
 
-const set = <A, S>(a: A | ((prev: A) => A), s: S, lenses: Lens[], foldTree = getFoldTree(lenses, s)): S => {
+export const set = <A, S>(a: A | ((prev: A) => A), s: S, lenses: Lens[], foldTree = getFoldTree(lenses, s)): S => {
     const [lens, ...tailLenses] = lenses;
     if (!lens) return typeof a === 'function' ? (a as (prev: any) => A)(s) : (a as any);
     if (isFold(lens)) {
@@ -22,5 +22,3 @@ const set = <A, S>(a: A | ((prev: A) => A), s: S, lenses: Lens[], foldTree = get
     if (slice === newSlice) return s;
     return lens.set(newSlice, s);
 };
-
-export default set;

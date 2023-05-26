@@ -1863,6 +1863,14 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@optics/data@workspace:packages/data":
+  version: 0.0.0-use.local
+  resolution: "@optics/data@workspace:packages/data"
+  dependencies:
+    "@optics/core": "workspace:*"
+  languageName: unknown
+  linkType: soft
+
 "@optics/react@workspace:packages/react":
   version: 0.0.0-use.local
   resolution: "@optics/react@workspace:packages/react"

@@ -10,5 +10,5 @@
         "declaration": true
     },
     "exclude": ["node_modules", "**/node_modules/*", "**/dist/*"],
-    "references": [{ "path": "./packages/core" }, { "path": "./packages/state" }, { "path": "./packages/react" }]
+    "references": [{ "path": "./packages/core" }, { "path": "./packages/data" }, { "path": "./packages/state" }, { "path": "./packages/react" }]
 }

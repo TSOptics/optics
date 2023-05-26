@@ -3,5 +3,4 @@ node_modules
 .vscode
 *.tgz
 .yarn
-.yarnrc.yml
 *.tsbuildinfo

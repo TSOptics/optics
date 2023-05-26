@@ -1,6 +1,6 @@
 {
     "name": "@optics/state",
-    "version": "0.0.1",
+    "version": "0.0.2",
     "packageManager": "yarn@3.3.1",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",

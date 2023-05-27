@@ -1,6 +1,6 @@
 # Optics
 
-Scalable state and cache management for modern TypeScript applications.
+Scalable state management for modern TypeScript applications.
 
 ## Documentation
 

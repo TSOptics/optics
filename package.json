@@ -41,9 +41,6 @@
         "url": "https://github.com/TSOptics/optics/issues"
     },
     "homepage": "https://github.com/TSOptics/optics#readme",
-    "dependencies": {
-        "use-sync-external-store": "^1.0.0"
-    },
     "jest": {
         "projects": [
             "<rootDir>/packages/core/jest.config.js",
@@ -51,5 +48,5 @@
             "<rootDir>/packages/react/jest.config.js"
         ]
     },
-    "packageManager": "yarn@3.3.1"
+    "packageManager": "yarn@3.6.1"
 }

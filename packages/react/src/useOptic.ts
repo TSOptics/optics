@@ -1,5 +1,4 @@
-import { Dispatch, SetStateAction, useMemo } from 'react';
-import { useSyncExternalStore } from 'use-sync-external-store/shim/';
+import { Dispatch, SetStateAction, useMemo, useSyncExternalStore } from 'react';
 import { OpticType, Optic, GetStateOptions, ResolvedType } from '@optics/state';
 
 export type UseOpticOptions = GetStateOptions;

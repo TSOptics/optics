@@ -29,7 +29,8 @@
     "scripts": {
         "g:test": "cd $INIT_CWD && jest",
         "g:type-check": "cd $INIT_CWD && tsc --skipLibCheck --noEmit",
-        "g:build": "cd $INIT_CWD && tsc"
+        "g:build": "cd $INIT_CWD && tsc",
+        "g:clean": "cd $INIT_CWD && rm -rf dist && rm tsconfig.tsbuildinfo"
     },
     "repository": {
         "type": "git",

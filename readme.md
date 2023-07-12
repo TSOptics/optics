@@ -4,7 +4,7 @@ Scalable state management for modern TypeScript applications.
 
 ## Documentation
 
-https://tsoptics.github.io/optics-docs/
+https://optics.page
 
 ## Installation
 

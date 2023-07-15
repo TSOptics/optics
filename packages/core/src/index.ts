@@ -1,5 +1,6 @@
-export { pureOptic } from './pureOptic';
-export { PureOptic } from './PureOptic.types';
+export { pureOptic } from './pureOpticConstructor';
+export { PureOptic } from './PureOptic';
+export { PureReadOptic } from './PureReadOptic';
 export {
     mapped,
     partial,

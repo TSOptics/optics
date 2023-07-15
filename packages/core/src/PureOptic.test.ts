@@ -1,6 +1,6 @@
 import { mapped, partial, total } from './types';
-import { pureOptic } from './pureOptic';
-import { PureOptic } from './PureOptic.types';
+import { pureOptic } from './pureOpticConstructor';
+import { PureOptic } from './PureOptic';
 
 const expectType = <T extends any>(t: T) => {};
 const expectPartial = <TOpticType extends partial>(

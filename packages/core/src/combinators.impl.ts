@@ -6,7 +6,7 @@ import {
     RecordCombinators,
     Resolve,
 } from './combinators.types';
-import { PureOptic } from './PureOptic.types';
+import { PureOptic } from './PureOptic';
 import { ComposedOpticType, Lens, mapped, OpticType, partial, ToPartial } from './types';
 
 abstract class CombinatorsImpl<A, TOpticType extends OpticType, S>
@@ -45,7 +45,7 @@ abstract class CombinatorsImpl<A, TOpticType extends OpticType, S>
     }
     compose<B, TOpticTypeB extends OpticType>(
         other: PureOptic<B, TOpticTypeB, NonNullable<A>>,
-    ): PureOptic<B, ComposedOpticType<TOpticType, TOpticTypeB, A>, S> {
+    ): Resolve<this, B, ComposedOpticType<TOpticType, TOpticTypeB, A>, S> {
         return this.derive([
             { get: (s) => s, set: (a) => a, key: 'compose', type: 'unstable' },
             ...(other as unknown as this).lenses,
@@ -97,7 +97,7 @@ abstract class CombinatorsImpl<A, TOpticType extends OpticType, S>
 
     findFirst<Elem = A extends (infer R)[] ? R : never>(
         predicate: (a: Elem) => boolean,
-    ): PureOptic<Elem, ToPartial<TOpticType>, S> {
+    ): Resolve<this, Elem, ToPartial<TOpticType>, S> {
         return this.derive([
             {
                 key: 'findFirst',
@@ -112,7 +112,7 @@ abstract class CombinatorsImpl<A, TOpticType extends OpticType, S>
 
     min<Elem = A extends (infer R)[] ? R : never>(
         ...f: Elem extends number ? [f?: ((a: Elem) => number) | undefined] : [f: (a: Elem) => number]
-    ): PureOptic<Elem, ToPartial<TOpticType>, S> {
+    ): Resolve<this, Elem, ToPartial<TOpticType>, S> {
         const getIndexOfMin = (s: any[]) => {
             if (s.length === 0) {
                 return undefined;
@@ -140,7 +140,7 @@ abstract class CombinatorsImpl<A, TOpticType extends OpticType, S>
 
     max<Elem = A extends (infer R)[] ? R : never>(
         ...f: Elem extends number ? [f?: ((a: Elem) => number) | undefined] : [f: (a: Elem) => number]
-    ): PureOptic<Elem, ToPartial<TOpticType>, S> {
+    ): Resolve<this, Elem, ToPartial<TOpticType>, S> {
         const getIndexOfMax = (s: any[]) => {
             if (s.length === 0) {
                 return undefined;
@@ -166,7 +166,7 @@ abstract class CombinatorsImpl<A, TOpticType extends OpticType, S>
         ]);
     }
 
-    reverse(): PureOptic<A, TOpticType, S> {
+    reverse(): Resolve<this, A, TOpticType, S> {
         return this.derive([
             {
                 key: 'reverse',
@@ -177,7 +177,7 @@ abstract class CombinatorsImpl<A, TOpticType extends OpticType, S>
         ]);
     }
 
-    slice(start = 0, end?: number | undefined): PureOptic<A, TOpticType, S> {
+    slice(start = 0, end?: number | undefined): Resolve<this, A, TOpticType, S> {
         return this.derive([
             {
                 key: 'slice',

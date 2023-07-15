@@ -1,16 +1,17 @@
-import PureOpticImpl from './PureOptic.impl';
-import { PureOptic } from './PureOptic.types';
-import { total } from './types';
+import { _PureReadOptic } from './PureReadOptic';
+import { CombinatorsForOptic } from './combinators.types';
+import { DeriveOpticType, OpticType, total } from './types';
 
-export function pureOptic<A, S>(get: (s: S) => A, set: (a: A, s: S) => S, key?: string): PureOptic<A, total, S>;
-export function pureOptic<S>(key?: string): PureOptic<S, total, S>;
-export function pureOptic<A, S>(
-    getOrKey?: string | ((s: S) => A),
-    set?: (a: A, s: S) => S,
-    key?: string,
-): PureOptic<A, total, S> {
-    if (typeof getOrKey === 'function') {
-        return new PureOpticImpl([{ get: getOrKey, set: set as any, key: key ?? 'custom optic' }]) as any;
-    }
-    return new PureOpticImpl([{ get: (s) => s, set: (a) => a, key: getOrKey || 'custom optic' }]) as any;
+export interface _PureOptic<A, TOpticType extends OpticType = total, S = any> extends _PureReadOptic<A, TOpticType, S> {
+    set(a: A | ((prev: A) => A), s: S): S;
 }
+
+type DeriveFromProps<A, TOpticType extends OpticType, S, T = NonNullable<A>> = T extends Record<any, any>
+    ? {
+          [P in keyof T as T[P] extends Function ? never : P]-?: PureOptic<T[P], DeriveOpticType<A, TOpticType>, S>;
+      }
+    : {};
+
+export type PureOptic<A, TOpticType extends OpticType = total, S = any> = _PureOptic<A, TOpticType, S> &
+    DeriveFromProps<A, TOpticType, S> &
+    CombinatorsForOptic<A, TOpticType, S>;

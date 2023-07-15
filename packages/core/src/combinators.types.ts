@@ -1,4 +1,5 @@
-import { PureOptic } from './PureOptic.types';
+import { PureOptic } from './PureOptic';
+import { PureReadOptic } from './PureReadOptic';
 import { ComposedOpticType, IsAny, IsNullable, mapped, OpticType, partial, ToPartial } from './types';
 
 export interface BaseCombinators<A, TOpticType extends OpticType, S> {
@@ -66,7 +67,6 @@ export type CombinatorsForOptic<A, TOpticType extends OpticType, S> = BaseCombin
     (IsAny<A> extends true ? {} : CombinatorsForType<A, TOpticType, S>) &
     CombinatorsForOpticType<A, TOpticType, S>;
 
-export interface _Resolve<TOptic, A, TOpticType extends OpticType, S> {
-    (): PureOptic<A, TOpticType, S>;
-}
-export type Resolve<TOptic, A, TOpticType extends OpticType, S> = ReturnType<_Resolve<TOptic, A, TOpticType, S>>;
+export type Resolve<TOptic, A, TOpticType extends OpticType, S> = [TOptic] extends [{ set(a: any, s: any): any }]
+    ? PureOptic<A, TOpticType, S>
+    : PureReadOptic<A, TOpticType, S>;

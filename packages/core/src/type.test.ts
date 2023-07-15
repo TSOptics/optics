@@ -1,5 +1,6 @@
-import { pureOptic } from './pureOptic';
-import { PureOptic } from './PureOptic.types';
+import { pureOptic } from './pureOpticConstructor';
+import { PureOptic } from './PureOptic';
+import { PureReadOptic } from './PureReadOptic';
 import { total, partial, mapped } from './types';
 
 const expectTotal: <A = any, S = any>(o: () => PureOptic<A, total, S>) => void = () => {};
@@ -60,18 +61,40 @@ describe('compose types', () => {
     expectMapped(() => (({} as PureOptic<string, mapped>).compose({} as PureOptic<boolean, mapped>)));
 });
 
-describe('lens', () => {
-    it('shoud be a subtype of partial', () => {
-        const lens = {} as PureOptic<any, total>;
-        const partial: PureOptic<any, partial> = lens;
+describe('PureOptic', () => {
+    describe('total', () => {
+        it('should be a subtype of partial', () => {
+            const lens = {} as PureOptic<any, total>;
+            const partial: PureOptic<any, partial> = lens;
+        });
+        it("shouldn't be a supertype of partial", () => {
+            const partial = {} as PureOptic<string, partial>;
+            // @ts-expect-error partial isn't assignable to total
+            const total: PureOptic<string> = partial;
+        });
+        it('should become a partial focusing on the non-nullable type when called with toPartial', () => {
+            const onNullable = pureOptic<{ a: string | null | undefined }>().a;
+            expectPartial<string>(() => onNullable.toPartial());
+        });
     });
-    it("should't be a supertype of partial", () => {
-        const partial = {} as PureOptic<string, partial>;
-        // @ts-expect-error partial isn't assignable to total
-        const total: PureOptic<string> = partial;
-    });
-    it('toPartial should return a partial focusing on the nonnullable type', () => {
-        const onNullable = pureOptic<{ a: string | null | undefined }>().a;
-        expectPartial<string>(() => onNullable.toPartial());
+    describe('PureReadOptic', () => {
+        it('should be a supertype of PureOptic', () => {
+            const readOptic = {} as PureOptic<string, total>;
+            const optic: PureReadOptic<string> = readOptic;
+        });
+        it("shouldn't be a subtype of PureOptic", () => {
+            const readOptic = {} as PureReadOptic<string, total>;
+            // @ts-expect-error PureOptic isn't assignable to PureReadOptic
+            const optic: PureOptic<string> = readOptic;
+        });
+        it('should return a PureReadOptic when calling combinators', () => {
+            const onStringRead: PureReadOptic<string> = pureOptic<string>();
+            // @ts-expect-error PureOptic isn't assignable to PureReadOptic
+            const onNumber: PureOptic<number> = onStringRead.convert(parseInt, (n) => `${n}`);
+
+            const onNumbersRead: PureReadOptic<number[]> = pureOptic<number[]>();
+            // @ts-expect-error PureOptic isn't assignable to PureReadOptic
+            const onFirstPositive: PureOptic<number, partial> = onNumbersRead.findFirst((n) => n > 0);
+        });
     });
 });

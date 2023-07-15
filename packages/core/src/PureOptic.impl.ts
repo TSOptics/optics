@@ -1,13 +1,14 @@
 import CombinatorsImpl from './combinators.impl';
 import { get } from './get';
 import { proxify } from './proxify';
-import { _PureOptic } from './PureOptic.types';
+import { _PureOptic } from './PureOptic';
+import { tag } from './PureReadOptic';
 import { set } from './set';
 import { FocusedValue, Lens, OpticType } from './types';
 
 class PureOpticImpl<A, TOpticType extends OpticType, S>
     extends CombinatorsImpl<A, TOpticType, S>
-    implements _PureOptic<A, TOpticType, S>
+    implements Omit<_PureOptic<A, TOpticType, S>, typeof tag>
 {
     protected lenses: Lens[];
     constructor(lenses: Lens[]) {

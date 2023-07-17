@@ -7,7 +7,8 @@ import {
     Resolve,
 } from './combinators.types';
 import { PureOptic } from './PureOptic';
-import { ComposedOpticType, Lens, mapped, OpticType, partial, ToPartial } from './types';
+import { PureReadOptic } from './PureReadOptic';
+import { ComposedOpticType, Lens, mapped, OpticType, partial, ToPartial, DeriveOpticType } from './types';
 
 abstract class CombinatorsImpl<A, TOpticType extends OpticType, S>
     implements
@@ -18,12 +19,23 @@ abstract class CombinatorsImpl<A, TOpticType extends OpticType, S>
         MappedCombinators<A, S>
 {
     protected abstract lenses: Lens[];
-    protected abstract derive(newLenses: Lens[]): any;
+    protected abstract instantiate(newLenses: Lens[]): any;
+
+    derive<B>(get: (a: NonNullable<A>) => B): PureReadOptic<B, DeriveOpticType<A, TOpticType>, S> {
+        return this.instantiate([
+            {
+                get,
+                set: (a, s) => s,
+                key: 'derive',
+                type: 'unstable',
+            },
+        ]);
+    }
 
     refine<B>(
         refiner: (a: NonNullable<A>) => false | B,
     ): B extends false ? never : Resolve<this, B, ToPartial<TOpticType>, S> {
-        return this.derive([
+        return this.instantiate([
             {
                 get: (s) => (refiner(s) !== false ? s : undefined),
                 set: (a, s) => (refiner(s) !== false ? a : s),
@@ -32,7 +44,7 @@ abstract class CombinatorsImpl<A, TOpticType extends OpticType, S>
         ]);
     }
     if(predicate: (a: NonNullable<A>) => boolean): Resolve<this, A, ToPartial<TOpticType>, S> {
-        return this.derive([
+        return this.instantiate([
             {
                 get: (s) => (predicate(s) === true ? s : undefined),
                 set: (a, s) => (predicate(s) === true ? a : s),
@@ -41,23 +53,23 @@ abstract class CombinatorsImpl<A, TOpticType extends OpticType, S>
         ]);
     }
     convert<B>(to: (a: NonNullable<A>) => B, from: (b: B) => A): Resolve<this, B, TOpticType, S> {
-        return this.derive([{ get: to, set: from, key: 'convert', type: 'unstable' }]);
+        return this.instantiate([{ get: to, set: from, key: 'convert', type: 'unstable' }]);
     }
     compose<B, TOpticTypeB extends OpticType>(
         other: PureOptic<B, TOpticTypeB, NonNullable<A>>,
     ): Resolve<this, B, ComposedOpticType<TOpticType, TOpticTypeB, A>, S> {
-        return this.derive([
+        return this.instantiate([
             { get: (s) => s, set: (a) => a, key: 'compose', type: 'unstable' },
             ...(other as unknown as this).lenses,
         ]);
     }
 
     map<Elem = A extends (infer R)[] ? R : never>(): Resolve<this, Elem, mapped, S> {
-        return this.derive([{ get: (s) => s, set: (a) => a, key: 'map', type: 'map' }]);
+        return this.instantiate([{ get: (s) => s, set: (a) => a, key: 'map', type: 'map' }]);
     }
 
     at<Elem = A extends (infer R)[] ? R : never>(index: number): Resolve<this, Elem, ToPartial<TOpticType>, S> {
-        return this.derive([
+        return this.instantiate([
             {
                 get: (s: any[]) => s[index < 0 ? index + s.length : index],
                 set: (a, s: any[]) => {
@@ -72,7 +84,7 @@ abstract class CombinatorsImpl<A, TOpticType extends OpticType, S>
     indexBy<Key extends string | number, Elem = A extends (infer R)[] ? R : never>(
         getKey: (a: Elem) => Key,
     ): Resolve<this, Record<Key, Elem>, TOpticType, S> {
-        return this.derive([
+        return this.instantiate([
             {
                 get: (s: any[]) => {
                     return s.reduce((acc, cv) => {
@@ -98,7 +110,7 @@ abstract class CombinatorsImpl<A, TOpticType extends OpticType, S>
     findFirst<Elem = A extends (infer R)[] ? R : never>(
         predicate: (a: Elem) => boolean,
     ): Resolve<this, Elem, ToPartial<TOpticType>, S> {
-        return this.derive([
+        return this.instantiate([
             {
                 key: 'findFirst',
                 get: (s: any[]) => s.find(predicate),
@@ -123,7 +135,7 @@ abstract class CombinatorsImpl<A, TOpticType extends OpticType, S>
                 0,
             );
         };
-        return this.derive([
+        return this.instantiate([
             {
                 key: 'min',
                 get: (s: any[]) => {
@@ -151,7 +163,7 @@ abstract class CombinatorsImpl<A, TOpticType extends OpticType, S>
                 0,
             );
         };
-        return this.derive([
+        return this.instantiate([
             {
                 key: 'max',
                 get: (s: any[]) => {
@@ -167,7 +179,7 @@ abstract class CombinatorsImpl<A, TOpticType extends OpticType, S>
     }
 
     reverse(): Resolve<this, A, TOpticType, S> {
-        return this.derive([
+        return this.instantiate([
             {
                 key: 'reverse',
                 type: 'unstable',
@@ -178,7 +190,7 @@ abstract class CombinatorsImpl<A, TOpticType extends OpticType, S>
     }
 
     slice(start = 0, end?: number | undefined): Resolve<this, A, TOpticType, S> {
-        return this.derive([
+        return this.instantiate([
             {
                 key: 'slice',
                 type: 'unstable',
@@ -189,7 +201,7 @@ abstract class CombinatorsImpl<A, TOpticType extends OpticType, S>
     }
 
     values(): A extends Record<string, infer R> ? Resolve<this, Array<R>, TOpticType, S> : never {
-        return this.derive([
+        return this.instantiate([
             {
                 get: (s) => Object.values(s),
                 set: (a, s) => {
@@ -205,7 +217,7 @@ abstract class CombinatorsImpl<A, TOpticType extends OpticType, S>
         ]);
     }
     entries(): A extends Record<string, infer R> ? Resolve<this, Array<readonly [string, R]>, TOpticType, S> : never {
-        return this.derive([
+        return this.instantiate([
             {
                 get: (s) => Object.entries(s),
                 set: (a) => Object.fromEntries(a),
@@ -216,7 +228,7 @@ abstract class CombinatorsImpl<A, TOpticType extends OpticType, S>
     }
 
     reduceFindFirst(predicate: (a: A) => boolean): Resolve<this, A, partial, S> {
-        return this.derive([
+        return this.instantiate([
             {
                 get: (s: A[]) => s.findIndex(predicate),
                 set: noop,
@@ -226,7 +238,7 @@ abstract class CombinatorsImpl<A, TOpticType extends OpticType, S>
         ]);
     }
     reduceMax(...arg: A extends number ? [f?: undefined] : [f: (a: A) => number]): Resolve<this, A, partial, S> {
-        return this.derive([
+        return this.instantiate([
             {
                 get: (s: A[]) =>
                     s.reduce<{ maxValue: number; indexOfMax: number }>(
@@ -246,7 +258,7 @@ abstract class CombinatorsImpl<A, TOpticType extends OpticType, S>
         ]);
     }
     reduceMin(...f: A extends number ? [undefined?] : [(a: A) => number]): Resolve<this, A, partial, S> {
-        return this.derive([
+        return this.instantiate([
             {
                 get: (s: A[]) =>
                     s.reduce<{ minValue: number; indexOfMin: number }>(
@@ -266,7 +278,7 @@ abstract class CombinatorsImpl<A, TOpticType extends OpticType, S>
         ]);
     }
     reduceAt(index: number): Resolve<this, A, partial, S> {
-        return this.derive([
+        return this.instantiate([
             {
                 get: (s: A[]) => (index < 0 ? index + s.length : index),
                 set: noop,
@@ -276,7 +288,7 @@ abstract class CombinatorsImpl<A, TOpticType extends OpticType, S>
         ]);
     }
     reduceFilter(predicate: (a: A) => boolean): Resolve<this, A, mapped, S> {
-        return this.derive([
+        return this.instantiate([
             {
                 get: (s: A[]) =>
                     s.reduce((acc, cv, ci) => {
@@ -290,7 +302,7 @@ abstract class CombinatorsImpl<A, TOpticType extends OpticType, S>
         ]);
     }
     reduceSlice(start = 0, end?: number | undefined): Resolve<this, A, mapped, S> {
-        return this.derive([
+        return this.instantiate([
             {
                 get: (s: A[]) => {
                     const startAbs = start < 0 ? s.length + start : start;
@@ -307,7 +319,7 @@ abstract class CombinatorsImpl<A, TOpticType extends OpticType, S>
         ]);
     }
     reduceSort(compareFn = (a: any, b: any) => (`${a}` < `${b}` ? -1 : 1)): Resolve<this, A, mapped, S> {
-        return this.derive([
+        return this.instantiate([
             {
                 get: (s: A[]) =>
                     Object.entries(s)
@@ -320,10 +332,10 @@ abstract class CombinatorsImpl<A, TOpticType extends OpticType, S>
         ]);
     }
     toPartial(): Resolve<this, NonNullable<A>, ToPartial<TOpticType>, S> {
-        return this.derive([{ get: (s) => s, set: (a) => a, key: 'toPartial' }]);
+        return this.instantiate([{ get: (s) => s, set: (a) => a, key: 'toPartial' }]);
     }
     default(fallback: () => NonNullable<A>): Resolve<this, NonNullable<A>, TOpticType, S> {
-        return this.derive([
+        return this.instantiate([
             {
                 key: 'default',
                 type: 'nullable',

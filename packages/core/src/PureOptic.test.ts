@@ -47,6 +47,20 @@ describe('refine', () => {
         expect(onBar.set({ type: 'bar', bar: 99 }, foo)).toBe(foo);
     });
 });
+describe('derive', () => {
+    it('should derive new read optic from get function', () => {
+        const onFoo = pureOptic<{ foo: string }>().derive((a) => a.foo);
+        expect(onFoo.get({ foo: 'test' })).toBe('test');
+    });
+    it('should derive new optic from a get and a set function', () => {
+        const onFoo = pureOptic<{ foo: string }>().derive(
+            (a) => a.foo,
+            (b, a) => ({ ...a, foo: b }),
+        );
+        expect(onFoo.get({ foo: 'test' })).toBe('test');
+        expect(onFoo.set('newFoo', { foo: 'test' })).toEqual({ foo: 'newFoo' });
+    });
+});
 describe('convert', () => {
     const onObject = pureOptic<[string, number]>().convert(
         ([name, age]) => ({ name, age }),

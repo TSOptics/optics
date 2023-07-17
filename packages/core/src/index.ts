@@ -7,7 +7,7 @@ export {
     total,
     OpticType,
     Lens,
-    ComposedOpticType,
+    ComposedOpticType as ComposedOpticType,
     IsAny,
     IsNullable,
     ToPartial,

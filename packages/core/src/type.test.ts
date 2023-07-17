@@ -3,65 +3,132 @@ import { PureOptic } from './PureOptic';
 import { PureReadOptic } from './PureReadOptic';
 import { total, partial, mapped } from './types';
 
-const expectTotal: <A = any, S = any>(o: () => PureOptic<A, total, S>) => void = () => {};
+const expectTotal: <A = any, S = any>(thunk: () => PureOptic<A, total, S>) => void = () => {};
 const expectPartial: <A = any, T extends partial = partial, S = any>(
-    o: partial extends T ? () => PureOptic<A, T, S> : never,
+    thunk: partial extends T ? () => PureOptic<A, T, S> : never,
 ) => void = () => {};
-const expectMapped: <A = any, S = any>(o: () => PureOptic<A, mapped, S>) => void = () => {};
+const expectMapped: <A = any, S = any>(thunk: () => PureOptic<A, mapped, S>) => void = () => {};
 
-describe('compose types', () => {
-    /**
-     * total on non nullable + total = total
-     */
-    expectTotal(() => pureOptic<{ foo: string }>().foo.compose({} as PureOptic<boolean>));
+const expectWritableOptic: <A = any, S = any>(thunk: () => PureOptic<A, total, S>) => void = () => {};
 
-    /**
-     * total on nullable + total = partial
-     */
-    expectPartial(() => pureOptic<{ foo: string | undefined }>().foo.compose({} as PureOptic<boolean, total, string>));
+describe('Derived types', () => {
+    describe('OpticType', () => {
+        /**
+         * total on non nullable + total = total
+         */
+        expectTotal(() => pureOptic<{ foo: string }>().foo.compose({} as PureOptic<boolean>));
 
-    /**
-     * total + partial = partial
-     */
-    expectPartial(() => pureOptic<{ foo: string }>().foo.compose({} as PureOptic<boolean, partial>));
+        /**
+         * total on nullable + total = partial
+         */
+        expectPartial(() =>
+            pureOptic<{ foo: string | undefined }>().foo.compose({} as PureOptic<boolean, total, string>),
+        );
 
-    /**
-     * total + mapped = mapped
-     */
-    expectMapped(() => pureOptic<{ foo: string[] }>().foo.compose({} as PureOptic<boolean, mapped>));
+        /**
+         * total + partial = partial
+         */
+        expectPartial(() => pureOptic<{ foo: string }>().foo.compose({} as PureOptic<boolean, partial>));
 
-    /**
-     * partial + total = partial
-     */
-    expectPartial(() => pureOptic<{ foo?: { bar: string } }>().foo.bar.compose({} as PureOptic<boolean>));
+        /**
+         * total + mapped = mapped
+         */
+        expectMapped(() => pureOptic<{ foo: string[] }>().foo.compose({} as PureOptic<boolean, mapped>));
 
-    /**
-     * partial + partial = partial
-     */
-    expectPartial(() => pureOptic<{ foo?: { bar: string } }>().foo.bar.compose({} as PureOptic<boolean, partial>));
+        /**
+         * partial + total = partial
+         */
+        expectPartial(() => pureOptic<{ foo?: { bar: string } }>().foo.bar.compose({} as PureOptic<boolean>));
 
-    /**
-     * partial + mapped = mapped
-     */
-    expectMapped(() => pureOptic<{ foo?: { bar: string } }>().foo.bar.compose({} as PureOptic<boolean, mapped>));
+        /**
+         * partial + partial = partial
+         */
+        expectPartial(() => pureOptic<{ foo?: { bar: string } }>().foo.bar.compose({} as PureOptic<boolean, partial>));
 
-    /**
-     * mapped + total = mapped
-     */
-    expectMapped(() => (({} as PureOptic<string, mapped>).compose({} as PureOptic<boolean>)));
+        /**
+         * partial + mapped = mapped
+         */
+        expectMapped(() => pureOptic<{ foo?: { bar: string } }>().foo.bar.compose({} as PureOptic<boolean, mapped>));
 
-    /**
-     * mapped + partial = mapped
-     */
-    expectMapped(() => (({} as PureOptic<string, mapped>).compose({} as PureOptic<boolean, partial>)));
+        /**
+         * mapped + total = mapped
+         */
+        expectMapped(() => (({} as PureOptic<string, mapped>).compose({} as PureOptic<boolean>)));
 
-    /**
-     * mapped + mapped = mapped
-     */
-    expectMapped(() => (({} as PureOptic<string, mapped>).compose({} as PureOptic<boolean, mapped>)));
+        /**
+         * mapped + partial = mapped
+         */
+        expectMapped(() => (({} as PureOptic<string, mapped>).compose({} as PureOptic<boolean, partial>)));
+
+        /**
+         * mapped + mapped = mapped
+         */
+        expectMapped(() => (({} as PureOptic<string, mapped>).compose({} as PureOptic<boolean, mapped>)));
+    });
+    describe('Writable status', () => {
+        /**
+         * PureOptic + PureReadOptic = PureReadOptic
+         */
+        // @ts-expect-error PureOptic isn't assignable to PureReadOptic
+        expectWritableOptic(() => pureOptic<string>().compose({} as PureReadOptic<string, total, string>));
+
+        /**
+         * PureReadOptic + PureOptic = PureReadOptic
+         */
+        expectWritableOptic(
+            // @ts-expect-error PureOptic isn't assignable to PureReadOptic
+            () => (pureOptic<string>() as PureReadOptic<string>).compose({} as PureOptic<string, total, string>),
+        );
+
+        /**
+         * PureReadOptic + PureReadOptic = PureReadOptic
+         */
+        expectWritableOptic(
+            // @ts-expect-error PureOptic isn't assignable to PureReadOptic
+            () => (pureOptic<string>() as PureReadOptic<string>).compose({} as PureReadOptic<string, total, string>),
+        );
+
+        /**
+         * PureOptic + PureOptic = PureOptic
+         */
+        // @ts-expect-error PureOptic isn't assignable to PureReadOptic
+        expectWritableOptic(() => pureOptic<string>().derive({} as PureReadOptic<string, total, string>));
+
+        /**
+         * PureOptic + get = PureReadOptic
+         */
+        // @ts-expect-error PureOptic isn't assignable to PureReadOptic
+        expectWritableOptic(() => pureOptic<{ foo: string }>().derive((x) => x.foo));
+        /**
+         * PureReadOptic + get = PureReadOptic
+         */
+        expectWritableOptic(() =>
+            // @ts-expect-error PureOptic isn't assignable to PureReadOptic
+            (pureOptic<{ foo: string }>() as PureReadOptic<{ foo: string }>).derive((x) => x.foo),
+        );
+
+        /**
+         * PureOptic + get & set = PureOptic
+         */
+        expectWritableOptic(() =>
+            pureOptic<{ foo: string }>().derive(
+                (x) => x.foo,
+                (x, y) => ({ ...y, foo: x }),
+            ),
+        );
+
+        /**
+         * PureReadOptic + get & set = ❌
+         */
+        (pureOptic<{ foo: string }>() as PureReadOptic<{ foo: string }>).derive(
+            (x) => x.foo,
+            // @ts-expect-error Expected 1 arguments, but got 2.
+            (x, y) => ({ ...y, foo: x }),
+        );
+    });
 });
 
-describe('PureOptic', () => {
+describe('Type relations', () => {
     describe('total', () => {
         it('should be a subtype of partial', () => {
             const lens = {} as PureOptic<any, total>;

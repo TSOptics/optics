@@ -2,12 +2,12 @@ import { Lens } from './types';
 
 export const proxify = (target: any) => {
     return new Proxy(target, {
-        get(target: { derive: (lens: Lens[]) => any } & Record<string, any>, prop: any) {
+        get(target: { instantiate: (lens: Lens[]) => any } & Record<string, any>, prop: any) {
             if (target[prop] !== undefined) {
                 return target[prop];
             }
             if (typeof prop === 'symbol') return;
-            return target.derive([
+            return target.instantiate([
                 {
                     key: 'focus ' + prop,
                     get: (s) => s[prop],

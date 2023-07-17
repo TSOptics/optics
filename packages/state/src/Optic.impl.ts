@@ -4,6 +4,7 @@ import { _Optic } from './Optics/Optic';
 import { Denormalized, Dependencies, Dependency, leafSymbol, ResolvedType, tag } from './Optics/ReadOptic';
 import { Store, stores } from './stores';
 import { GetStateOptions, SubscribeOptions } from './types';
+
 class OpticImpl<A, TOpticType extends OpticType>
     extends CombinatorsImpl<A, TOpticType, any>
     implements Omit<_Optic<A, TOpticType>, typeof tag>, TotalCombinators
@@ -107,7 +108,7 @@ class OpticImpl<A, TOpticType extends OpticType>
         };
     }
 
-    protected override derive(newLenses: Lens[]): any {
+    protected override instantiate(newLenses: Lens[]): any {
         return new OpticImpl([...this.lenses, ...newLenses], this.initialValue, this.storeId);
     }
 

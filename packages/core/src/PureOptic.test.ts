@@ -61,18 +61,18 @@ describe('derive', () => {
         expect(onFoo.set('newFoo', { foo: 'test' })).toEqual({ foo: 'newFoo' });
     });
 });
-describe('convert', () => {
-    const onObject = pureOptic<[string, number]>().convert(
+describe('derive', () => {
+    const onObject = pureOptic<[string, number]>().derive(
         ([name, age]) => ({ name, age }),
         ({ name, age }) => [name, age],
     );
 
-    it('should convert from tuple to object', () => {
+    it('should derive from tuple to object', () => {
         expect(onObject.get(['Jean', 42])).toStrictEqual({ name: 'Jean', age: 42 });
         expect(onObject.set({ name: 'Albert', age: 65 }, ['Jean', 34])).toStrictEqual(['Albert', 65]);
     });
-    it('should convert from celcius to fahrenheit', () => {
-        const onTemp = pureOptic<number>().convert(
+    it('should derive from celcius to fahrenheit', () => {
+        const onTemp = pureOptic<number>().derive(
             (celcius) => celcius * (9 / 5) + 32,
             (fahrenheit) => (fahrenheit - 32) * (5 / 9),
         );

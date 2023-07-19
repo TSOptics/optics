@@ -38,7 +38,7 @@ describe('useOptic', () => {
     });
     it('should update state if optic changes', () => {
         const onRoot = createState({ test: 42 });
-        const timesTwo = onRoot.convert(
+        const timesTwo = onRoot.derive(
             (a) => ({
                 test: a.test * 2,
             }),

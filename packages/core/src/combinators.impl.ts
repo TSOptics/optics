@@ -41,9 +41,6 @@ abstract class CombinatorsImpl<A, TOpticType extends OpticType, S>
             },
         ]);
     }
-    convert<B>(to: (a: NonNullable<A>) => B, from: (b: B) => A): Resolve<this, B, TOpticType, S> {
-        return this.instantiate([{ get: to, set: from, key: 'convert', type: 'unstable' }]);
-    }
 
     compose<B, TOpticTypeB extends OpticType>(
         other: PureOptic<B, TOpticTypeB, NonNullable<A>>,

@@ -157,7 +157,7 @@ describe('Type relations', () => {
         it('should return a PureReadOptic when calling combinators', () => {
             const onStringRead: PureReadOptic<string> = pureOptic<string>();
             // @ts-expect-error PureOptic isn't assignable to PureReadOptic
-            const onNumber: PureOptic<number> = onStringRead.convert(parseInt, (n) => `${n}`);
+            const onNumber: PureOptic<number> = onStringRead.derive(parseInt, (n) => `${n}`);
 
             const onNumbersRead: PureReadOptic<number[]> = pureOptic<number[]>();
             // @ts-expect-error PureOptic isn't assignable to PureReadOptic

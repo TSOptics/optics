@@ -7,7 +7,6 @@ export interface BaseCombinators<A, TOpticType extends OpticType, S> {
         refiner: (a: NonNullable<A>) => B | false,
     ): B extends false ? never : Resolve<this, B, ToPartial<TOpticType>, S>;
     if(predicate: (a: NonNullable<A>) => boolean): Resolve<this, A, ToPartial<TOpticType>, S>;
-    convert<B>(to: (a: NonNullable<A>) => B, from: (b: B) => NonNullable<A>): Resolve<this, B, TOpticType, S>;
     compose<B, TOpticTypeB extends OpticType>(
         other: PureOptic<B, TOpticTypeB, NonNullable<A>>,
     ): Resolve<this, B, ComposedOpticType<TOpticType, TOpticTypeB, A>, S>;

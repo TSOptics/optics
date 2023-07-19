@@ -1,4 +1,4 @@
-import { PureOptic, pureOptic, partial, total } from '@optics/core';
+import { PureOptic, pureOptic, partial, total, PureReadOptic } from '@optics/core';
 import { createState } from './createState';
 import { AsyncOptic } from './Optics/AsyncOptic';
 import { AsyncReadOptic } from './Optics/AsyncReadOptic';
@@ -39,12 +39,36 @@ describe('Optic', () => {
             // @ts-expect-error
             onNumberTotal = onNumberPartial;
         });
-        it('should compose with plain optics', () => {
+        it('should return the same type when composed with PureOptic', () => {
             const onState = createState({ a: { b: 42 } });
-            const onNumber = pureOptic<{ b: number }>().b;
-            const onNumberFromState = onState.a.compose(onNumber);
+            const onNumberFromState = onState.a.compose(pureOptic<{ b: number }>().b);
             expectType<Optic<number, total>>(onNumberFromState);
-            expect(onNumberFromState.get()).toBe(42);
+        });
+        it('should return a read only type when composed with PureReadOptic', () => {
+            expectType<Optic<number>>(
+                // @ts-expect-error ReadOptic isn't assignable to Optic
+                createState({ a: { b: 42 } }).a.compose((pureOptic<{ b: number }>() as PureReadOptic<{ b: number }>).b),
+            );
+            expectType<AsyncOptic<number>>(
+                // @ts-expect-error AsyncReadOptic isn't assignable to AsyncOptic
+                (createState({ a: { b: 42 } }) as AsyncOptic<{ a: { b: number } }>).a.compose(
+                    (pureOptic<{ b: number }>() as PureReadOptic<{ b: number }>).b,
+                ),
+            );
+        });
+        it('should return a read only optic when derived with get function', () => {
+            const onState = createState({ a: { b: 42 } });
+            const onNumber = onState.a.derive((x) => x.b);
+            // @ts-expect-error ReadOptic isn't assignable to Optic
+            expectType<Optic<number>>(onNumber);
+        });
+        it('should return an optic when derived with get and set function', () => {
+            const onState = createState({ a: { b: 42 } });
+            const onNumber = onState.a.derive(
+                (x) => x.b,
+                (b, x) => ({ ...x, b }),
+            );
+            expectType<Optic<number>>(onNumber);
         });
     });
     describe('get and set state', () => {
@@ -60,6 +84,35 @@ describe('Optic', () => {
         onState.set({ a: 42 });
         expect(listener).toHaveBeenCalledTimes(1);
         expect(listener).toHaveBeenCalledWith(42);
+    });
+    describe('combinators', () => {
+        describe('compose', () => {
+            it('should compose with PureOptic', () => {
+                const onState = createState({ a: { b: 42 } });
+                const onNumber = pureOptic<{ b: number }>().b;
+                const onNumberFromState = onState.a.compose(onNumber);
+                expect(onNumberFromState.get()).toBe(42);
+                onNumberFromState.set(100);
+                expect(onState.get()).toEqual({ a: { b: 100 } });
+            });
+        });
+        describe('derive', () => {
+            it('should derive read only optic from get', () => {
+                const onState = createState({ a: { b: 42 } });
+                const onNumber = onState.a.derive((x) => x.b);
+                expect(onNumber.get()).toBe(42);
+            });
+            it('should derive an optic from get and set', () => {
+                const onState = createState({ a: { b: 42 } });
+                const onNumber = onState.a.derive(
+                    (x) => x.b,
+                    (b, x) => ({ ...x, b }),
+                );
+                expect(onNumber.get()).toBe(42);
+                onNumber.set(100);
+                expect(onState.get()).toEqual({ a: { b: 100 } });
+            });
+        });
     });
     describe('references', () => {
         const onCountries = createState([
@@ -332,9 +385,9 @@ describe('Optic', () => {
                 expect(entries.get()).toBe(value);
             });
         });
-        it('convert', () => {
+        it('derive', () => {
             const onState = createState({ obj: { b1: true, b2: false }, a: 42 });
-            const onTuple = onState.obj.convert(
+            const onTuple = onState.obj.derive(
                 ({ b1, b2 }) => [b1, b2] as const,
                 ([b1, b2]) => ({ b1, b2 }),
             );

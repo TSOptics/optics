@@ -8,9 +8,9 @@ type OpticDeriveFromProps<A, TOpticType extends OpticType, T = NonNullable<A>> =
       }
     : {};
 
-export type _Optic<A, TOpticType extends OpticType> = _ReadOptic<A, TOpticType> & {
+export interface _Optic<A, TOpticType extends OpticType> extends _ReadOptic<A, TOpticType> {
     set(a: A | ((prev: A) => A)): void;
-};
+}
 
 export type Optic<A, TOpticType extends OpticType = total> = _Optic<A, TOpticType> &
     OpticDeriveFromProps<A, TOpticType> &

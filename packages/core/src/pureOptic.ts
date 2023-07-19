@@ -1,9 +1,10 @@
-import { _PureReadOptic } from './PureReadOptic';
+import { PureReadOptic, _PureReadOptic } from './PureReadOptic';
 import { CombinatorsForOptic } from './combinators.types';
 import { DeriveOpticType, OpticType, total } from './types';
 
 export interface _PureOptic<A, TOpticType extends OpticType = total, S = any> extends _PureReadOptic<A, TOpticType, S> {
     set(a: A | ((prev: A) => A), s: S): S;
+    derive<B>(get: (a: NonNullable<A>) => B): PureReadOptic<B, DeriveOpticType<A, TOpticType>, S>;
     derive<B>(
         get: (a: NonNullable<A>) => B,
         set: (b: B, a: NonNullable<A>) => NonNullable<A>,

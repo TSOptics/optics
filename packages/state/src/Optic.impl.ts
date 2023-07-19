@@ -1,5 +1,5 @@
-import { CombinatorsImpl, get, proxify, set, FocusedValue, Lens, OpticType } from '@optics/core';
-import { TotalCombinators } from './combinators';
+import { CombinatorsImpl, get, proxify, set, FocusedValue, Lens, OpticType, DeriveOpticType } from '@optics/core';
+import { Resolve, ResolveReadOnly, TotalCombinators } from './combinators';
 import { _Optic } from './Optics/Optic';
 import { Denormalized, Dependencies, Dependency, leafSymbol, ResolvedType, tag } from './Optics/ReadOptic';
 import { Store, stores } from './stores';
@@ -106,6 +106,22 @@ class OpticImpl<A, TOpticType extends OpticType>
                 }
             }
         };
+    }
+
+    derive<B>(get: (a: NonNullable<A>) => B): ResolveReadOnly<this, DeriveOpticType<A, TOpticType>, TOpticType>;
+    derive<B>(
+        get: (a: NonNullable<A>) => B,
+        set: (b: B, prev: NonNullable<A>) => NonNullable<A>,
+    ): Resolve<this, DeriveOpticType<A, TOpticType>, TOpticType>;
+    derive(get: any, set?: any): any {
+        return this.instantiate([
+            {
+                get,
+                set: set ?? ((b, a) => a),
+                key: 'derive',
+                type: 'unstable',
+            },
+        ]);
     }
 
     protected override instantiate(newLenses: Lens[]): any {

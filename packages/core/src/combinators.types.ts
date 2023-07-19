@@ -14,7 +14,6 @@ export interface BaseCombinators<A, TOpticType extends OpticType, S> {
     compose<B, TOpticTypeB extends OpticType>(
         other: PureReadOptic<B, TOpticTypeB, NonNullable<A>>,
     ): PureReadOptic<B, ComposedOpticType<TOpticType, TOpticTypeB, A>, S>;
-    derive<B>(get: (a: NonNullable<A>) => B): PureReadOptic<B, DeriveOpticType<A, TOpticType>, S>;
 }
 
 export interface ArrayCombinators<A, TOpticType extends OpticType, S, Elem = A extends (infer R)[] ? R : never> {

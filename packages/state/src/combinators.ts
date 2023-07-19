@@ -8,6 +8,8 @@ import {
     IsAny,
     IsNullable,
     ToPartial,
+    PureReadOptic,
+    DeriveOpticType,
 } from '@optics/core';
 import { AsyncOptic } from './Optics/AsyncOptic';
 import { AsyncReadOptic } from './Optics/AsyncReadOptic';
@@ -23,6 +25,14 @@ export interface BaseCombinators<A, TOpticType extends OpticType> {
     compose<B, TOpticTypeB extends OpticType>(
         other: PureOptic<B, TOpticTypeB, NonNullable<A>>,
     ): Resolve<this, B, ComposedOpticType<TOpticType, TOpticTypeB, A>>;
+    compose<B, TOpticTypeB extends OpticType>(
+        other: PureReadOptic<B, TOpticTypeB, NonNullable<A>>,
+    ): ResolveReadOnly<this, B, ComposedOpticType<TOpticType, TOpticTypeB, A>>;
+    derive<B>(get: (a: NonNullable<A>) => B): ResolveReadOnly<this, B, DeriveOpticType<A, TOpticType>>;
+    derive<B>(
+        get: (a: NonNullable<A>) => B,
+        set: (b: B, prev: NonNullable<A>) => NonNullable<A>,
+    ): Resolve<this, B, DeriveOpticType<A, TOpticType>>;
 }
 
 export interface TotalCombinators {
@@ -89,8 +99,14 @@ export type CombinatorsForOptic<A, TOpticType extends OpticType> = BaseCombinato
 
 export type Resolve<TOptic, A, TOpticType extends OpticType> = [TOptic] extends [{ setAsync(a: any): any }]
     ? AsyncOptic<A, TOpticType>
+    : [TOptic] extends [{ getAsync(): any }]
+    ? AsyncReadOptic<A, TOpticType>
     : [TOptic] extends [{ set(a: any): any }]
     ? Optic<A, TOpticType>
-    : [TOptic] extends [{ getAsync(): any }]
+    : ReadOptic<A, TOpticType>;
+
+export type ResolveReadOnly<TOptic, A, TOpticType extends OpticType> = [TOptic] extends [
+    { setAsync(a: any): any } | { getAsync(): any },
+]
     ? AsyncReadOptic<A, TOpticType>
     : ReadOptic<A, TOpticType>;

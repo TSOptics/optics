@@ -30,18 +30,15 @@ class PureOpticImpl<A, TOpticType extends OpticType, S>
         get: (a: NonNullable<A>) => B,
         set: (b: B, a: NonNullable<A>) => NonNullable<A>,
     ): PureOptic<B, DeriveOpticType<A, TOpticType>, S>;
-    derive<B>(get: (a: NonNullable<A>) => B, set?: (b: B, a: NonNullable<A>) => NonNullable<A>): any {
-        if (set) {
-            return this.instantiate([
-                {
-                    get,
-                    set,
-                    key: 'derive',
-                    type: 'unstable',
-                },
-            ]);
-        }
-        return super.derive(get);
+    derive(get: any, set?: any): any {
+        return this.instantiate([
+            {
+                get,
+                set: set ?? ((b, a) => a),
+                key: 'derive',
+                type: 'unstable',
+            },
+        ]);
     }
 
     protected instantiate(newLenses: Lens[]): any {

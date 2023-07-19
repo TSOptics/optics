@@ -49,14 +49,14 @@ export type ReadOpticDeriveFromProps<A, TOpticType extends OpticType, T = NonNul
       }
     : {};
 
-export type _ReadOptic<A, TOpticType extends OpticType> = {
+export interface _ReadOptic<A, TOpticType extends OpticType> {
     get<TOptions extends GetStateOptions | undefined>(options?: TOptions): ResolvedType<A, TOpticType, TOptions>;
     subscribe<TOptions extends SubscribeOptions | undefined>(
         listener: (a: ResolvedType<A, TOpticType, TOptions>) => void,
         options?: TOptions,
     ): () => void;
     [tag]: [opticType: TOpticType, focus: A, invariance: (a: A) => void];
-};
+}
 
 export type ReadOptic<A, TOpticType extends OpticType = total> = _ReadOptic<A, TOpticType> &
     ReadOpticDeriveFromProps<A, TOpticType> &

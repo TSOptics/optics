@@ -21,17 +21,6 @@ abstract class CombinatorsImpl<A, TOpticType extends OpticType, S>
     protected abstract lenses: Lens[];
     protected abstract instantiate(newLenses: Lens[]): any;
 
-    derive<B>(get: (a: NonNullable<A>) => B): PureReadOptic<B, DeriveOpticType<A, TOpticType>, S> {
-        return this.instantiate([
-            {
-                get,
-                set: (a, s) => s,
-                key: 'derive',
-                type: 'unstable',
-            },
-        ]);
-    }
-
     refine<B>(
         refiner: (a: NonNullable<A>) => false | B,
     ): B extends false ? never : Resolve<this, B, ToPartial<TOpticType>, S> {
@@ -55,9 +44,14 @@ abstract class CombinatorsImpl<A, TOpticType extends OpticType, S>
     convert<B>(to: (a: NonNullable<A>) => B, from: (b: B) => A): Resolve<this, B, TOpticType, S> {
         return this.instantiate([{ get: to, set: from, key: 'convert', type: 'unstable' }]);
     }
+
     compose<B, TOpticTypeB extends OpticType>(
         other: PureOptic<B, TOpticTypeB, NonNullable<A>>,
-    ): Resolve<this, B, ComposedOpticType<TOpticType, TOpticTypeB, A>, S> {
+    ): Resolve<this, B, ComposedOpticType<TOpticType, TOpticTypeB, A>, S>;
+    compose<B, TOpticTypeB extends OpticType>(
+        other: PureReadOptic<B, TOpticTypeB, NonNullable<A>>,
+    ): PureReadOptic<B, ComposedOpticType<TOpticType, TOpticTypeB, A>, S>;
+    compose(other: any): any {
         return this.instantiate([
             { get: (s) => s, set: (a) => a, key: 'compose', type: 'unstable' },
             ...(other as unknown as this).lenses,

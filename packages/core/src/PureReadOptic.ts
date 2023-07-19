@@ -5,6 +5,7 @@ export const tag: unique symbol = Symbol('tag');
 
 export interface _PureReadOptic<A, TOpticType extends OpticType = total, S = any> {
     get(s: S): FocusedValue<A, TOpticType>;
+    derive<B>(get: (a: NonNullable<A>) => B): PureReadOptic<B, DeriveOpticType<A, TOpticType>, S>;
     [tag]: [opticType: TOpticType, root: S, invariance: (a: A, s: S) => void];
 }
 

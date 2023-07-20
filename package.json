@@ -50,6 +50,5 @@
       "<rootDir>/packages/react/jest.config.js"
     ]
   },
-  "packageManager": "yarn@3.6.1",
-  "dependencies": {}
+  "packageManager": "yarn@3.6.1"
 }

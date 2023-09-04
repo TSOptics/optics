@@ -3,9 +3,9 @@ import { renderHook } from '@testing-library/react-hooks';
 import { act } from 'react-test-renderer';
 import { render, fireEvent } from '@testing-library/react';
 import { useOptic } from './useOptic';
-import { useKeyedOptics } from './useKeyedOptics';
 import { useOpticReducer } from './useOpticReducer';
 import { pureOptic, PureOptic, Optic, total, createState } from '@optics/state';
+import { useDeriveOptics } from './useDeriveOptics';
 
 describe('useOptic', () => {
     it('should set state', () => {
@@ -93,19 +93,17 @@ describe('useKeyedOptics', () => {
     });
 
     const Numbers = ({ onArray }: { onArray: Optic<number[]> }) => {
-        const [array, setArray] = useOptic(onArray);
-        const getOptic = useKeyedOptics(onArray, (n) => n.toString());
+        const optics = useDeriveOptics(onArray, (n) => n.toString());
 
         const prepend = useCallback(() => {
-            setArray((prev) => [prev[0] - 1, ...prev]);
-        }, [setArray]);
+            onArray.set((prev) => [prev[0] - 1, ...prev]);
+        }, [onArray]);
 
         return (
             <div>
                 <button onClick={prepend}>prepend</button>
-                {array.map((n) => {
-                    const key = n.toString();
-                    return <Number onNumber={getOptic(key)} key={key} />;
+                {optics.map(([key, optic]) => {
+                    return <Number onNumber={optic} key={key} />;
                 })}
             </div>
         );
@@ -121,37 +119,24 @@ describe('useKeyedOptics', () => {
         expect(elems.map((x) => x.textContent)).toStrictEqual(['0', '1', '2', '3', '4', '5']);
         expect(renders.map((x) => x.textContent)).toEqual(['1', '1', '1', '1', '1', '1']);
     });
-    it('should only accept optics with the stores as root', () => {
-        const onArray = pureOptic<number[]>();
-        // @ts-expect-error
-        renderHook(() => useKeyedOptics(onArray, (n) => n.toString()));
-    });
     it('should update if the optic changes', () => {
         const onEvens = createState([0, 2, 4, 6]);
         const onOdds = createState([1, 3, 5, 7]);
         const { result, rerender } = renderHook(
-            ({ optic }: { optic: typeof onEvens }) => useKeyedOptics(optic, (n) => n.toString()),
+            ({ optic }: { optic: typeof onEvens }) => useDeriveOptics(optic, (n) => n.toString()),
             {
                 initialProps: { optic: onEvens },
             },
         );
 
         const evenKeys = ['0', '2', '4', '6'];
-        const oddKeys = ['1', '3', '5', '7'];
-        for (const evenKey of evenKeys) {
-            expect(result.current(evenKey)).toBeDefined();
-        }
-        for (const oddKey of oddKeys) {
-            expect(result.current(oddKey)).toBeUndefined();
-        }
+        expect(evenKeys).toEqual(result.current.map(([key]) => key));
 
         rerender({ optic: onOdds });
-        for (const oddKey of oddKeys) {
-            expect(result.current(oddKey)).toBeDefined();
-        }
-        for (const evenKey of evenKeys) {
-            expect(result.current(evenKey)).toBeUndefined();
-        }
+        console.log(result.current.map(([key]) => key));
+
+        const oddKeys = ['1', '3', '5', '7'];
+        expect(oddKeys).toEqual(result.current.map(([key]) => key));
     });
 });
 describe('useOpticReducer', () => {

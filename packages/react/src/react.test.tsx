@@ -83,7 +83,7 @@ describe('useOptic', () => {
         const _: [number] = result.current;
     });
 });
-describe('useKeyedOptics', () => {
+describe('useDeriveOptics', () => {
     const Number = memo(({ onNumber }: { onNumber: Optic<number> }) => {
         const [n] = useOptic(onNumber);
         const renders = useRef(0);

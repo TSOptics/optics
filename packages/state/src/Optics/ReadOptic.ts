@@ -5,7 +5,7 @@ import { GetStateOptions, SubscribeOptions } from '../types';
 export const tag: unique symbol = Symbol('tag');
 
 export type Denormalized<T> = [T] extends [
-    { [tag]: [opticScope: infer TScope extends OpticScope, focus: infer R, invariance: any] },
+    { [tag]: [scope: infer TScope extends OpticScope, focus: infer R, invariance: any] },
 ]
     ? Denormalized<FocusedValue<R, TScope>>
     : T extends Date
@@ -55,7 +55,7 @@ export interface _ReadOptic<A, TScope extends OpticScope> {
         listener: (a: ResolvedType<A, TScope, TOptions>) => void,
         options?: TOptions,
     ): () => void;
-    [tag]: [opticScope: TScope, focus: A, invariance: (a: A) => void];
+    [tag]: [scope: TScope, focus: A, invariance: (a: A) => void];
 }
 
 export type ReadOptic<A, TScope extends OpticScope = total> = _ReadOptic<A, TScope> &

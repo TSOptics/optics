@@ -1,6 +1,7 @@
-import { Lens, Optic, partial } from '@optics/state';
+import { GetOpticFocus, GetOpticScope, Lens, OpticScope, ReadOptic, total } from '@optics/state';
 import { useOptic } from './useOptic';
 import { useRef } from 'react';
+import { Resolve } from '@optics/state/src/combinators';
 
 const focusIndex = (index: number): Lens<any, any[]> => ({
     get: (s) => s[index],
@@ -8,13 +9,14 @@ const focusIndex = (index: number): Lens<any, any[]> => ({
     key: 'focus ' + index,
 });
 
-export function useDeriveOptics<T, TScope extends partial>(
-    onArray: Optic<T[], TScope>,
-    getKey: (t: T) => string,
-): [key: string, optic: Optic<T, TScope>][] {
+export function useDeriveOptics<
+    TOptic extends ReadOptic<any[], any>,
+    T extends any[] = GetOpticFocus<TOptic>,
+    TScope extends OpticScope = GetOpticScope<TOptic>,
+>(onArray: TOptic, getKey: (t: T) => string): [key: string, optic: Resolve<TOptic, T[number], TScope>][] {
     const [array = []] = useOptic(onArray, { denormalize: false });
 
-    const cachedOptics = useRef<Record<string, Optic<T, TScope>>>({});
+    const cachedOptics = useRef<Record<string, Resolve<TOptic, T[number], TScope>>>({});
 
     const derivedOptics = array.reduce<(typeof cachedOptics)['current']>((acc, cv, ci) => {
         const key = getKey(cv);

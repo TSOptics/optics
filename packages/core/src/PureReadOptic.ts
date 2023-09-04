@@ -6,7 +6,7 @@ export const tag: unique symbol = Symbol('tag');
 export interface _PureReadOptic<A, TScope extends OpticScope = total, S = any> {
     get(s: S): FocusedValue<A, TScope>;
     derive<B>(get: (a: NonNullable<A>) => B): PureReadOptic<B, DeriveOpticScope<A, TScope>, S>;
-    [tag]: [opticScope: TScope, root: S, invariance: (a: A, s: S) => void];
+    [tag]: [scope: TScope, root: S, invariance: (a: A, s: S) => void];
 }
 
 type DeriveFromProps<A, TScope extends OpticScope, S, T = NonNullable<A>> = T extends Record<any, any>

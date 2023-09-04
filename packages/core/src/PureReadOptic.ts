@@ -1,20 +1,20 @@
 import { CombinatorsForOptic } from './combinators.types';
-import { DeriveOpticType, FocusedValue, OpticType, total } from './types';
+import { DeriveOpticScope, FocusedValue, OpticScope, total } from './types';
 
 export const tag: unique symbol = Symbol('tag');
 
-export interface _PureReadOptic<A, TOpticType extends OpticType = total, S = any> {
-    get(s: S): FocusedValue<A, TOpticType>;
-    derive<B>(get: (a: NonNullable<A>) => B): PureReadOptic<B, DeriveOpticType<A, TOpticType>, S>;
-    [tag]: [opticType: TOpticType, root: S, invariance: (a: A, s: S) => void];
+export interface _PureReadOptic<A, TScope extends OpticScope = total, S = any> {
+    get(s: S): FocusedValue<A, TScope>;
+    derive<B>(get: (a: NonNullable<A>) => B): PureReadOptic<B, DeriveOpticScope<A, TScope>, S>;
+    [tag]: [opticScope: TScope, root: S, invariance: (a: A, s: S) => void];
 }
 
-type DeriveFromProps<A, TOpticType extends OpticType, S, T = NonNullable<A>> = T extends Record<any, any>
+type DeriveFromProps<A, TScope extends OpticScope, S, T = NonNullable<A>> = T extends Record<any, any>
     ? {
-          [P in keyof T as T[P] extends Function ? never : P]-?: PureReadOptic<T[P], DeriveOpticType<A, TOpticType>, S>;
+          [P in keyof T as T[P] extends Function ? never : P]-?: PureReadOptic<T[P], DeriveOpticScope<A, TScope>, S>;
       }
     : {};
 
-export type PureReadOptic<A, TOpticType extends OpticType = total, S = any> = _PureReadOptic<A, TOpticType, S> &
-    DeriveFromProps<A, TOpticType, S> &
-    CombinatorsForOptic<A, TOpticType, S>;
+export type PureReadOptic<A, TScope extends OpticScope = total, S = any> = _PureReadOptic<A, TScope, S> &
+    DeriveFromProps<A, TScope, S> &
+    CombinatorsForOptic<A, TScope, S>;

@@ -4,11 +4,11 @@ import { proxify } from './proxify';
 import { _PureOptic, PureOptic } from './PureOptic';
 import { PureReadOptic, tag } from './PureReadOptic';
 import { set } from './set';
-import { DeriveOpticType, FocusedValue, Lens, OpticType } from './types';
+import { DeriveOpticScope, FocusedValue, Lens, OpticScope } from './types';
 
-class PureOpticImpl<A, TOpticType extends OpticType, S>
-    extends CombinatorsImpl<A, TOpticType, S>
-    implements Omit<_PureOptic<A, TOpticType, S>, typeof tag>
+class PureOpticImpl<A, TScope extends OpticScope, S>
+    extends CombinatorsImpl<A, TScope, S>
+    implements Omit<_PureOptic<A, TScope, S>, typeof tag>
 {
     protected lenses: Lens[];
     constructor(lenses: Lens[]) {
@@ -17,7 +17,7 @@ class PureOpticImpl<A, TOpticType extends OpticType, S>
         return proxify(this);
     }
 
-    get(s: S): FocusedValue<A, TOpticType> {
+    get(s: S): FocusedValue<A, TScope> {
         return get(s, this.lenses);
     }
 
@@ -25,11 +25,11 @@ class PureOpticImpl<A, TOpticType extends OpticType, S>
         return set(a, s, this.lenses);
     }
 
-    derive<B>(get: (a: NonNullable<A>) => B): PureReadOptic<B, DeriveOpticType<A, TOpticType>, S>;
+    derive<B>(get: (a: NonNullable<A>) => B): PureReadOptic<B, DeriveOpticScope<A, TScope>, S>;
     derive<B>(
         get: (a: NonNullable<A>) => B,
         set: (b: B, a: NonNullable<A>) => NonNullable<A>,
-    ): PureOptic<B, DeriveOpticType<A, TOpticType>, S>;
+    ): PureOptic<B, DeriveOpticScope<A, TScope>, S>;
     derive(get: any, set?: any): any {
         return this.instantiate([
             {

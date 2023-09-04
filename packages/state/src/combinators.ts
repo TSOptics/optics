@@ -1,68 +1,66 @@
 import {
-    OpticType,
+    OpticScope,
     PureOptic,
     mapped,
     partial,
     total,
-    ComposedOpticType,
+    ComposeScopes,
     IsAny,
     IsNullable,
     ToPartial,
     PureReadOptic,
-    DeriveOpticType,
+    DeriveOpticScope,
 } from '@optics/core';
 import { AsyncOptic } from './Optics/AsyncOptic';
 import { AsyncReadOptic } from './Optics/AsyncReadOptic';
 import { Optic } from './Optics/Optic';
 import { ReadOptic } from './Optics/ReadOptic';
 
-export interface BaseCombinators<A, TOpticType extends OpticType> {
-    refine<B>(
-        refiner: (a: NonNullable<A>) => B | false,
-    ): B extends false ? never : Resolve<this, B, ToPartial<TOpticType>>;
-    if(predicate: (a: NonNullable<A>) => boolean): Resolve<this, A, ToPartial<TOpticType>>;
-    compose<B, TOpticTypeB extends OpticType>(
-        other: PureOptic<B, TOpticTypeB, NonNullable<A>>,
-    ): Resolve<this, B, ComposedOpticType<TOpticType, TOpticTypeB, A>>;
-    compose<B, TOpticTypeB extends OpticType>(
-        other: PureReadOptic<B, TOpticTypeB, NonNullable<A>>,
-    ): ResolveReadOnly<this, B, ComposedOpticType<TOpticType, TOpticTypeB, A>>;
-    derive<B>(get: (a: NonNullable<A>) => B): ResolveReadOnly<this, B, DeriveOpticType<A, TOpticType>>;
+export interface BaseCombinators<A, TScope extends OpticScope> {
+    refine<B>(refiner: (a: NonNullable<A>) => B | false): B extends false ? never : Resolve<this, B, ToPartial<TScope>>;
+    if(predicate: (a: NonNullable<A>) => boolean): Resolve<this, A, ToPartial<TScope>>;
+    compose<B, TScopeB extends OpticScope>(
+        other: PureOptic<B, TScopeB, NonNullable<A>>,
+    ): Resolve<this, B, ComposeScopes<TScope, TScopeB, A>>;
+    compose<B, TScopeB extends OpticScope>(
+        other: PureReadOptic<B, TScopeB, NonNullable<A>>,
+    ): ResolveReadOnly<this, B, ComposeScopes<TScope, TScopeB, A>>;
+    derive<B>(get: (a: NonNullable<A>) => B): ResolveReadOnly<this, B, DeriveOpticScope<A, TScope>>;
     derive<B>(
         get: (a: NonNullable<A>) => B,
         set: (b: B, prev: NonNullable<A>) => NonNullable<A>,
-    ): Resolve<this, B, DeriveOpticType<A, TOpticType>>;
+    ): Resolve<this, B, DeriveOpticScope<A, TScope>>;
 }
 
 export interface TotalCombinators {
     reset(): void;
 }
 
-export interface ArrayCombinators<A, TOpticType extends OpticType, Elem = A extends (infer R)[] ? R : never> {
+export interface ArrayCombinators<A, TScope extends OpticScope, Elem = A extends (infer R)[] ? R : never> {
     map(): A extends (infer R)[] ? Resolve<this, R, mapped> : never;
-    at(index: number): A extends (infer R)[] ? Resolve<this, R, ToPartial<TOpticType>> : never;
+    at(index: number): A extends (infer R)[] ? Resolve<this, R, ToPartial<TScope>> : never;
     indexBy<Key extends string | number, Elem = A extends (infer R)[] ? R : never>(
         f: (a: Elem) => Key,
-    ): Resolve<this, Record<Key, Elem>, TOpticType>;
-    findFirst(predicate: (a: Elem) => boolean): Resolve<this, Elem, ToPartial<TOpticType>>;
+    ): Resolve<this, Record<Key, Elem>, TScope>;
+    findFirst(predicate: (a: Elem) => boolean): Resolve<this, Elem, ToPartial<TScope>>;
     min(
         ...arg: Elem extends number ? [f?: (a: Elem) => number] : [f: (a: Elem) => number]
-    ): Resolve<this, Elem, ToPartial<TOpticType>>;
+    ): Resolve<this, Elem, ToPartial<TScope>>;
     max(
         ...arg: Elem extends number ? [f?: (a: Elem) => number] : [f: (a: Elem) => number]
-    ): Resolve<this, Elem, ToPartial<TOpticType>>;
-    reverse(): Resolve<this, A, TOpticType>;
-    slice(start?: number, end?: number): Resolve<this, A, TOpticType>;
+    ): Resolve<this, Elem, ToPartial<TScope>>;
+    reverse(): Resolve<this, A, TScope>;
+    slice(start?: number, end?: number): Resolve<this, A, TScope>;
 }
 
-export interface RecordCombinators<A, TOpticType extends OpticType> {
-    values(): A extends Record<string, infer R> ? Resolve<this, Array<R>, TOpticType> : never;
-    entries(): A extends Record<string, infer R> ? Resolve<this, Array<readonly [string, R]>, TOpticType> : never;
+export interface RecordCombinators<A, TScope extends OpticScope> {
+    values(): A extends Record<string, infer R> ? Resolve<this, Array<R>, TScope> : never;
+    entries(): A extends Record<string, infer R> ? Resolve<this, Array<readonly [string, R]>, TScope> : never;
 }
 
-export interface NullableCombinators<A, TOpticType extends OpticType> {
-    toPartial(): Resolve<this, NonNullable<A>, ToPartial<TOpticType>>;
-    default(fallback: () => NonNullable<A>): Resolve<this, NonNullable<A>, TOpticType>;
+export interface NullableCombinators<A, TScope extends OpticScope> {
+    toPartial(): Resolve<this, NonNullable<A>, ToPartial<TScope>>;
+    default(fallback: () => NonNullable<A>): Resolve<this, NonNullable<A>, TScope>;
 }
 
 export interface MappedCombinators<A> {
@@ -75,37 +73,37 @@ export interface MappedCombinators<A> {
     reduceSort(compareFn?: (a: A, b: A) => number): Resolve<this, A, mapped>;
 }
 
-type CombinatorsForType<A, TOpticType extends OpticType> = (IsNullable<A> extends true
-    ? NullableCombinators<A, TOpticType>
+type CombinatorsForType<A, TScope extends OpticScope> = (IsNullable<A> extends true
+    ? NullableCombinators<A, TScope>
     : {}) &
     (NonNullable<A> extends any[]
-        ? ArrayCombinators<NonNullable<A>, TOpticType>
+        ? ArrayCombinators<NonNullable<A>, TScope>
         : Record<string, any> extends A
         ? NonNullable<A> extends Record<string, any>
-            ? RecordCombinators<A, TOpticType>
+            ? RecordCombinators<A, TScope>
             : {}
         : {});
 
-type CombinatorsForOpticType<A, TOpticType extends OpticType> = TOpticType extends mapped
+type CombinatorsForOpticScope<A, TScope extends OpticScope> = TScope extends mapped
     ? MappedCombinators<A>
-    : TOpticType extends total
+    : TScope extends total
     ? TotalCombinators
     : {};
 
-export type CombinatorsForOptic<A, TOpticType extends OpticType> = BaseCombinators<A, TOpticType> &
-    (IsAny<A> extends true ? {} : CombinatorsForType<A, TOpticType>) &
-    CombinatorsForOpticType<A, TOpticType>;
+export type CombinatorsForOptic<A, TScope extends OpticScope> = BaseCombinators<A, TScope> &
+    (IsAny<A> extends true ? {} : CombinatorsForType<A, TScope>) &
+    CombinatorsForOpticScope<A, TScope>;
 
-export type Resolve<TOptic, A, TOpticType extends OpticType> = [TOptic] extends [{ setAsync(a: any): any }]
-    ? AsyncOptic<A, TOpticType>
+export type Resolve<TOptic, A, TScope extends OpticScope> = [TOptic] extends [{ setAsync(a: any): any }]
+    ? AsyncOptic<A, TScope>
     : [TOptic] extends [{ getAsync(): any }]
-    ? AsyncReadOptic<A, TOpticType>
+    ? AsyncReadOptic<A, TScope>
     : [TOptic] extends [{ set(a: any): any }]
-    ? Optic<A, TOpticType>
-    : ReadOptic<A, TOpticType>;
+    ? Optic<A, TScope>
+    : ReadOptic<A, TScope>;
 
-export type ResolveReadOnly<TOptic, A, TOpticType extends OpticType> = [TOptic] extends [
+export type ResolveReadOnly<TOptic, A, TScope extends OpticScope> = [TOptic] extends [
     { setAsync(a: any): any } | { getAsync(): any },
 ]
-    ? AsyncReadOptic<A, TOpticType>
-    : ReadOptic<A, TOpticType>;
+    ? AsyncReadOptic<A, TScope>
+    : ReadOptic<A, TScope>;

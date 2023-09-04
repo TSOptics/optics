@@ -1,12 +1,12 @@
 import { isFold } from './fold';
 import isMapped from './isMapped';
-import { FocusedValue, Lens, OpticType } from './types';
+import { FocusedValue, Lens, OpticScope } from './types';
 
-export const get = <A, TOpticType extends OpticType>(
+export const get = <A, TScope extends OpticScope>(
     s: any,
     lenses: Lens[],
     earlyReturn?: (s: any, lens: Lens) => any | undefined,
-): FocusedValue<A, TOpticType> => {
+): FocusedValue<A, TScope> => {
     const aux = (s: any, lenses: Lens[], isTraversal = false): any => {
         const [lens, ...tailLenses] = lenses;
         if (!lens || ((s === undefined || s === null) && lens.type !== 'nullable')) {

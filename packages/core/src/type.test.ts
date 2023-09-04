@@ -12,7 +12,7 @@ const expectMapped: <A = any, S = any>(thunk: () => PureOptic<A, mapped, S>) => 
 const expectWritableOptic: <A = any, S = any>(thunk: () => PureOptic<A, total, S>) => void = () => {};
 
 describe('Derived types', () => {
-    describe('OpticType', () => {
+    describe('OpticScope', () => {
         /**
          * total on non nullable + total = total
          */

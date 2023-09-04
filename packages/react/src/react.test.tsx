@@ -6,6 +6,7 @@ import { useOptic } from './useOptic';
 import { useOpticReducer } from './useOpticReducer';
 import { pureOptic, PureOptic, Optic, total, createState, ReadOptic } from '@optics/state';
 import { useDeriveOptics } from './useDeriveOptics';
+import For from './For';
 
 describe('useOptic', () => {
     it('should set state', () => {
@@ -141,6 +142,32 @@ describe('useDeriveOptics', () => {
 
         const oddKeys = ['1', '3', '5', '7'];
         expect(oddKeys).toEqual(result.current.map(([key]) => key));
+    });
+    describe('For component', () => {
+        const NumbersWithFor = ({ onArray }: { onArray: Optic<number[]> }) => {
+            const prepend = useCallback(() => {
+                onArray.set((prev) => [prev[0] - 1, ...prev]);
+            }, [onArray]);
+
+            return (
+                <div>
+                    <button onClick={prepend}>prepend</button>
+                    <For optic={onArray} getKey={(n) => n.toString()}>
+                        {(optic) => <Number onNumber={optic} />}
+                    </For>
+                </div>
+            );
+        };
+
+        it('should not rerender the existing cells when prepending', () => {
+            const { getAllByTestId, getByText } = render(<NumbersWithFor onArray={createState([1, 2, 3, 4, 5])} />);
+            const prepend = getByText('prepend');
+            fireEvent.click(prepend);
+            const elems = getAllByTestId('display');
+            const renders = getAllByTestId('renders');
+            expect(elems.map((x) => x.textContent)).toStrictEqual(['0', '1', '2', '3', '4', '5']);
+            expect(renders.map((x) => x.textContent)).toEqual(['1', '1', '1', '1', '1', '1']);
+        });
     });
 });
 describe('useOpticReducer', () => {

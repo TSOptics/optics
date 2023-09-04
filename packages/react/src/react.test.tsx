@@ -138,7 +138,6 @@ describe('useKeyedOptics', () => {
         expect(evenKeys).toEqual(result.current.map(([key]) => key));
 
         rerender({ optic: onOdds });
-        console.log(result.current.map(([key]) => key));
 
         const oddKeys = ['1', '3', '5', '7'];
         expect(oddKeys).toEqual(result.current.map(([key]) => key));

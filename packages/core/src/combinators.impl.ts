@@ -8,14 +8,14 @@ import {
 } from './combinators.types';
 import { PureOptic } from './PureOptic';
 import { PureReadOptic } from './PureReadOptic';
-import { ComposedOpticType, Lens, mapped, OpticType, partial, ToPartial, DeriveOpticType } from './types';
+import { ComposeScopes, Lens, mapped, OpticScope, partial, ToPartial } from './types';
 
-abstract class CombinatorsImpl<A, TOpticType extends OpticType, S>
+abstract class CombinatorsImpl<A, TScope extends OpticScope, S>
     implements
-        BaseCombinators<A, TOpticType, S>,
-        ArrayCombinators<A, TOpticType, S>,
-        RecordCombinators<A, TOpticType, S>,
-        NullableCombinators<A, TOpticType, S>,
+        BaseCombinators<A, TScope, S>,
+        ArrayCombinators<A, TScope, S>,
+        RecordCombinators<A, TScope, S>,
+        NullableCombinators<A, TScope, S>,
         MappedCombinators<A, S>
 {
     protected abstract lenses: Lens[];
@@ -23,7 +23,7 @@ abstract class CombinatorsImpl<A, TOpticType extends OpticType, S>
 
     refine<B>(
         refiner: (a: NonNullable<A>) => false | B,
-    ): B extends false ? never : Resolve<this, B, ToPartial<TOpticType>, S> {
+    ): B extends false ? never : Resolve<this, B, ToPartial<TScope>, S> {
         return this.instantiate([
             {
                 get: (s) => (refiner(s) !== false ? s : undefined),
@@ -32,7 +32,7 @@ abstract class CombinatorsImpl<A, TOpticType extends OpticType, S>
             },
         ]);
     }
-    if(predicate: (a: NonNullable<A>) => boolean): Resolve<this, A, ToPartial<TOpticType>, S> {
+    if(predicate: (a: NonNullable<A>) => boolean): Resolve<this, A, ToPartial<TScope>, S> {
         return this.instantiate([
             {
                 get: (s) => (predicate(s) === true ? s : undefined),
@@ -42,12 +42,12 @@ abstract class CombinatorsImpl<A, TOpticType extends OpticType, S>
         ]);
     }
 
-    compose<B, TOpticTypeB extends OpticType>(
-        other: PureOptic<B, TOpticTypeB, NonNullable<A>>,
-    ): Resolve<this, B, ComposedOpticType<TOpticType, TOpticTypeB, A>, S>;
-    compose<B, TOpticTypeB extends OpticType>(
-        other: PureReadOptic<B, TOpticTypeB, NonNullable<A>>,
-    ): PureReadOptic<B, ComposedOpticType<TOpticType, TOpticTypeB, A>, S>;
+    compose<B, TScopeB extends OpticScope>(
+        other: PureOptic<B, TScopeB, NonNullable<A>>,
+    ): Resolve<this, B, ComposeScopes<TScope, TScopeB, A>, S>;
+    compose<B, TScopeB extends OpticScope>(
+        other: PureReadOptic<B, TScopeB, NonNullable<A>>,
+    ): PureReadOptic<B, ComposeScopes<TScope, TScopeB, A>, S>;
     compose(other: any): any {
         return this.instantiate([
             { get: (s) => s, set: (a) => a, key: 'compose', type: 'unstable' },
@@ -59,7 +59,7 @@ abstract class CombinatorsImpl<A, TOpticType extends OpticType, S>
         return this.instantiate([{ get: (s) => s, set: (a) => a, key: 'map', type: 'map' }]);
     }
 
-    at<Elem = A extends (infer R)[] ? R : never>(index: number): Resolve<this, Elem, ToPartial<TOpticType>, S> {
+    at<Elem = A extends (infer R)[] ? R : never>(index: number): Resolve<this, Elem, ToPartial<TScope>, S> {
         return this.instantiate([
             {
                 get: (s: any[]) => s[index < 0 ? index + s.length : index],
@@ -74,7 +74,7 @@ abstract class CombinatorsImpl<A, TOpticType extends OpticType, S>
 
     indexBy<Key extends string | number, Elem = A extends (infer R)[] ? R : never>(
         getKey: (a: Elem) => Key,
-    ): Resolve<this, Record<Key, Elem>, TOpticType, S> {
+    ): Resolve<this, Record<Key, Elem>, TScope, S> {
         return this.instantiate([
             {
                 get: (s: any[]) => {
@@ -100,7 +100,7 @@ abstract class CombinatorsImpl<A, TOpticType extends OpticType, S>
 
     findFirst<Elem = A extends (infer R)[] ? R : never>(
         predicate: (a: Elem) => boolean,
-    ): Resolve<this, Elem, ToPartial<TOpticType>, S> {
+    ): Resolve<this, Elem, ToPartial<TScope>, S> {
         return this.instantiate([
             {
                 key: 'findFirst',
@@ -115,7 +115,7 @@ abstract class CombinatorsImpl<A, TOpticType extends OpticType, S>
 
     min<Elem = A extends (infer R)[] ? R : never>(
         ...f: Elem extends number ? [f?: ((a: Elem) => number) | undefined] : [f: (a: Elem) => number]
-    ): Resolve<this, Elem, ToPartial<TOpticType>, S> {
+    ): Resolve<this, Elem, ToPartial<TScope>, S> {
         const getIndexOfMin = (s: any[]) => {
             if (s.length === 0) {
                 return undefined;
@@ -143,7 +143,7 @@ abstract class CombinatorsImpl<A, TOpticType extends OpticType, S>
 
     max<Elem = A extends (infer R)[] ? R : never>(
         ...f: Elem extends number ? [f?: ((a: Elem) => number) | undefined] : [f: (a: Elem) => number]
-    ): Resolve<this, Elem, ToPartial<TOpticType>, S> {
+    ): Resolve<this, Elem, ToPartial<TScope>, S> {
         const getIndexOfMax = (s: any[]) => {
             if (s.length === 0) {
                 return undefined;
@@ -169,7 +169,7 @@ abstract class CombinatorsImpl<A, TOpticType extends OpticType, S>
         ]);
     }
 
-    reverse(): Resolve<this, A, TOpticType, S> {
+    reverse(): Resolve<this, A, TScope, S> {
         return this.instantiate([
             {
                 key: 'reverse',
@@ -180,7 +180,7 @@ abstract class CombinatorsImpl<A, TOpticType extends OpticType, S>
         ]);
     }
 
-    slice(start = 0, end?: number | undefined): Resolve<this, A, TOpticType, S> {
+    slice(start = 0, end?: number | undefined): Resolve<this, A, TScope, S> {
         return this.instantiate([
             {
                 key: 'slice',
@@ -191,7 +191,7 @@ abstract class CombinatorsImpl<A, TOpticType extends OpticType, S>
         ]);
     }
 
-    values(): A extends Record<string, infer R> ? Resolve<this, Array<R>, TOpticType, S> : never {
+    values(): A extends Record<string, infer R> ? Resolve<this, Array<R>, TScope, S> : never {
         return this.instantiate([
             {
                 get: (s) => Object.values(s),
@@ -207,7 +207,7 @@ abstract class CombinatorsImpl<A, TOpticType extends OpticType, S>
             },
         ]);
     }
-    entries(): A extends Record<string, infer R> ? Resolve<this, Array<readonly [string, R]>, TOpticType, S> : never {
+    entries(): A extends Record<string, infer R> ? Resolve<this, Array<readonly [string, R]>, TScope, S> : never {
         return this.instantiate([
             {
                 get: (s) => Object.entries(s),
@@ -322,10 +322,10 @@ abstract class CombinatorsImpl<A, TOpticType extends OpticType, S>
             },
         ]);
     }
-    toPartial(): Resolve<this, NonNullable<A>, ToPartial<TOpticType>, S> {
+    toPartial(): Resolve<this, NonNullable<A>, ToPartial<TScope>, S> {
         return this.instantiate([{ get: (s) => s, set: (a) => a, key: 'toPartial' }]);
     }
-    default(fallback: () => NonNullable<A>): Resolve<this, NonNullable<A>, TOpticType, S> {
+    default(fallback: () => NonNullable<A>): Resolve<this, NonNullable<A>, TScope, S> {
         return this.instantiate([
             {
                 key: 'default',

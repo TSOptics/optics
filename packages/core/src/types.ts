@@ -10,7 +10,7 @@ export interface mapped {
     map: 'map';
 }
 
-export type OpticType = mapped | partial;
+export type OpticScope = mapped | partial;
 
 export interface Lens<A = any, S = any> {
     key: string;
@@ -28,29 +28,27 @@ export type IsNullable<T> = StrictMode extends false
     ? true
     : false;
 
-export type ComposedOpticType<TOpticTypeA extends OpticType, TOpticTypeB extends OpticType, A> = mapped extends
-    | TOpticTypeA
-    | TOpticTypeB
+export type ComposeScopes<TScopeA extends OpticScope, TScopeB extends OpticScope, A> = mapped extends TScopeA | TScopeB
     ? mapped
-    : partial extends TOpticTypeA | TOpticTypeB
+    : partial extends TScopeA | TScopeB
     ? partial
     : IsNullable<A> extends true
     ? partial
     : total;
 
-export type FocusedValue<T, TOpticType extends OpticType> = TOpticType extends mapped
+export type FocusedValue<T, TScope extends OpticScope> = TScope extends mapped
     ? T[]
-    : TOpticType extends total
+    : TScope extends total
     ? T
     : T | undefined;
 
-export type ToPartial<TOpticType extends OpticType> = TOpticType extends total ? partial : TOpticType;
-export type FocusToPartial<TOpticType extends OpticType, T> = TOpticType extends total ? T : TOpticType;
+export type ToPartial<TScope extends OpticScope> = TScope extends total ? partial : TScope;
+export type FocusToPartial<TScope extends OpticScope, T> = TScope extends total ? T : TScope;
 
 export type IsAny<T> = boolean extends (T extends never ? true : false) ? true : false;
 
-export type DeriveOpticType<T, TOpticType extends OpticType> = IsNullable<T> extends true
-    ? TOpticType extends partial
+export type DeriveOpticScope<T, TScope extends OpticScope> = IsNullable<T> extends true
+    ? TScope extends partial
         ? partial
-        : TOpticType
-    : TOpticType;
+        : TScope
+    : TScope;

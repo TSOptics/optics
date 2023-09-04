@@ -1,16 +1,16 @@
-import { CombinatorsImpl, get, proxify, set, FocusedValue, Lens, OpticType, DeriveOpticType } from '@optics/core';
+import { CombinatorsImpl, get, proxify, set, FocusedValue, Lens, OpticScope, DeriveOpticScope } from '@optics/core';
 import { Resolve, ResolveReadOnly, TotalCombinators } from './combinators';
 import { _Optic } from './Optics/Optic';
 import { Denormalized, Dependencies, Dependency, leafSymbol, ResolvedType, tag } from './Optics/ReadOptic';
 import { Store, stores } from './stores';
 import { GetStateOptions, SubscribeOptions } from './types';
 
-class OpticImpl<A, TOpticType extends OpticType>
-    extends CombinatorsImpl<A, TOpticType, any>
-    implements Omit<_Optic<A, TOpticType>, typeof tag>, TotalCombinators
+class OpticImpl<A, TScope extends OpticScope>
+    extends CombinatorsImpl<A, TScope, any>
+    implements Omit<_Optic<A, TScope>, typeof tag>, TotalCombinators
 {
     protected lenses: Lens<any, any>[];
-    private storeId: OpticImpl<any, OpticType>;
+    private storeId: OpticImpl<any, OpticScope>;
     private listenersDenormalized = new Set<() => void>();
 
     private _dependencies?: Dependencies | null;
@@ -21,7 +21,7 @@ class OpticImpl<A, TOpticType extends OpticType>
         return this._dependencies;
     }
 
-    constructor(lenses: Lens[], private initialValue: any, _storeId?: OpticImpl<any, OpticType>) {
+    constructor(lenses: Lens[], private initialValue: any, _storeId?: OpticImpl<any, OpticScope>) {
         super();
         this.lenses = lenses;
         this.storeId = _storeId ?? (this as any);
@@ -30,17 +30,17 @@ class OpticImpl<A, TOpticType extends OpticType>
 
     private cacheByLenses = new Map<Lens, any>();
     private cache: {
-        a?: FocusedValue<A, TOpticType>;
-        normalized?: FocusedValue<A, TOpticType>;
-        denormalized?: Denormalized<FocusedValue<A, TOpticType>>;
+        a?: FocusedValue<A, TScope>;
+        normalized?: FocusedValue<A, TScope>;
+        denormalized?: Denormalized<FocusedValue<A, TScope>>;
     } = {};
 
     get<TOptions extends GetStateOptions | undefined>(
         options?: TOptions | undefined,
-    ): ResolvedType<A, TOpticType, TOptions, FocusedValue<A, TOpticType>, Denormalized<FocusedValue<A, TOpticType>>> {
+    ): ResolvedType<A, TScope, TOptions, FocusedValue<A, TScope>, Denormalized<FocusedValue<A, TScope>>> {
         const denormalize = options?.denormalize === false ? false : !!this.dependencies;
         const store = this.getStore();
-        const a = get<A, TOpticType>(store.state, this.lenses, (s, lens) => {
+        const a = get<A, TScope>(store.state, this.lenses, (s, lens) => {
             if (lens.type === 'unstable' || lens.type === 'map') {
                 if (this.cacheByLenses.get(lens) === s && this.cache.a !== undefined) {
                     return this.cache.a;
@@ -73,7 +73,7 @@ class OpticImpl<A, TOpticType extends OpticType>
     }
 
     subscribe<TOptions extends SubscribeOptions | undefined>(
-        listener: (a: ResolvedType<A, TOpticType, TOptions>) => void,
+        listener: (a: ResolvedType<A, TScope, TOptions>) => void,
         options?: TOptions,
     ): () => void {
         const denormalize = options?.denormalize === false ? false : !!this.dependencies;
@@ -108,11 +108,11 @@ class OpticImpl<A, TOpticType extends OpticType>
         };
     }
 
-    derive<B>(get: (a: NonNullable<A>) => B): ResolveReadOnly<this, DeriveOpticType<A, TOpticType>, TOpticType>;
+    derive<B>(get: (a: NonNullable<A>) => B): ResolveReadOnly<this, DeriveOpticScope<A, TScope>, TScope>;
     derive<B>(
         get: (a: NonNullable<A>) => B,
         set: (b: B, prev: NonNullable<A>) => NonNullable<A>,
-    ): Resolve<this, DeriveOpticType<A, TOpticType>, TOpticType>;
+    ): Resolve<this, DeriveOpticScope<A, TScope>, TScope>;
     derive(get: any, set?: any): any {
         return this.instantiate([
             {
@@ -219,7 +219,7 @@ class OpticImpl<A, TOpticType extends OpticType>
         let changed = false;
         const aux = (dependencies: Dependencies, state: any) => {
             if (isLeaf(dependencies)) {
-                const newState = (state as _Optic<any, OpticType>).get({ denormalize: true });
+                const newState = (state as _Optic<any, OpticScope>).get({ denormalize: true });
                 if (newState !== dependencies.state) {
                     changed = true;
                 }

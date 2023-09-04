@@ -8,13 +8,13 @@ const focusIndex = (index: number): Lens<any, any[]> => ({
     key: 'focus ' + index,
 });
 
-export function useDeriveOptics<T, TOpticType extends partial>(
-    onArray: Optic<T[], TOpticType>,
+export function useDeriveOptics<T, TScope extends partial>(
+    onArray: Optic<T[], TScope>,
     getKey: (t: T) => string,
-): [key: string, optic: Optic<T, TOpticType>][] {
+): [key: string, optic: Optic<T, TScope>][] {
     const [array = []] = useOptic(onArray, { denormalize: false });
 
-    const cachedOptics = useRef<Record<string, Optic<T, TOpticType>>>({});
+    const cachedOptics = useRef<Record<string, Optic<T, TScope>>>({});
 
     const derivedOptics = array.reduce<(typeof cachedOptics)['current']>((acc, cv, ci) => {
         const key = getKey(cv);

@@ -3,9 +3,9 @@ import { pureOptic } from './pureOpticConstructor';
 import { PureOptic } from './PureOptic';
 
 const expectType = <T extends any>(t: T) => {};
-const expectPartial = <TOpticType extends partial>(
-    optic: PureOptic<any, TOpticType>,
-    t: TOpticType extends total ? never : true,
+const expectPartial = <TScope extends partial>(
+    optic: PureOptic<any, TScope>,
+    t: TScope extends total ? never : true,
 ) => {};
 
 const expectTotal = (optic: PureOptic<any, total>) => {};

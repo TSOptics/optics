@@ -1,18 +1,18 @@
 import { Dispatch, SetStateAction, useMemo, useSyncExternalStore } from 'react';
-import { OpticType, Optic, GetStateOptions, ResolvedType, ReadOptic } from '@optics/state';
+import { OpticScope, Optic, GetStateOptions, ResolvedType, ReadOptic } from '@optics/state';
 
 export type UseOpticOptions = GetStateOptions;
 
-export function useOptic<T, TOpticType extends OpticType, TOptions extends UseOpticOptions | undefined>(
-    optic: Optic<T, TOpticType>,
+export function useOptic<T, TScope extends OpticScope, TOptions extends UseOpticOptions | undefined>(
+    optic: Optic<T, TScope>,
     options?: TOptions,
-): [ResolvedType<T, TOpticType, TOptions>, Dispatch<SetStateAction<T>>];
-export function useOptic<T, TOpticType extends OpticType, TOptions extends UseOpticOptions | undefined>(
-    optic: ReadOptic<T, TOpticType>,
+): [ResolvedType<T, TScope, TOptions>, Dispatch<SetStateAction<T>>];
+export function useOptic<T, TScope extends OpticScope, TOptions extends UseOpticOptions | undefined>(
+    optic: ReadOptic<T, TScope>,
     options?: TOptions,
-): [ResolvedType<T, TOpticType, TOptions>];
-export function useOptic<T, TOpticType extends OpticType, TOptions extends UseOpticOptions | undefined>(
-    optic: Optic<T, TOpticType> | ReadOptic<T, TOpticType>,
+): [ResolvedType<T, TScope, TOptions>];
+export function useOptic<T, TScope extends OpticScope, TOptions extends UseOpticOptions | undefined>(
+    optic: Optic<T, TScope> | ReadOptic<T, TScope>,
     options?: TOptions,
 ) {
     const optionsWithDefault: UseOpticOptions = { denormalize: true, ...(options ?? {}) };
@@ -21,7 +21,7 @@ export function useOptic<T, TOpticType extends OpticType, TOptions extends UseOp
         () => optic.get(optionsWithDefault as TOptions),
     );
 
-    const setSlice = useMemo(() => (optic as Optic<T, TOpticType>)?.set.bind(optic), [optic]);
+    const setSlice = useMemo(() => (optic as Optic<T, TScope>)?.set.bind(optic), [optic]);
 
     return [slice, setSlice];
 }

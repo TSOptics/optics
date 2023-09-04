@@ -5,14 +5,14 @@ export {
     mapped,
     partial,
     total,
-    OpticType,
+    OpticScope,
     Lens,
-    ComposedOpticType as ComposedOpticType,
+    ComposeScopes,
     IsAny,
     IsNullable,
     ToPartial,
     FocusedValue,
-    DeriveOpticType,
+    DeriveOpticScope,
 } from './types';
 export { default as CombinatorsImpl } from './combinators.impl';
 export { get } from './get';

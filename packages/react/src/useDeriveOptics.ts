@@ -12,8 +12,8 @@ export function useDeriveOptics<
     TOptic extends ReadOptic<any[], any>,
     T extends any[] = GetOpticFocus<TOptic>,
     TScope extends OpticScope = GetOpticScope<TOptic>,
->(onArray: TOptic, getKey: (t: T[number]) => string): [key: string, optic: Resolve<TOptic, T[number], TScope>][] {
-    const [array = []] = useOptic(onArray, { denormalize: false });
+>(arrayOptic: TOptic, getKey: (t: T[number]) => string): [key: string, optic: Resolve<TOptic, T[number], TScope>][] {
+    const [array = []] = useOptic(arrayOptic, { denormalize: false });
 
     const cachedOptics = useRef<Record<string, Resolve<TOptic, T[number], TScope>>>({});
 
@@ -25,7 +25,7 @@ export function useDeriveOptics<
             lenses[lenses.length - 1] = focusIndex(ci);
         }
 
-        acc[key] = cachedOptic ?? (onArray as any)[ci];
+        acc[key] = cachedOptic ?? (arrayOptic as any)[ci];
         return acc;
     }, {});
 

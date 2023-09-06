@@ -27,22 +27,22 @@ describe('Optic', () => {
             const po: PureOptic<number> = ro;
         });
         it('should be invariant on focused type', () => {
-            let onStringOrNumber = {} as Optic<number | string>;
+            let stringOrNumberOptic = {} as Optic<number | string>;
             // @ts-expect-error
-            const onNumber: Optic<string> = onStringOrNumber;
+            const numberOptic: Optic<string> = stringOrNumberOptic;
             // @ts-expect-error
-            onStringOrNumber = onNumber;
+            stringOrNumberOptic = numberOptic;
         });
         it('should be covariant on optic type', () => {
-            let onNumberTotal = {} as Optic<number>;
-            const onNumberPartial: Optic<number, partial> = onNumberTotal;
+            let numberTotalOptic = {} as Optic<number>;
+            const numberPartialOptic: Optic<number, partial> = numberTotalOptic;
             // @ts-expect-error
-            onNumberTotal = onNumberPartial;
+            numberTotalOptic = numberPartialOptic;
         });
         it('should return the same type when composed with PureOptic', () => {
-            const onState = createState({ a: { b: 42 } });
-            const onNumberFromState = onState.a.compose(pureOptic<{ b: number }>().b);
-            expectType<Optic<number, total>>(onNumberFromState);
+            const stateOptic = createState({ a: { b: 42 } });
+            const numberFromStateOptic = stateOptic.a.compose(pureOptic<{ b: number }>().b);
+            expectType<Optic<number, total>>(numberFromStateOptic);
         });
         it('should return a read only type when composed with PureReadOptic', () => {
             expectType<Optic<number>>(
@@ -57,84 +57,84 @@ describe('Optic', () => {
             );
         });
         it('should return a read only optic when derived with get function', () => {
-            const onState = createState({ a: { b: 42 } });
-            const onNumber = onState.a.derive((x) => x.b);
+            const stateOptic = createState({ a: { b: 42 } });
+            const numberOptic = stateOptic.a.derive((x) => x.b);
             // @ts-expect-error ReadOptic isn't assignable to Optic
-            expectType<Optic<number>>(onNumber);
+            expectType<Optic<number>>(numberOptic);
         });
         it('should return an optic when derived with get and set function', () => {
-            const onState = createState({ a: { b: 42 } });
-            const onNumber = onState.a.derive(
+            const stateOptic = createState({ a: { b: 42 } });
+            const numberOptic = stateOptic.a.derive(
                 (x) => x.b,
                 (b, x) => ({ ...x, b }),
             );
-            expectType<Optic<number>>(onNumber);
+            expectType<Optic<number>>(numberOptic);
         });
     });
     describe('get and set state', () => {
-        const onState = createState({ a: 42 });
-        expect(onState.get()).toEqual({ a: 42 });
+        const stateOptic = createState({ a: 42 });
+        expect(stateOptic.get()).toEqual({ a: 42 });
 
-        onState.set({ a: 100 });
-        expect(onState.get()).toEqual({ a: 100 });
+        stateOptic.set({ a: 100 });
+        expect(stateOptic.get()).toEqual({ a: 100 });
 
-        const onNumber = onState.a;
+        const numberOptic = stateOptic.a;
         const listener = jest.fn();
-        onNumber.subscribe(listener);
-        onState.set({ a: 42 });
+        numberOptic.subscribe(listener);
+        stateOptic.set({ a: 42 });
         expect(listener).toHaveBeenCalledTimes(1);
         expect(listener).toHaveBeenCalledWith(42);
     });
     describe('combinators', () => {
         describe('compose', () => {
             it('should compose with PureOptic', () => {
-                const onState = createState({ a: { b: 42 } });
-                const onNumber = pureOptic<{ b: number }>().b;
-                const onNumberFromState = onState.a.compose(onNumber);
-                expect(onNumberFromState.get()).toBe(42);
-                onNumberFromState.set(100);
-                expect(onState.get()).toEqual({ a: { b: 100 } });
+                const stateOptic = createState({ a: { b: 42 } });
+                const numberOptic = pureOptic<{ b: number }>().b;
+                const numberFromStateOptic = stateOptic.a.compose(numberOptic);
+                expect(numberFromStateOptic.get()).toBe(42);
+                numberFromStateOptic.set(100);
+                expect(stateOptic.get()).toEqual({ a: { b: 100 } });
             });
         });
         describe('derive', () => {
             it('should derive read only optic from get', () => {
-                const onState = createState({ a: { b: 42 } });
-                const onNumber = onState.a.derive((x) => x.b);
-                expect(onNumber.get()).toBe(42);
+                const stateOptic = createState({ a: { b: 42 } });
+                const numberOptic = stateOptic.a.derive((x) => x.b);
+                expect(numberOptic.get()).toBe(42);
             });
             it('should derive an optic from get and set', () => {
-                const onState = createState({ a: { b: 42 } });
-                const onNumber = onState.a.derive(
+                const stateOptic = createState({ a: { b: 42 } });
+                const numberOptic = stateOptic.a.derive(
                     (x) => x.b,
                     (b, x) => ({ ...x, b }),
                 );
-                expect(onNumber.get()).toBe(42);
-                onNumber.set(100);
-                expect(onState.get()).toEqual({ a: { b: 100 } });
+                expect(numberOptic.get()).toBe(42);
+                numberOptic.set(100);
+                expect(stateOptic.get()).toEqual({ a: { b: 100 } });
             });
         });
     });
     describe('references', () => {
-        const onCountries = createState([
+        const countriesOptic = createState([
             { name: 'Italia', language: 'Italiano' },
             { name: 'Österreich', language: 'Deutsch' },
         ]);
-        const onÖsterreich = onCountries[1];
-        const onCities = createState([
-            { name: 'Wien', inhabitants: 1_897_000, country: onCountries[1] },
-            { name: 'Milano', inhabitants: 1_352_000, country: onCountries[0] },
+        const onÖsterreich = countriesOptic[1];
+        const citiesOptic = createState([
+            { name: 'Wien', inhabitants: 1_897_000, country: countriesOptic[1] },
+            { name: 'Milano', inhabitants: 1_352_000, country: countriesOptic[0] },
         ]);
-        const onWien = onCities[0];
-        const onMilano = onCities[1];
-        const onPeople = createState([{ name: 'Franz', age: 25, driver: false, city: onWien }]);
+        const wienOptic = citiesOptic[0];
+        const milanoOptic = citiesOptic[1];
+        const peopleOptic = createState([{ name: 'Franz', age: 25, driver: false, city: wienOptic }]);
         beforeEach(() => {
-            onCountries.reset();
-            onCities.reset();
-            onPeople.reset();
+            countriesOptic.reset();
+            citiesOptic.reset();
+            peopleOptic.reset();
         });
         it('should return denormalized state', () => {
-            onCities.get();
-            const people = onPeople.get();
+            citiesOptic.get();
+            const people = peopleOptic.get();
             expectType<
                 {
                     name: string;
@@ -161,7 +161,7 @@ describe('Optic', () => {
             ]);
         });
         it('should return normalized state', () => {
-            const people = onPeople.get({ denormalize: false });
+            const people = peopleOptic.get({ denormalize: false });
             expectType<
                 {
                     name: string;
@@ -179,27 +179,27 @@ describe('Optic', () => {
                     name: 'Franz',
                     age: 25,
                     driver: false,
-                    city: onWien,
+                    city: wienOptic,
                 },
             ]);
         });
         it('should have separate cache for normalized and denormalized data', () => {
-            const onFranz = onPeople[0];
+            const franzOptic = peopleOptic[0];
 
-            const normalizedFranz = onFranz.get({ denormalize: false });
-            const denormalizedFranz = onFranz.get();
+            const normalizedFranz = franzOptic.get({ denormalize: false });
+            const denormalizedFranz = franzOptic.get();
 
-            onWien.inhabitants.set((prev) => prev + 1);
-            expect(onFranz.get({ denormalize: false })).toBe(normalizedFranz);
-            expect(onFranz.get()).not.toBe(denormalizedFranz);
+            wienOptic.inhabitants.set((prev) => prev + 1);
+            expect(franzOptic.get({ denormalize: false })).toBe(normalizedFranz);
+            expect(franzOptic.get()).not.toBe(denormalizedFranz);
         });
         describe('subscribe', () => {
-            const onFranz = onPeople[0];
+            const franzOptic = peopleOptic[0];
             it('should subscribe to denormalized state', () => {
                 const listener = jest.fn();
-                const unsubscribe = onFranz.subscribe(listener);
+                const unsubscribe = franzOptic.subscribe(listener);
 
-                onFranz.driver.set(true);
+                franzOptic.driver.set(true);
 
                 expect(listener).toHaveBeenCalledWith({
                     name: 'Franz',
@@ -212,7 +212,7 @@ describe('Optic', () => {
                     },
                 });
 
-                onWien.inhabitants.set((prev) => prev + 1);
+                wienOptic.inhabitants.set((prev) => prev + 1);
 
                 expect(listener).lastCalledWith({
                     name: 'Franz',
@@ -239,32 +239,32 @@ describe('Optic', () => {
 
                 unsubscribe();
 
-                onWien.inhabitants.set((prev) => prev - 1);
+                wienOptic.inhabitants.set((prev) => prev - 1);
                 expect(listener).toHaveBeenCalledTimes(3);
             });
             it('should subscribe to normalized state', () => {
                 const listener = jest.fn();
-                const unsubscribe = onFranz.subscribe(listener, { denormalize: false });
+                const unsubscribe = franzOptic.subscribe(listener, { denormalize: false });
 
-                onFranz.age.set((prev) => prev + 1);
+                franzOptic.age.set((prev) => prev + 1);
 
-                expect(listener).toHaveBeenCalledWith({ name: 'Franz', age: 26, driver: false, city: onWien });
+                expect(listener).toHaveBeenCalledWith({ name: 'Franz', age: 26, driver: false, city: wienOptic });
 
-                onWien.inhabitants.set((prev) => prev + 1);
+                wienOptic.inhabitants.set((prev) => prev + 1);
 
                 expect(listener).toHaveBeenCalledTimes(1);
 
                 unsubscribe();
 
-                onFranz.city.set(onMilano);
+                franzOptic.city.set(milanoOptic);
 
                 expect(listener).toHaveBeenCalledTimes(1);
             });
             it('should work when changing dependency', () => {
                 const listener = jest.fn();
-                onFranz.subscribe(listener);
+                franzOptic.subscribe(listener);
 
-                onFranz.city.set(onMilano);
+                franzOptic.city.set(milanoOptic);
                 expect(listener).toHaveBeenCalledWith({
                     name: 'Franz',
                     age: 25,
@@ -272,10 +272,10 @@ describe('Optic', () => {
                     city: { name: 'Milano', inhabitants: 1_352_000, country: { name: 'Italia', language: 'Italiano' } },
                 });
 
-                onWien.inhabitants.set((prev) => prev + 1);
+                wienOptic.inhabitants.set((prev) => prev + 1);
                 expect(listener).toHaveBeenCalledTimes(1);
 
-                onCountries[0].name.set('Repubblica Italiana');
+                countriesOptic[0].name.set('Repubblica Italiana');
                 expect(listener).toHaveBeenCalledWith({
                     name: 'Franz',
                     age: 25,
@@ -290,21 +290,21 @@ describe('Optic', () => {
             });
         });
         describe('references in arrays', () => {
-            const onParis = createState({ name: 'Paris', inhabitants: 2_148_000 });
-            const onLyon = createState({ name: 'Lyon', inhabitants: 513_000 });
-            const onFrance = createState({ name: 'France', cities: [onParis, onLyon] });
+            const parisOptic = createState({ name: 'Paris', inhabitants: 2_148_000 });
+            const lyonOptic = createState({ name: 'Lyon', inhabitants: 513_000 });
+            const franceOptic = createState({ name: 'France', cities: [parisOptic, lyonOptic] });
             it('should denormalize references', () => {
-                const onCities = onFrance.cities;
-                expect(onCities.get()).toEqual([
+                const citiesOptic = franceOptic.cities;
+                expect(citiesOptic.get()).toEqual([
                     { name: 'Paris', inhabitants: 2_148_000 },
                     { name: 'Lyon', inhabitants: 513_000 },
                 ]);
             });
             it('should subscribe to reference changes', () => {
-                const onCities = onFrance.cities;
+                const citiesOptic = franceOptic.cities;
                 const listener = jest.fn();
-                onCities.subscribe(listener);
-                onParis.inhabitants.set((prev) => prev + 1);
+                citiesOptic.subscribe(listener);
+                parisOptic.inhabitants.set((prev) => prev + 1);
                 expect(listener).toHaveBeenCalledWith([
                     { name: 'Paris', inhabitants: 2_148_001 },
                     { name: 'Lyon', inhabitants: 513_000 },
@@ -386,28 +386,28 @@ describe('Optic', () => {
             });
         });
         it('derive', () => {
-            const onState = createState({ obj: { b1: true, b2: false }, a: 42 });
-            const onTuple = onState.obj.derive(
+            const stateOptic = createState({ obj: { b1: true, b2: false }, a: 42 });
+            const tupleOptic = stateOptic.obj.derive(
                 ({ b1, b2 }) => [b1, b2] as const,
                 ([b1, b2]) => ({ b1, b2 }),
             );
-            const tuple = onTuple.get();
+            const tuple = tupleOptic.get();
 
-            onState.a.set((prev) => prev + 1);
-            expect(onTuple.get()).toBe(tuple);
+            stateOptic.a.set((prev) => prev + 1);
+            expect(tupleOptic.get()).toBe(tuple);
         });
         it('compose', () => {
-            const onState = createState({ obj: { b1: true, b2: false }, a: 42 });
-            const onTuple = onState.obj.compose(
+            const stateOptic = createState({ obj: { b1: true, b2: false }, a: 42 });
+            const tupleOptic = stateOptic.obj.compose(
                 pureOptic(
                     ({ b1, b2 }: { b1: boolean; b2: boolean }) => [b1, b2] as const,
                     ([b1, b2]) => ({ b1, b2 }),
                 ),
             );
-            const tuple = onTuple.get();
+            const tuple = tupleOptic.get();
 
-            onState.a.set((prev) => prev + 1);
-            expect(onTuple.get()).toBe(tuple);
+            stateOptic.a.set((prev) => prev + 1);
+            expect(tupleOptic.get()).toBe(tuple);
         });
     });
 });

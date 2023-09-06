@@ -6,18 +6,18 @@ import { useOptic } from './useOptic';
 import { useOpticReducer } from './useOpticReducer';
 import { pureOptic, PureOptic, Optic, total, createState, ReadOptic } from '@optics/state';
 import { useDeriveOptics } from './useDeriveOptics';
-import For from './For';
+import { For } from './For';
 
 describe('useOptic', () => {
     it('should set state', () => {
-        const onRoot = createState({ test: 42 });
-        const { result } = renderHook(() => useOptic(onRoot));
+        const rootOptic = createState({ test: 42 });
+        const { result } = renderHook(() => useOptic(rootOptic));
         act(() => result.current[1]((prev) => ({ test: prev.test * 2 })));
         expect(result.current[0]).toStrictEqual({ test: 84 });
     });
     it('should return referentially stable state and setter', () => {
-        const onRoot = createState({ test: 42 });
-        const { result, rerender } = renderHook(() => useOptic(onRoot));
+        const rootOptic = createState({ test: 42 });
+        const { result, rerender } = renderHook(() => useOptic(rootOptic));
         const [prevState, prevSetState] = result.current;
         rerender();
         const [state, setState] = result.current;
@@ -25,8 +25,8 @@ describe('useOptic', () => {
         expect(prevSetState).toBe(setState);
     });
     it('should not rerender when calling setter with the same reference', () => {
-        const onRoot = createState({ test: 42 });
-        const { result } = renderHook(() => useOptic(onRoot));
+        const rootOptic = createState({ test: 42 });
+        const { result } = renderHook(() => useOptic(rootOptic));
         const initialResult = result.current;
         act(() => initialResult[1]((prev) => prev));
         expect(result.current).toBe(initialResult);
@@ -38,8 +38,8 @@ describe('useOptic', () => {
         () => renderHook(() => useOptic(onA));
     });
     it('should update state if optic changes', () => {
-        const onRoot = createState({ test: 42 });
-        const timesTwo = onRoot.derive(
+        const rootOptic = createState({ test: 42 });
+        const timesTwo = rootOptic.derive(
             (a) => ({
                 test: a.test * 2,
             }),
@@ -48,27 +48,27 @@ describe('useOptic', () => {
             }),
         );
         const { result, rerender } = renderHook(
-            ({ initialValue }: { initialValue: typeof onRoot }) => useOptic(initialValue),
+            ({ initialValue }: { initialValue: typeof rootOptic }) => useOptic(initialValue),
             {
-                initialProps: { initialValue: onRoot },
+                initialProps: { initialValue: rootOptic },
             },
         );
         rerender({ initialValue: timesTwo });
         expect(result.current[0]).toEqual({ test: 84 });
     });
     it('should not exhibit the zombie child problem', () => {
-        const onState = createState<number[]>([42]);
-        const onFirst = onState[0];
+        const stateOptic = createState<number[]>([42]);
+        const firstOptic = stateOptic[0];
 
-        const Children = ({ onElem }: { onElem: Optic<number> }) => {
-            const [elem] = useOptic(onElem);
+        const Children = ({ elemOptic }: { elemOptic: Optic<number> }) => {
+            const [elem] = useOptic(elemOptic);
             return <>{elem.toString()}</>;
         };
         const Parent = () => {
-            const [state, setState] = useOptic(onState);
+            const [state, setState] = useOptic(stateOptic);
             return (
                 <>
-                    {state.length > 0 ? <Children onElem={onFirst} /> : null}
+                    {state.length > 0 ? <Children elemOptic={firstOptic} /> : null}
                     <button onClick={() => setState([])}>delete</button>
                 </>
             );
@@ -85,8 +85,8 @@ describe('useOptic', () => {
     });
 });
 describe('useDeriveOptics', () => {
-    const Number = memo(({ onNumber }: { onNumber: Optic<number> }) => {
-        const [n] = useOptic(onNumber);
+    const Number = memo(({ numberOptic }: { numberOptic: Optic<number> }) => {
+        const [n] = useOptic(numberOptic);
         const renders = useRef(0);
         renders.current = renders.current + 1;
 
@@ -98,26 +98,26 @@ describe('useDeriveOptics', () => {
         );
     });
 
-    const Numbers = ({ onArray }: { onArray: Optic<number[]> }) => {
-        const optics = useDeriveOptics(onArray, (n) => n.toString());
+    const Numbers = ({ arrayOptic }: { arrayOptic: Optic<number[]> }) => {
+        const optics = useDeriveOptics(arrayOptic, (n) => n.toString());
 
         const prepend = useCallback(() => {
-            onArray.set((prev) => [prev[0] - 1, ...prev]);
-        }, [onArray]);
+            arrayOptic.set((prev) => [prev[0] - 1, ...prev]);
+        }, [arrayOptic]);
 
         return (
             <div>
                 <button onClick={prepend}>prepend</button>
                 {optics.map(([key, optic]) => {
-                    return <Number onNumber={optic} key={key} />;
+                    return <Number numberOptic={optic} key={key} />;
                 })}
             </div>
         );
     };
-    const onArray = createState([1, 2, 3, 4, 5]);
+    const arrayOptic = createState([1, 2, 3, 4, 5]);
 
     it('should not rerender the cells when prepending', () => {
-        const { getAllByTestId, getByText } = render(<Numbers onArray={onArray} />);
+        const { getAllByTestId, getByText } = render(<Numbers arrayOptic={arrayOptic} />);
         const prepend = getByText('prepend');
         fireEvent.click(prepend);
         const elems = getAllByTestId('display');
@@ -126,41 +126,41 @@ describe('useDeriveOptics', () => {
         expect(renders.map((x) => x.textContent)).toEqual(['1', '1', '1', '1', '1', '1']);
     });
     it('should update if the optic changes', () => {
-        const onEvens = createState([0, 2, 4, 6]);
-        const onOdds = createState([1, 3, 5, 7]);
+        const evensOptic = createState([0, 2, 4, 6]);
+        const oddsOptic = createState([1, 3, 5, 7]);
         const { result, rerender } = renderHook(
-            ({ optic }: { optic: typeof onEvens }) => useDeriveOptics(optic, (n) => n.toString()),
+            ({ optic }: { optic: typeof evensOptic }) => useDeriveOptics(optic, (n) => n.toString()),
             {
-                initialProps: { optic: onEvens },
+                initialProps: { optic: evensOptic },
             },
         );
 
         const evenKeys = ['0', '2', '4', '6'];
         expect(evenKeys).toEqual(result.current.map(([key]) => key));
 
-        rerender({ optic: onOdds });
+        rerender({ optic: oddsOptic });
 
         const oddKeys = ['1', '3', '5', '7'];
         expect(oddKeys).toEqual(result.current.map(([key]) => key));
     });
     describe('For component', () => {
-        const NumbersWithFor = ({ onArray }: { onArray: Optic<number[]> }) => {
+        const NumbersWithFor = ({ arrayOptic }: { arrayOptic: Optic<number[]> }) => {
             const prepend = useCallback(() => {
-                onArray.set((prev) => [prev[0] - 1, ...prev]);
-            }, [onArray]);
+                arrayOptic.set((prev) => [prev[0] - 1, ...prev]);
+            }, [arrayOptic]);
 
             return (
                 <div>
                     <button onClick={prepend}>prepend</button>
-                    <For optic={onArray} getKey={(n) => n.toString()}>
-                        {(optic) => <Number onNumber={optic} />}
+                    <For optic={arrayOptic} getKey={(n) => n.toString()}>
+                        {(optic) => <Number numberOptic={optic} />}
                     </For>
                 </div>
             );
         };
 
         it('should not rerender the existing cells when prepending', () => {
-            const { getAllByTestId, getByText } = render(<NumbersWithFor onArray={createState([1, 2, 3, 4, 5])} />);
+            const { getAllByTestId, getByText } = render(<NumbersWithFor arrayOptic={createState([1, 2, 3, 4, 5])} />);
             const prepend = getByText('prepend');
             fireEvent.click(prepend);
             const elems = getAllByTestId('display');
@@ -178,7 +178,7 @@ describe('useOpticReducer', () => {
         | { type: 'changeStep'; step: number }
         | { type: 'reset' };
     const initialValue: State = { counter: 0, step: 1 };
-    const onState = createState(initialValue);
+    const stateOptic = createState(initialValue);
     const reducer = (state: State, action: Action): State => {
         switch (action.type) {
             case 'increment':
@@ -191,22 +191,22 @@ describe('useOpticReducer', () => {
                 return initialValue;
         }
     };
-    const reducerWithOptic = (state: State, action: Action, onState: PureOptic<State, total, State>): State => {
-        const onCounter = onState.counter;
-        const onStep = onState.step;
+    const reducerWithOptic = (state: State, action: Action, stateOptic: PureOptic<State, total, State>): State => {
+        const counterOptic = stateOptic.counter;
+        const stepOptic = stateOptic.step;
         switch (action.type) {
             case 'increment':
-                return onCounter.set((prev) => prev + state.step, state);
+                return counterOptic.set((prev) => prev + state.step, state);
             case 'decrement':
-                return onCounter.set((prev) => prev - state.step, state);
+                return counterOptic.set((prev) => prev - state.step, state);
             case 'changeStep':
-                return onStep.set(action.step, state);
+                return stepOptic.set(action.step, state);
             case 'reset':
                 return initialValue;
         }
     };
     it('should dispatch actions', () => {
-        const { result, rerender } = renderHook(({ initialReducer }) => useOpticReducer(onState, initialReducer), {
+        const { result, rerender } = renderHook(({ initialReducer }) => useOpticReducer(stateOptic, initialReducer), {
             initialProps: { initialReducer: reducer as typeof reducerWithOptic },
         });
         const dispatchActions = () => {

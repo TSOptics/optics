@@ -10,11 +10,11 @@ export const useOpticReducer = <
     Action,
     TOptions extends UseOpticReducerOptions | undefined,
 >(
-    onState: Optic<T, TScope>,
-    reducer: (state: T, action: Action, onState: PureOptic<T, total, T>) => T,
+    stateOptic: Optic<T, TScope>,
+    reducer: (state: T, action: Action, stateOptic: PureOptic<T, total, T>) => T,
     options?: TOptions,
 ): [ResolvedType<T, TScope, TOptions>, Dispatch<Action>] => {
-    const [state, setState] = useOptic(onState, options);
+    const [state, setState] = useOptic(stateOptic, options);
 
     const dispatch = useCallback<Dispatch<Action>>(
         (action: Action) => setState((prev) => reducer(prev, action, pureOptic())),

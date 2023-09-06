@@ -13,11 +13,11 @@ const expectMapped = (optic: PureOptic<any, mapped>) => {};
 
 describe('lens', () => {
     const obj = { a: { as: [1, 2, 3] } };
-    const onAsFirst = pureOptic<typeof obj>().a.as[0];
+    const asFirstOptic = pureOptic<typeof obj>().a.as[0];
 
     it('should be referentially stable', () => {
-        expect(onAsFirst.set(1, obj)).toBe(obj);
-        expect(onAsFirst.set((prev) => prev, obj)).toBe(obj);
+        expect(asFirstOptic.set(1, obj)).toBe(obj);
+        expect(asFirstOptic.set((prev) => prev, obj)).toBe(obj);
     });
 });
 describe('optional', () => {
@@ -35,90 +35,90 @@ describe('refine', () => {
     type FooBar = { type: 'foo'; foo: string } | { type: 'bar'; bar: number };
     const foo: FooBar = { type: 'foo', foo: 'test' };
     it('should focus on a part of the union', () => {
-        const onFoo = pureOptic<FooBar>().refine((a) => a.type === 'foo' && a);
-        expect(onFoo.get(foo)?.foo).toBe('test');
+        const fooOptic = pureOptic<FooBar>().refine((a) => a.type === 'foo' && a);
+        expect(fooOptic.get(foo)?.foo).toBe('test');
 
-        const updated = onFoo.set({ type: 'foo', foo: 'newFoo' }, foo);
-        expect(onFoo.get(updated)?.foo).toBe('newFoo');
+        const updated = fooOptic.set({ type: 'foo', foo: 'newFoo' }, foo);
+        expect(fooOptic.get(updated)?.foo).toBe('newFoo');
     });
     it('should handle the type narrowing failing', () => {
-        const onBar = pureOptic<FooBar>().refine((a) => a.type === 'bar' && a);
-        expect(onBar.get(foo)).toBeUndefined();
-        expect(onBar.set({ type: 'bar', bar: 99 }, foo)).toBe(foo);
+        const barOptic = pureOptic<FooBar>().refine((a) => a.type === 'bar' && a);
+        expect(barOptic.get(foo)).toBeUndefined();
+        expect(barOptic.set({ type: 'bar', bar: 99 }, foo)).toBe(foo);
     });
 });
 describe('derive', () => {
     it('should derive new read optic from get function', () => {
-        const onFoo = pureOptic<{ foo: string }>().derive((a) => a.foo);
-        expect(onFoo.get({ foo: 'test' })).toBe('test');
+        const fooOptic = pureOptic<{ foo: string }>().derive((a) => a.foo);
+        expect(fooOptic.get({ foo: 'test' })).toBe('test');
     });
     it('should derive new optic from a get and a set function', () => {
-        const onFoo = pureOptic<{ foo: string }>().derive(
+        const fooOptic = pureOptic<{ foo: string }>().derive(
             (a) => a.foo,
             (b, a) => ({ ...a, foo: b }),
         );
-        expect(onFoo.get({ foo: 'test' })).toBe('test');
-        expect(onFoo.set('newFoo', { foo: 'test' })).toEqual({ foo: 'newFoo' });
+        expect(fooOptic.get({ foo: 'test' })).toBe('test');
+        expect(fooOptic.set('newFoo', { foo: 'test' })).toEqual({ foo: 'newFoo' });
     });
 });
 describe('derive', () => {
-    const onObject = pureOptic<[string, number]>().derive(
+    const objectOptic = pureOptic<[string, number]>().derive(
         ([name, age]) => ({ name, age }),
         ({ name, age }) => [name, age],
     );
 
     it('should derive from tuple to object', () => {
-        expect(onObject.get(['Jean', 42])).toStrictEqual({ name: 'Jean', age: 42 });
-        expect(onObject.set({ name: 'Albert', age: 65 }, ['Jean', 34])).toStrictEqual(['Albert', 65]);
+        expect(objectOptic.get(['Jean', 42])).toStrictEqual({ name: 'Jean', age: 42 });
+        expect(objectOptic.set({ name: 'Albert', age: 65 }, ['Jean', 34])).toStrictEqual(['Albert', 65]);
     });
     it('should derive from celcius to fahrenheit', () => {
-        const onTemp = pureOptic<number>().derive(
+        const tempOptic = pureOptic<number>().derive(
             (celcius) => celcius * (9 / 5) + 32,
             (fahrenheit) => (fahrenheit - 32) * (5 / 9),
         );
 
-        expect(onTemp.get(0)).toBe(32);
-        expect(onTemp.get(100)).toBe(212);
-        expect(onTemp.set(212, 0)).toBe(100);
+        expect(tempOptic.get(0)).toBe(32);
+        expect(tempOptic.get(100)).toBe(212);
+        expect(tempOptic.set(212, 0)).toBe(100);
     });
 });
 describe('if', () => {
-    const onEvenNumber = pureOptic<number>().if((n) => n % 2 === 0);
+    const evenNumberOptic = pureOptic<number>().if((n) => n % 2 === 0);
 
-    const onMajorName = pureOptic<{ age: number; name: string }>().if(({ age }) => age >= 18).name;
+    const majorNameOptic = pureOptic<{ age: number; name: string }>().if(({ age }) => age >= 18).name;
     const major = { age: 42, name: 'Louis' };
     const minor = { age: 15, name: 'Killian' };
     it('should get result with predicate true', () => {
-        expect(onEvenNumber.get(2)).toBe(2);
-        expect(onEvenNumber.set(4, 2)).toBe(4);
+        expect(evenNumberOptic.get(2)).toBe(2);
+        expect(evenNumberOptic.set(4, 2)).toBe(4);
 
-        expect(onMajorName.get(major)).toBe('Louis');
-        expect(onMajorName.set('François', major)).toStrictEqual({ name: 'François', age: 42 });
+        expect(majorNameOptic.get(major)).toBe('Louis');
+        expect(majorNameOptic.set('François', major)).toStrictEqual({ name: 'François', age: 42 });
     });
     it('should return undefined with predicate false', () => {
-        expect(onEvenNumber.get(3)).toBeUndefined();
-        expect(onEvenNumber.set(2, 3)).toBe(3);
+        expect(evenNumberOptic.get(3)).toBeUndefined();
+        expect(evenNumberOptic.set(2, 3)).toBe(3);
 
-        expect(onMajorName.get(minor)).toBeUndefined();
-        expect(onMajorName.set('Titouan', minor)).toBe(minor);
+        expect(majorNameOptic.get(minor)).toBeUndefined();
+        expect(majorNameOptic.set('Titouan', minor)).toBe(minor);
     });
 });
 describe('focus string key', () => {
     const countryCodes: Record<string, number> = { france: 33, germany: 49, italy: 39 };
-    const onCountryCodes = pureOptic<typeof countryCodes>();
+    const countryCodesOptic = pureOptic<typeof countryCodes>();
 
     it('should focus on the value indexed by the key', () => {
-        const onFrance = onCountryCodes['france'];
-        expect(onFrance.get(countryCodes)).toBe(33);
-        expect(onFrance.set(-1, countryCodes)).toStrictEqual({ france: -1, germany: 49, italy: 39 });
+        const franceOptic = countryCodesOptic['france'];
+        expect(franceOptic.get(countryCodes)).toBe(33);
+        expect(franceOptic.set(-1, countryCodes)).toStrictEqual({ france: -1, germany: 49, italy: 39 });
     });
     it('should find no key and return undefined', () => {
-        const onSpain = onCountryCodes['spain'];
-        expect(onSpain.get(countryCodes)).toBeUndefined();
+        const spainOptic = countryCodesOptic['spain'];
+        expect(spainOptic.get(countryCodes)).toBeUndefined();
     });
     it("should allow to set a key if it doesn't exist yet", () => {
-        const onSpain = onCountryCodes['spain'];
-        expect(onSpain.set(34, countryCodes)).toEqual({ france: 33, germany: 49, italy: 39, spain: 34 });
+        const spainOptic = countryCodesOptic['spain'];
+        expect(spainOptic.set(34, countryCodes)).toEqual({ france: 33, germany: 49, italy: 39, spain: 34 });
     });
 });
 describe('default', () => {
@@ -144,166 +144,166 @@ describe('toPartial', () => {
     expect(onB.set((prev) => prev + 10, { a: { b: undefined } })).toEqual({ a: { b: undefined } });
     expect(onB.set((prev) => prev + 10, { a: { b: 42 } })).toEqual({ a: { b: 52 } });
 
-    const onAs = pureOptic<{ a?: number }[]>().map().a.toPartial();
-    expectMapped(onAs);
-    expect(onAs.get([{ a: undefined }, { a: 42 }])).toEqual([42]);
-    expect(onAs.set((prev) => prev + 10, [{ a: undefined }, { a: 42 }])).toEqual([{ a: undefined }, { a: 52 }]);
+    const asOptic = pureOptic<{ a?: number }[]>().map().a.toPartial();
+    expectMapped(asOptic);
+    expect(asOptic.get([{ a: undefined }, { a: 42 }])).toEqual([42]);
+    expect(asOptic.set((prev) => prev + 10, [{ a: undefined }, { a: 42 }])).toEqual([{ a: undefined }, { a: 52 }]);
 });
 describe('array methods', () => {
     describe('at', () => {
         const state = [0, 1, 2, 3];
-        const onState = pureOptic<typeof state>();
+        const stateOptic = pureOptic<typeof state>();
         it('should focus the element at index', () => {
-            expect(onState.at(3).get(state)).toBe(3);
-            expect(onState.at(3).set(42, state)).toEqual([0, 1, 2, 42]);
+            expect(stateOptic.at(3).get(state)).toBe(3);
+            expect(stateOptic.at(3).set(42, state)).toEqual([0, 1, 2, 42]);
         });
         it('should focus undefined if out of range', () => {
-            expect(onState.at(4).get(state)).toBe(undefined);
-            expect(onState.at(4).set(42, state)).toEqual([0, 1, 2, 3]);
+            expect(stateOptic.at(4).get(state)).toBe(undefined);
+            expect(stateOptic.at(4).set(42, state)).toEqual([0, 1, 2, 3]);
         });
         it('should count from the end with negative index', () => {
-            expect(onState.at(-4).get(state)).toBe(0);
-            expect(onState.at(-4).set(42, state)).toEqual([42, 1, 2, 3]);
+            expect(stateOptic.at(-4).get(state)).toBe(0);
+            expect(stateOptic.at(-4).set(42, state)).toEqual([42, 1, 2, 3]);
         });
     });
     describe('indexBy', () => {
         const state = ['earth', 'wind', 'fire', 'water'];
-        const onState = pureOptic<typeof state>();
-        const onIndexedState = onState.indexBy((x) => x[0]);
+        const stateOptic = pureOptic<typeof state>();
+        const indexedStateOptic = stateOptic.indexBy((x) => x[0]);
         it('should take last element in case of collision', () => {
-            expect(onIndexedState.get(state)).toEqual({ e: 'earth', f: 'fire', w: 'water' });
-            const newState = onIndexedState.set({ e: 'terre', f: 'feu', w: 'eau' }, state);
+            expect(indexedStateOptic.get(state)).toEqual({ e: 'earth', f: 'fire', w: 'water' });
+            const newState = indexedStateOptic.set({ e: 'terre', f: 'feu', w: 'eau' }, state);
             expect(newState).toEqual(['terre', 'wind', 'feu', 'eau']);
-            expect(onIndexedState.get(newState)).toEqual({ t: 'terre', w: 'wind', f: 'feu', e: 'eau' });
+            expect(indexedStateOptic.get(newState)).toEqual({ t: 'terre', w: 'wind', f: 'feu', e: 'eau' });
         });
     });
     describe('findFirst', () => {
         const state = [0, 1, 2, 3];
-        const onState = pureOptic<typeof state>();
+        const stateOptic = pureOptic<typeof state>();
         it('should focus the first element matching predicate', () => {
-            const onFirstEven = onState.findFirst((x) => x % 2 === 0);
-            expect(onFirstEven.get(state)).toBe(0);
+            const firstEvenOptic = stateOptic.findFirst((x) => x % 2 === 0);
+            expect(firstEvenOptic.get(state)).toBe(0);
 
-            const newState = onFirstEven.set(43, state);
+            const newState = firstEvenOptic.set(43, state);
             expect(newState).toEqual([43, 1, 2, 3]);
-            expect(onFirstEven.get(newState)).toBe(2);
+            expect(firstEvenOptic.get(newState)).toBe(2);
         });
         it('should focus undefined if no element matches', () => {
-            const onOver10 = onState.findFirst((x) => x > 10);
-            expect(onOver10.get(state)).toBe(undefined);
-            expect(onOver10.set(42, state)).toEqual([0, 1, 2, 3]);
+            const over10Optic = stateOptic.findFirst((x) => x > 10);
+            expect(over10Optic.get(state)).toBe(undefined);
+            expect(over10Optic.set(42, state)).toEqual([0, 1, 2, 3]);
         });
     });
     describe('max', () => {
         const state = [0, 1, 2, 3];
-        const onState = pureOptic<typeof state>();
+        const stateOptic = pureOptic<typeof state>();
         it('should focus the maximum element', () => {
-            const onMax = onState.max();
-            expect(onMax.get(state)).toBe(3);
+            const maxOptic = stateOptic.max();
+            expect(maxOptic.get(state)).toBe(3);
 
-            const newState = onMax.set(-1, state);
+            const newState = maxOptic.set(-1, state);
             expect(newState).toEqual([0, 1, 2, -1]);
-            expect(onMax.get(newState)).toBe(2);
+            expect(maxOptic.get(newState)).toBe(2);
         });
         it('should focus undefined if empty', () => {
-            const onMax = onState.max();
-            expect(onMax.get([])).toBe(undefined);
-            expect(onMax.set(42, [])).toEqual([]);
+            const maxOptic = stateOptic.max();
+            expect(maxOptic.get([])).toBe(undefined);
+            expect(maxOptic.set(42, [])).toEqual([]);
         });
         it('should use custom number getter if provided', () => {
             const state = [{ a: 0 }, { a: 1 }, { a: 2 }, { a: 3 }];
-            const onState = pureOptic<typeof state>();
-            const onMax = onState.max((x) => x.a);
-            expect(onMax.get(state)).toEqual({ a: 3 });
+            const stateOptic = pureOptic<typeof state>();
+            const maxOptic = stateOptic.max((x) => x.a);
+            expect(maxOptic.get(state)).toEqual({ a: 3 });
 
-            const newState = onMax.set({ a: -1 }, state);
+            const newState = maxOptic.set({ a: -1 }, state);
             expect(newState).toEqual([{ a: 0 }, { a: 1 }, { a: 2 }, { a: -1 }]);
-            expect(onMax.get(newState)).toEqual({ a: 2 });
+            expect(maxOptic.get(newState)).toEqual({ a: 2 });
         });
     });
     describe('min', () => {
         const state = [0, 1, 2, 3];
-        const onState = pureOptic<typeof state>();
+        const stateOptic = pureOptic<typeof state>();
         it('should focus the minimum element', () => {
-            const onMin = onState.min();
-            expect(onMin.get(state)).toBe(0);
+            const minOptic = stateOptic.min();
+            expect(minOptic.get(state)).toBe(0);
 
-            const newState = onMin.set(42, state);
+            const newState = minOptic.set(42, state);
             expect(newState).toEqual([42, 1, 2, 3]);
-            expect(onMin.get(newState)).toBe(1);
+            expect(minOptic.get(newState)).toBe(1);
         });
         it('should focus undefined if empty', () => {
-            const onMin = onState.min();
-            expect(onMin.get([])).toBe(undefined);
-            expect(onMin.set(42, [])).toEqual([]);
+            const minOptic = stateOptic.min();
+            expect(minOptic.get([])).toBe(undefined);
+            expect(minOptic.set(42, [])).toEqual([]);
         });
         it('should use custom number getter if provided', () => {
             const state = [{ a: 0 }, { a: 1 }, { a: 2 }, { a: 3 }];
-            const onState = pureOptic<typeof state>();
-            const onMin = onState.min((x) => x.a);
-            expect(onMin.get(state)).toEqual({ a: 0 });
+            const stateOptic = pureOptic<typeof state>();
+            const minOptic = stateOptic.min((x) => x.a);
+            expect(minOptic.get(state)).toEqual({ a: 0 });
 
-            const newState = onMin.set({ a: 42 }, state);
+            const newState = minOptic.set({ a: 42 }, state);
             expect(newState).toEqual([{ a: 42 }, { a: 1 }, { a: 2 }, { a: 3 }]);
-            expect(onMin.get(newState)).toEqual({ a: 1 });
+            expect(minOptic.get(newState)).toEqual({ a: 1 });
         });
     });
     describe('reverse', () => {
         const state = [0, 1, 2, 3];
-        const onState = pureOptic<typeof state>();
+        const stateOptic = pureOptic<typeof state>();
         it('should reverse the array', () => {
-            expect(onState.reverse().get(state)).toEqual([3, 2, 1, 0]);
-            expect(onState.reverse().set([3, 2, 1, 0], state)).toEqual(state);
+            expect(stateOptic.reverse().get(state)).toEqual([3, 2, 1, 0]);
+            expect(stateOptic.reverse().set([3, 2, 1, 0], state)).toEqual(state);
         });
     });
     describe('slice', () => {
         const state = [0, 1, 2, 3];
-        const onState = pureOptic<typeof state>();
+        const stateOptic = pureOptic<typeof state>();
         it('should slice the array', () => {
-            expect(onState.slice(1, 3).get(state)).toEqual([1, 2]);
-            expect(onState.slice(1, 3).set([42, 43], state)).toEqual([0, 42, 43, 3]);
+            expect(stateOptic.slice(1, 3).get(state)).toEqual([1, 2]);
+            expect(stateOptic.slice(1, 3).set([42, 43], state)).toEqual([0, 42, 43, 3]);
         });
         it('should slice the array from start', () => {
-            expect(onState.slice(1).get(state)).toEqual([1, 2, 3]);
-            expect(onState.slice(1).set([42, 43, 44], state)).toEqual([0, 42, 43, 44]);
+            expect(stateOptic.slice(1).get(state)).toEqual([1, 2, 3]);
+            expect(stateOptic.slice(1).set([42, 43, 44], state)).toEqual([0, 42, 43, 44]);
         });
         it('should get the whole array if not bounds are provided', () => {
-            expect(onState.slice().get(state)).toEqual(state);
-            expect(onState.slice().set([42, 43, 44, 45], state)).toEqual([42, 43, 44, 45]);
+            expect(stateOptic.slice().get(state)).toEqual(state);
+            expect(stateOptic.slice().set([42, 43, 44, 45], state)).toEqual([42, 43, 44, 45]);
         });
     });
 });
 describe('entries', () => {
     const state: Record<string, number> = { a: 42, b: 67, c: 1000, d: 90 };
-    const onState = pureOptic<typeof state>();
+    const stateOptic = pureOptic<typeof state>();
     it('should map over object entries', () => {
-        const onEntries = onState.entries();
-        expect(onEntries.get(state)).toEqual([
+        const entriesOptic = stateOptic.entries();
+        expect(entriesOptic.get(state)).toEqual([
             ['a', 42],
             ['b', 67],
             ['c', 1000],
             ['d', 90],
         ]);
-        const newState = onEntries.set((prev) => prev.map(([k, v]) => [k.toUpperCase(), v * 2]), state);
+        const newState = entriesOptic.set((prev) => prev.map(([k, v]) => [k.toUpperCase(), v * 2]), state);
         expect(newState).toEqual({ A: 84, B: 134, C: 2000, D: 180 });
     });
     it('should map over object values', () => {
-        const onValues = onState.values();
-        expect(onValues.get(state)).toEqual([42, 67, 1000, 90]);
-        const newState = onValues.set((prev) => prev.map((value) => value * 2), state);
+        const valuesOptic = stateOptic.values();
+        expect(valuesOptic.get(state)).toEqual([42, 67, 1000, 90]);
+        const newState = valuesOptic.set((prev) => prev.map((value) => value * 2), state);
         expect(newState).toEqual({ a: 84, b: 134, c: 2000, d: 180 });
     });
 });
 describe('custom optic', () => {
-    const onEvenNums = pureOptic(
+    const evenNumsOptic = pureOptic(
         (s: number[]) => s.filter((n) => n % 2 === 0),
         (a) => a,
         'onEven',
     );
     const nums = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
     it('should work', () => {
-        expect(onEvenNums.get(nums)).toStrictEqual([0, 2, 4, 6, 8]);
-        expect(onEvenNums.set([42, 84], nums)).toStrictEqual([42, 84]);
+        expect(evenNumsOptic.get(nums)).toStrictEqual([0, 2, 4, 6, 8]);
+        expect(evenNumsOptic.set([42, 84], nums)).toStrictEqual([42, 84]);
     });
 
     const countryInfos: Record<string, { capital: string }> = {
@@ -311,18 +311,20 @@ describe('custom optic', () => {
         germany: { capital: 'Berlin' },
     };
     it('should work', () => {
-        const onCountry = (country: string) =>
+        const countryOptic = (country: string) =>
             pureOptic(
                 (s: typeof countryInfos) => s[country],
                 (a, s) => (s[country] !== undefined ? { ...s, [country]: a } : s),
                 'onCountry ' + country,
             );
-        const onFrance = onCountry('france');
-        const onSpain = onCountry('spain');
+        const franceOptic = countryOptic('france');
+        const spainOptic = countryOptic('spain');
 
-        expect(onFrance.get(countryInfos)?.capital).toBe('Paris');
-        expect(onSpain.get(countryInfos)?.capital).toBeUndefined();
-        expect(onFrance.set({ capital: 'Marseille' }, countryInfos)['france']).toStrictEqual({ capital: 'Marseille' });
-        expect(onSpain.set({ capital: 'Barcelona' }, countryInfos)).toBe(countryInfos);
+        expect(franceOptic.get(countryInfos)?.capital).toBe('Paris');
+        expect(spainOptic.get(countryInfos)?.capital).toBeUndefined();
+        expect(franceOptic.set({ capital: 'Marseille' }, countryInfos)['france']).toStrictEqual({
+            capital: 'Marseille',
+        });
+        expect(spainOptic.set({ capital: 'Barcelona' }, countryInfos)).toBe(countryInfos);
     });
 });

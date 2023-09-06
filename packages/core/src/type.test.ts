@@ -140,8 +140,8 @@ describe('Type relations', () => {
             const total: PureOptic<string> = partial;
         });
         it('should become a partial focusing on the non-nullable type when called with toPartial', () => {
-            const onNullable = pureOptic<{ a: string | null | undefined }>().a;
-            expectPartial<string>(() => onNullable.toPartial());
+            const nullableOptic = pureOptic<{ a: string | null | undefined }>().a;
+            expectPartial<string>(() => nullableOptic.toPartial());
         });
     });
     describe('PureReadOptic', () => {
@@ -155,13 +155,13 @@ describe('Type relations', () => {
             const optic: PureOptic<string> = readOptic;
         });
         it('should return a PureReadOptic when calling combinators', () => {
-            const onStringRead: PureReadOptic<string> = pureOptic<string>();
+            const stringReadOptic: PureReadOptic<string> = pureOptic<string>();
             // @ts-expect-error PureOptic isn't assignable to PureReadOptic
-            const onNumber: PureOptic<number> = onStringRead.derive(parseInt, (n) => `${n}`);
+            const numberOptic: PureOptic<number> = stringReadOptic.derive(parseInt, (n) => `${n}`);
 
-            const onNumbersRead: PureReadOptic<number[]> = pureOptic<number[]>();
+            const numbersReadOptic: PureReadOptic<number[]> = pureOptic<number[]>();
             // @ts-expect-error PureOptic isn't assignable to PureReadOptic
-            const onFirstPositive: PureOptic<number, partial> = onNumbersRead.findFirst((n) => n > 0);
+            const firstPositiveOptic: PureOptic<number, partial> = numbersReadOptic.findFirst((n) => n > 0);
         });
     });
 });

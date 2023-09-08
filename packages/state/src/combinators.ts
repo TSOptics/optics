@@ -10,6 +10,7 @@ import {
     ToPartial,
     PureReadOptic,
     DeriveOpticScope,
+    Lens,
 } from '@optics/core';
 import { AsyncOptic } from './Optics/AsyncOptic';
 import { AsyncReadOptic } from './Optics/AsyncReadOptic';
@@ -25,11 +26,7 @@ export interface BaseCombinators<A, TScope extends OpticScope> {
     compose<B, TScopeB extends OpticScope>(
         other: PureReadOptic<B, TScopeB, NonNullable<A>>,
     ): ResolveReadOnly<this, B, ComposeScopes<TScope, TScopeB, A>>;
-    derive<B>(lens: {
-        get: (a: NonNullable<A>) => B;
-        set: (b: B, prev: NonNullable<A>) => NonNullable<A>;
-        key?: string;
-    }): Resolve<this, B, DeriveOpticScope<A, TScope>>;
+    derive<B>(lens: Lens<B, NonNullable<A>>): Resolve<this, B, DeriveOpticScope<A, TScope>>;
     derive<B>(lens: {
         get: (a: NonNullable<A>) => B;
         key?: string;

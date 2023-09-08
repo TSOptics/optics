@@ -13,9 +13,9 @@ export interface mapped {
 export type OpticScope = mapped | partial;
 
 export interface Lens<A = any, S = any> {
-    key: string;
     get: (s: S) => A;
     set: (a: A, s: S) => S;
+    key?: string;
     type?: 'fold' | 'foldN' | 'map' | 'nullable' | 'unstable';
 }
 

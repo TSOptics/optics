@@ -98,33 +98,30 @@ describe('Derived types', () => {
          * PureOptic + get = PureReadOptic
          */
         // @ts-expect-error PureOptic isn't assignable to PureReadOptic
-        expectWritableOptic(() => pureOptic<{ foo: string }>().derive((x) => x.foo));
+        expectWritableOptic(() => pureOptic<{ foo: string }>().derive({ get: (x) => x.foo }));
         /**
          * PureReadOptic + get = PureReadOptic
          */
         expectWritableOptic(() =>
             // @ts-expect-error PureOptic isn't assignable to PureReadOptic
-            (pureOptic<{ foo: string }>() as PureReadOptic<{ foo: string }>).derive((x) => x.foo),
+            (pureOptic<{ foo: string }>() as PureReadOptic<{ foo: string }>).derive({ get: (x) => x.foo }),
         );
 
         /**
          * PureOptic + get & set = PureOptic
          */
         expectWritableOptic(() =>
-            pureOptic<{ foo: string }>().derive(
-                (x) => x.foo,
-                (x, y) => ({ ...y, foo: x }),
-            ),
+            pureOptic<{ foo: string }>().derive({ get: (x) => x.foo, set: (x, y) => ({ ...y, foo: x }) }),
         );
 
         /**
          * PureReadOptic + get & set = ❌
          */
-        (pureOptic<{ foo: string }>() as PureReadOptic<{ foo: string }>).derive(
-            (x) => x.foo,
-            // @ts-expect-error Expected 1 arguments, but got 2.
-            (x, y) => ({ ...y, foo: x }),
-        );
+        (pureOptic<{ foo: string }>() as PureReadOptic<{ foo: string }>).derive({
+            get: (x) => x.foo,
+            // @ts-expect-error set property doesn't exist
+            set: (x, y) => ({ ...y, foo: x }),
+        });
     });
 });
 
@@ -156,8 +153,8 @@ describe('Type relations', () => {
         });
         it('should return a PureReadOptic when calling combinators', () => {
             const stringReadOptic: PureReadOptic<string> = pureOptic<string>();
-            // @ts-expect-error PureOptic isn't assignable to PureReadOptic
-            const numberOptic: PureOptic<number> = stringReadOptic.derive(parseInt, (n) => `${n}`);
+            // @ts-expect-error lens property of derive method doesn't take a set function
+            const numberOptic = stringReadOptic.derive({ get: parseInt, set: (n) => `${n}` });
 
             const numbersReadOptic: PureReadOptic<number[]> = pureOptic<number[]>();
             // @ts-expect-error PureOptic isn't assignable to PureReadOptic

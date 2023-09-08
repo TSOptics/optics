@@ -39,14 +39,14 @@ describe('useOptic', () => {
     });
     it('should update state if optic changes', () => {
         const rootOptic = createState({ test: 42 });
-        const timesTwo = rootOptic.derive(
-            (a) => ({
+        const timesTwo = rootOptic.derive({
+            get: (a) => ({
                 test: a.test * 2,
             }),
-            (b) => ({
+            set: (b) => ({
                 test: b.test / 2,
             }),
-        );
+        });
         const { result, rerender } = renderHook(
             ({ initialValue }: { initialValue: typeof rootOptic }) => useOptic(initialValue),
             {

@@ -49,33 +49,30 @@ describe('refine', () => {
 });
 describe('derive', () => {
     it('should derive new read optic from get function', () => {
-        const fooOptic = pureOptic<{ foo: string }>().derive((a) => a.foo);
+        const fooOptic = pureOptic<{ foo: string }>().derive({ get: (a) => a.foo });
         expect(fooOptic.get({ foo: 'test' })).toBe('test');
     });
     it('should derive new optic from a get and a set function', () => {
-        const fooOptic = pureOptic<{ foo: string }>().derive(
-            (a) => a.foo,
-            (b, a) => ({ ...a, foo: b }),
-        );
+        const fooOptic = pureOptic<{ foo: string }>().derive({ get: (a) => a.foo, set: (b, a) => ({ ...a, foo: b }) });
         expect(fooOptic.get({ foo: 'test' })).toBe('test');
         expect(fooOptic.set('newFoo', { foo: 'test' })).toEqual({ foo: 'newFoo' });
     });
 });
 describe('derive', () => {
-    const objectOptic = pureOptic<[string, number]>().derive(
-        ([name, age]) => ({ name, age }),
-        ({ name, age }) => [name, age],
-    );
+    const objectOptic = pureOptic<readonly [string, number]>().derive({
+        get: ([name, age]) => ({ name, age }),
+        set: (p) => [p.name, p.age] as const,
+    });
 
     it('should derive from tuple to object', () => {
         expect(objectOptic.get(['Jean', 42])).toStrictEqual({ name: 'Jean', age: 42 });
         expect(objectOptic.set({ name: 'Albert', age: 65 }, ['Jean', 34])).toStrictEqual(['Albert', 65]);
     });
     it('should derive from celcius to fahrenheit', () => {
-        const tempOptic = pureOptic<number>().derive(
-            (celcius) => celcius * (9 / 5) + 32,
-            (fahrenheit) => (fahrenheit - 32) * (5 / 9),
-        );
+        const tempOptic = pureOptic<number>().derive({
+            get: (celcius) => celcius * (9 / 5) + 32,
+            set: (fahrenheit) => (fahrenheit - 32) * (5 / 9),
+        });
 
         expect(tempOptic.get(0)).toBe(32);
         expect(tempOptic.get(100)).toBe(212);

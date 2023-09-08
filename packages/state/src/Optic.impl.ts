@@ -108,17 +108,18 @@ class OpticImpl<A, TScope extends OpticScope>
         };
     }
 
-    derive<B>(get: (a: NonNullable<A>) => B): ResolveReadOnly<this, DeriveOpticScope<A, TScope>, TScope>;
+    derive<B>(get: (a: NonNullable<A>) => B, key?: string): ResolveReadOnly<this, DeriveOpticScope<A, TScope>, TScope>;
     derive<B>(
         get: (a: NonNullable<A>) => B,
         set: (b: B, prev: NonNullable<A>) => NonNullable<A>,
+        key?: string,
     ): Resolve<this, DeriveOpticScope<A, TScope>, TScope>;
-    derive(get: any, set?: any): any {
+    derive(get: any, set?: any, key?: string): any {
         return this.instantiate([
             {
                 get,
                 set: set ?? ((b, a) => a),
-                key: 'derive',
+                key: key ?? 'derive',
                 type: 'unstable',
             },
         ]);

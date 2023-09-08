@@ -25,17 +25,18 @@ class PureOpticImpl<A, TScope extends OpticScope, S>
         return set(a, s, this.lenses);
     }
 
-    derive<B>(get: (a: NonNullable<A>) => B): PureReadOptic<B, DeriveOpticScope<A, TScope>, S>;
+    derive<B>(get: (a: NonNullable<A>) => B, key?: string): PureReadOptic<B, DeriveOpticScope<A, TScope>, S>;
     derive<B>(
         get: (a: NonNullable<A>) => B,
         set: (b: B, a: NonNullable<A>) => NonNullable<A>,
+        key?: string,
     ): PureOptic<B, DeriveOpticScope<A, TScope>, S>;
-    derive(get: any, set?: any): any {
+    derive(get: any, set?: any, key?: string): any {
         return this.instantiate([
             {
                 get,
                 set: set ?? ((b, a) => a),
-                key: 'derive',
+                key: key ?? 'derive',
                 type: 'unstable',
             },
         ]);

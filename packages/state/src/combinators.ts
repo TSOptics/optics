@@ -25,10 +25,11 @@ export interface BaseCombinators<A, TScope extends OpticScope> {
     compose<B, TScopeB extends OpticScope>(
         other: PureReadOptic<B, TScopeB, NonNullable<A>>,
     ): ResolveReadOnly<this, B, ComposeScopes<TScope, TScopeB, A>>;
-    derive<B>(get: (a: NonNullable<A>) => B): ResolveReadOnly<this, B, DeriveOpticScope<A, TScope>>;
+    derive<B>(get: (a: NonNullable<A>) => B, key?: string): ResolveReadOnly<this, B, DeriveOpticScope<A, TScope>>;
     derive<B>(
         get: (a: NonNullable<A>) => B,
         set: (b: B, prev: NonNullable<A>) => NonNullable<A>,
+        key?: string,
     ): Resolve<this, B, DeriveOpticScope<A, TScope>>;
 }
 

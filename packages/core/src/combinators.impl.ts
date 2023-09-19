@@ -329,7 +329,7 @@ abstract class CombinatorsImpl<A, TScope extends OpticScope, S>
         return this.instantiate([
             {
                 key: 'default',
-                type: 'nullable',
+                type: 'partial',
                 get: (s) => {
                     return s === null || s === undefined ? fallback() : s;
                 },

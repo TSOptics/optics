@@ -16,7 +16,7 @@ export interface Lens<A = any, S = any> {
     get: (s: S) => A;
     set: (a: A, s: S) => S;
     key?: string;
-    type?: 'fold' | 'foldN' | 'map' | 'nullable' | 'unstable';
+    type?: 'fold' | 'foldN' | 'map' | 'partial' | 'unstable';
 }
 
 type StrictMode = null extends string ? false : true;

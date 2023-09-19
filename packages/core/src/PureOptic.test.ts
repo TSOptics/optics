@@ -57,8 +57,46 @@ describe('derive', () => {
         expect(fooOptic.get({ foo: 'test' })).toBe('test');
         expect(fooOptic.set('newFoo', { foo: 'test' })).toEqual({ foo: 'newFoo' });
     });
+    it('should derive new partial optic from partial lens', () => {
+        const evenNumberOptic = pureOptic<number>().derive({
+            type: 'partial',
+            get: (a) => (a % 2 === 0 ? a : undefined),
+            set: (a, s) => (a % 2 === 0 ? a : s),
+        });
+        expect(evenNumberOptic.get(2)).toBe(2);
+        expect(evenNumberOptic.get(3)).toBeUndefined();
+
+        expect(evenNumberOptic.set(4, 3)).toBe(4);
+        expect(evenNumberOptic.set(5, 2)).toBe(2);
+    });
+    it('should derive new partial optic from fold lens and mapped optic', () => {
+        const firstEvenOptic = pureOptic<number[]>()
+            .map()
+            .derive({
+                type: 'fold',
+                get: (s) => s.findIndex((n) => n % 2 === 0),
+            });
+
+        expect(firstEvenOptic.get([1, 3, 2])).toBe(2);
+        expect(firstEvenOptic.get([1, 3, 5])).toBe(undefined);
+
+        expect(firstEvenOptic.set(90, [1, 3, 2])).toEqual([1, 3, 90]);
+    });
+    it('should derive new mapped optic from foldN lens and a mapped optic', () => {
+        const evenNumbersOptic = pureOptic<number[]>()
+            .map()
+            .derive({
+                type: 'foldN',
+                get: (s) => s.map((n, i) => (n % 2 === 0 ? i : undefined)).filter((n): n is number => n !== undefined),
+            });
+
+        expect(evenNumbersOptic.get([1, 2, 3, 4, 5, 6])).toEqual([2, 4, 6]);
+        expect(evenNumbersOptic.get([1, 3, 5])).toEqual([]);
+
+        expect(evenNumbersOptic.set((prev) => prev + 10, [1, 2, 3, 4, 5, 6])).toEqual([1, 12, 3, 14, 5, 16]);
+    });
 });
-describe('derive', () => {
+describe('derive isomorphism', () => {
     const objectOptic = pureOptic<readonly [string, number]>().derive({
         get: ([name, age]) => ({ name, age }),
         set: (p) => [p.name, p.age] as const,

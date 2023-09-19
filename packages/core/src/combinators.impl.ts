@@ -6,9 +6,7 @@ import {
     RecordCombinators,
     Resolve,
 } from './combinators.types';
-import { PureOptic } from './PureOptic';
-import { PureReadOptic } from './PureReadOptic';
-import { ComposeScopes, Lens, mapped, OpticScope, partial, ToPartial } from './types';
+import { Lens, mapped, OpticScope, partial, ToPartial } from './types';
 
 abstract class CombinatorsImpl<A, TScope extends OpticScope, S>
     implements
@@ -39,19 +37,6 @@ abstract class CombinatorsImpl<A, TScope extends OpticScope, S>
                 set: (a, s) => (predicate(s) === true ? a : s),
                 key: 'if',
             },
-        ]);
-    }
-
-    compose<B, TScopeB extends OpticScope>(
-        other: PureOptic<B, TScopeB, NonNullable<A>>,
-    ): Resolve<this, B, ComposeScopes<TScope, TScopeB, A>, S>;
-    compose<B, TScopeB extends OpticScope>(
-        other: PureReadOptic<B, TScopeB, NonNullable<A>>,
-    ): PureReadOptic<B, ComposeScopes<TScope, TScopeB, A>, S>;
-    compose(other: any): any {
-        return this.instantiate([
-            { get: (s) => s, set: (a) => a, key: 'compose', type: 'unstable' },
-            ...(other as unknown as this).lenses,
         ]);
     }
 

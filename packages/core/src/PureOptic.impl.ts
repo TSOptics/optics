@@ -1,21 +1,10 @@
 import CombinatorsImpl from './combinators.impl';
 import { get } from './get';
 import { proxify } from './proxify';
-import { _PureOptic, PureOptic } from './PureOptic';
-import { PureReadOptic, tag } from './PureReadOptic';
+import { _PureOptic } from './PureOptic';
+import { tag } from './PureReadOptic';
 import { set } from './set';
-import {
-    DeriveOpticScope,
-    FocusedValue,
-    FoldLens,
-    FoldNLens,
-    Lens,
-    mapped,
-    OpticScope,
-    partial,
-    PartialLens,
-    TotalLens,
-} from './types';
+import { FocusedValue, Lens, OpticScope } from './types';
 
 class PureOpticImpl<A, TScope extends OpticScope, S>
     extends CombinatorsImpl<A, TScope, S>
@@ -36,12 +25,11 @@ class PureOpticImpl<A, TScope extends OpticScope, S>
         return set(a, s, this.lenses);
     }
 
-    derive<B>(lens: PartialLens<B, NonNullable<A>>): PureOptic<B, TScope extends partial ? partial : TScope, S>;
-    derive<B>(lens: TotalLens<B, NonNullable<A>>): PureOptic<B, DeriveOpticScope<A, TScope>, S>;
-    derive<B>(lens: { get: (a: NonNullable<A>) => B; key?: string }): PureReadOptic<B, DeriveOpticScope<A, TScope>, S>;
-    derive(lens: TScope extends mapped ? FoldLens<NonNullable<A>> : never): PureOptic<A, partial, S>;
-    derive(lens: TScope extends mapped ? FoldNLens<NonNullable<A>> : never): PureOptic<A, mapped, S>;
-    derive({ get, set, key, type }: { get: any; set?: any; key?: string; type?: Lens['type'] }): any {
+    derive(other: any): any {
+        if (other instanceof PureOpticImpl) {
+            return this.instantiate([...other.lenses]);
+        }
+        const { get, set, key, type } = other;
         return this.instantiate([
             {
                 get,

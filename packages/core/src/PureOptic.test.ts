@@ -95,6 +95,14 @@ describe('derive', () => {
 
         expect(evenNumbersOptic.set((prev) => prev + 10, [1, 2, 3, 4, 5, 6])).toEqual([1, 12, 3, 14, 5, 16]);
     });
+    it('should derive a new optic from another optic', () => {
+        const fooOptic = pureOptic<{ foo: { bar: string } }>();
+        const barOptic = pureOptic<{ bar: string }>();
+        const fooBarOptic = fooOptic.foo.derive(barOptic);
+
+        expect(fooBarOptic.get({ foo: { bar: 'test' } })).toEqual({ bar: 'test' });
+        expect(fooBarOptic.bar.set('fooBar', { foo: { bar: 'test' } })).toEqual({ foo: { bar: 'fooBar' } });
+    });
 });
 describe('derive isomorphism', () => {
     const objectOptic = pureOptic<readonly [string, number]>().derive({

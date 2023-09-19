@@ -1,5 +1,7 @@
+import { PureOptic } from './PureOptic';
 import { CombinatorsForOptic, Resolve } from './combinators.types';
 import {
+    ComposeScopes,
     DeriveOpticScope,
     FocusedValue,
     FoldLens,
@@ -21,6 +23,12 @@ export interface _PureReadOptic<A, TScope extends OpticScope = total, S = any> {
     derive(lens: TScope extends mapped ? FoldLens<NonNullable<A>> : never): Resolve<this, A, partial, S>;
     derive(lens: TScope extends mapped ? FoldNLens<NonNullable<A>> : never): Resolve<this, A, mapped, S>;
     derive<B>(lens: { get: (a: NonNullable<A>) => B; key?: string }): PureReadOptic<B, DeriveOpticScope<A, TScope>, S>;
+    derive<B, TScopeB extends OpticScope>(
+        other: PureOptic<B, TScopeB, NonNullable<A>>,
+    ): Resolve<this, B, ComposeScopes<TScope, TScopeB, A>, S>;
+    derive<B, TScopeB extends OpticScope>(
+        other: PureReadOptic<B, TScopeB, NonNullable<A>>,
+    ): PureReadOptic<B, ComposeScopes<TScope, TScopeB, A>, S>;
     [tag]: [scope: TScope, root: S, invariance: (a: A, s: S) => void];
 }
 

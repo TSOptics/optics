@@ -1,18 +1,12 @@
 import { PureOptic } from './PureOptic';
 import { PureReadOptic } from './PureReadOptic';
-import { ComposeScopes, IsAny, IsNullable, mapped, OpticScope, partial, ToPartial } from './types';
+import { IsAny, IsNullable, mapped, OpticScope, partial, ToPartial } from './types';
 
 export interface BaseCombinators<A, TScope extends OpticScope, S> {
     refine<B>(
         refiner: (a: NonNullable<A>) => B | false,
     ): B extends false ? never : Resolve<this, B, ToPartial<TScope>, S>;
     if(predicate: (a: NonNullable<A>) => boolean): Resolve<this, A, ToPartial<TScope>, S>;
-    compose<B, TScopeB extends OpticScope>(
-        other: PureOptic<B, TScopeB, NonNullable<A>>,
-    ): Resolve<this, B, ComposeScopes<TScope, TScopeB, A>, S>;
-    compose<B, TScopeB extends OpticScope>(
-        other: PureReadOptic<B, TScopeB, NonNullable<A>>,
-    ): PureReadOptic<B, ComposeScopes<TScope, TScopeB, A>, S>;
 }
 
 export interface ArrayCombinators<A, TScope extends OpticScope, S, Elem = A extends (infer R)[] ? R : never> {

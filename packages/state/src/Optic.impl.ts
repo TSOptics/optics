@@ -123,6 +123,10 @@ class OpticImpl<A, TScope extends OpticScope>
         ]);
     }
 
+    pipe(...fns: ((arg: any) => any)[]) {
+        return fns.reduce((acc, cv) => cv(acc), this);
+    }
+
     protected override instantiate(newLenses: Lens[]): any {
         return new OpticImpl([...this.lenses, ...newLenses], this.initialValue, this.storeId);
     }

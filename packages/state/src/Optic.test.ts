@@ -82,30 +82,44 @@ describe('Optic', () => {
         expect(listener).toHaveBeenCalledTimes(1);
         expect(listener).toHaveBeenCalledWith(42);
     });
-    describe('combinators', () => {
-        describe('derive', () => {
-            it('should compose with PureOptic', () => {
-                const stateOptic = createState({ a: { b: 42 } });
-                const numberOptic = pureOptic<{ b: number }>().b;
-                const numberFromStateOptic = stateOptic.a.derive(numberOptic);
-                expect(numberFromStateOptic.get()).toBe(42);
-                numberFromStateOptic.set(100);
-                expect(stateOptic.get()).toEqual({ a: { b: 100 } });
-            });
-            it('should derive read only optic from get', () => {
-                const stateOptic = createState({ a: { b: 42 } });
-                const numberOptic = stateOptic.a.derive({ get: (x) => x.b });
-                expect(numberOptic.get()).toBe(42);
-            });
-            it('should derive an optic from get and set', () => {
-                const stateOptic = createState({ a: { b: 42 } });
-                const numberOptic = stateOptic.a.derive({ get: (x) => x.b, set: (b, x) => ({ ...x, b }) });
-                expect(numberOptic.get()).toBe(42);
-                numberOptic.set(100);
-                expect(stateOptic.get()).toEqual({ a: { b: 100 } });
-            });
+    describe('derive', () => {
+        it('should compose with PureOptic', () => {
+            const stateOptic = createState({ a: { b: 42 } });
+            const numberOptic = pureOptic<{ b: number }>().b;
+            const numberFromStateOptic = stateOptic.a.derive(numberOptic);
+            expect(numberFromStateOptic.get()).toBe(42);
+            numberFromStateOptic.set(100);
+            expect(stateOptic.get()).toEqual({ a: { b: 100 } });
+        });
+        it('should derive read only optic from get', () => {
+            const stateOptic = createState({ a: { b: 42 } });
+            const numberOptic = stateOptic.a.derive({ get: (x) => x.b });
+            expect(numberOptic.get()).toBe(42);
+        });
+        it('should derive an optic from get and set', () => {
+            const stateOptic = createState({ a: { b: 42 } });
+            const numberOptic = stateOptic.a.derive({ get: (x) => x.b, set: (b, x) => ({ ...x, b }) });
+            expect(numberOptic.get()).toBe(42);
+            numberOptic.set(100);
+            expect(stateOptic.get()).toEqual({ a: { b: 100 } });
         });
     });
+    describe('pipe', () => {
+        it('should pipe unary functions and return the last function result', () => {
+            const endResult = createState({ foo: { bar: 42 } })
+                .pipe((fooOptic) => fooOptic.foo)
+                .pipe((barOptic) => barOptic.bar)
+                .pipe(
+                    (optic) => optic.get(),
+                    (n) => n * 2,
+                    (n) => n + 10,
+                    (n) => n.toString(),
+                    (s) => s.split(''),
+                );
+            expect(endResult).toEqual(['9', '4']);
+        });
+    });
+
     describe('references', () => {
         const countriesOptic = createState([
             { name: 'Italia', language: 'Italiano' },

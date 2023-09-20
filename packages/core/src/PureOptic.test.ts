@@ -125,6 +125,21 @@ describe('derive isomorphism', () => {
         expect(tempOptic.set(212, 0)).toBe(100);
     });
 });
+describe('pipe', () => {
+    it('should pipe unary functions and return the last function result', () => {
+        const endResult = pureOptic<{ foo: { bar: number } }>()
+            .pipe((fooOptic) => fooOptic.foo)
+            .pipe((barOptic) => barOptic.bar)
+            .pipe(
+                (optic) => optic.get({ foo: { bar: 42 } }),
+                (n) => n * 2,
+                (n) => n + 10,
+                (n) => n.toString(),
+                (s) => s.split(''),
+            );
+        expect(endResult).toEqual(['9', '4']);
+    });
+});
 describe('if', () => {
     const evenNumberOptic = pureOptic<number>().if((n) => n % 2 === 0);
 

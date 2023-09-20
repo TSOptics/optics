@@ -338,11 +338,11 @@ describe('entries', () => {
     });
 });
 describe('custom optic', () => {
-    const evenNumsOptic = pureOptic(
-        (s: number[]) => s.filter((n) => n % 2 === 0),
-        (a) => a,
-        'onEven',
-    );
+    const evenNumsOptic = pureOptic<number[]>().derive({
+        get: (s: number[]) => s.filter((n) => n % 2 === 0),
+        set: (a) => a,
+        key: 'evenNums',
+    });
     const nums = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
     it('should work', () => {
         expect(evenNumsOptic.get(nums)).toStrictEqual([0, 2, 4, 6, 8]);
@@ -355,11 +355,11 @@ describe('custom optic', () => {
     };
     it('should work', () => {
         const countryOptic = (country: string) =>
-            pureOptic(
-                (s: typeof countryInfos) => s[country],
-                (a, s) => (s[country] !== undefined ? { ...s, [country]: a } : s),
-                'onCountry ' + country,
-            );
+            pureOptic<typeof countryInfos>().derive({
+                get: (s) => s[country],
+                set: (a, s) => (s[country] !== undefined ? { ...s, [country]: a } : s),
+                key: 'optic on ' + country,
+            });
         const franceOptic = countryOptic('france');
         const spainOptic = countryOptic('spain');
 

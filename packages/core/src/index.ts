@@ -13,6 +13,10 @@ export {
     ToPartial,
     FocusedValue,
     DeriveOpticScope,
+    TotalLens,
+    PartialLens,
+    FoldLens,
+    FoldNLens,
 } from './types';
 export { default as CombinatorsImpl } from './combinators.impl';
 export { get } from './get';

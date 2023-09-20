@@ -1,5 +1,5 @@
-import { CombinatorsImpl, get, proxify, set, FocusedValue, Lens, OpticScope, DeriveOpticScope } from '@optics/core';
-import { Resolve, ResolveReadOnly, TotalCombinators } from './combinators';
+import { CombinatorsImpl, get, proxify, set, FocusedValue, Lens, OpticScope } from '@optics/core';
+import { TotalCombinators } from './combinators';
 import { _Optic } from './Optics/Optic';
 import { Denormalized, Dependencies, Dependency, leafSymbol, ResolvedType, tag } from './Optics/ReadOptic';
 import { Store, stores } from './stores';
@@ -108,18 +108,17 @@ class OpticImpl<A, TScope extends OpticScope>
         };
     }
 
-    derive<B>(lens: Lens<B, NonNullable<A>>): Resolve<this, DeriveOpticScope<A, TScope>, TScope>;
-    derive<B>(lens: {
-        get: (a: NonNullable<A>) => B;
-        key?: string;
-    }): ResolveReadOnly<this, DeriveOpticScope<A, TScope>, TScope>;
-    derive({ get, set, key }: { get: any; set?: any; key?: string }): any {
+    derive(other: any): any {
+        if (Array.isArray(other.lenses)) {
+            return this.instantiate([...other.lenses]);
+        }
+        const { get, set, key, type } = other;
         return this.instantiate([
             {
                 get,
                 set: set ?? ((b, a) => a),
                 key: key ?? 'derive',
-                type: 'unstable',
+                type: type ?? 'unstable',
             },
         ]);
     }

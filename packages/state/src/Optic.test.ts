@@ -41,17 +41,17 @@ describe('Optic', () => {
         });
         it('should return the same type when composed with PureOptic', () => {
             const stateOptic = createState({ a: { b: 42 } });
-            const numberFromStateOptic = stateOptic.a.compose(pureOptic<{ b: number }>().b);
+            const numberFromStateOptic = stateOptic.a.derive(pureOptic<{ b: number }>().b);
             expectType<Optic<number, total>>(numberFromStateOptic);
         });
         it('should return a read only type when composed with PureReadOptic', () => {
             expectType<Optic<number>>(
                 // @ts-expect-error ReadOptic isn't assignable to Optic
-                createState({ a: { b: 42 } }).a.compose((pureOptic<{ b: number }>() as PureReadOptic<{ b: number }>).b),
+                createState({ a: { b: 42 } }).a.derive((pureOptic<{ b: number }>() as PureReadOptic<{ b: number }>).b),
             );
             expectType<AsyncOptic<number>>(
                 // @ts-expect-error AsyncReadOptic isn't assignable to AsyncOptic
-                (createState({ a: { b: 42 } }) as AsyncOptic<{ a: { b: number } }>).a.compose(
+                (createState({ a: { b: 42 } }) as AsyncOptic<{ a: { b: number } }>).a.derive(
                     (pureOptic<{ b: number }>() as PureReadOptic<{ b: number }>).b,
                 ),
             );
@@ -83,17 +83,15 @@ describe('Optic', () => {
         expect(listener).toHaveBeenCalledWith(42);
     });
     describe('combinators', () => {
-        describe('compose', () => {
+        describe('derive', () => {
             it('should compose with PureOptic', () => {
                 const stateOptic = createState({ a: { b: 42 } });
                 const numberOptic = pureOptic<{ b: number }>().b;
-                const numberFromStateOptic = stateOptic.a.compose(numberOptic);
+                const numberFromStateOptic = stateOptic.a.derive(numberOptic);
                 expect(numberFromStateOptic.get()).toBe(42);
                 numberFromStateOptic.set(100);
                 expect(stateOptic.get()).toEqual({ a: { b: 100 } });
             });
-        });
-        describe('derive', () => {
             it('should derive read only optic from get', () => {
                 const stateOptic = createState({ a: { b: 42 } });
                 const numberOptic = stateOptic.a.derive({ get: (x) => x.b });
@@ -390,13 +388,13 @@ describe('Optic', () => {
             stateOptic.a.set((prev) => prev + 1);
             expect(tupleOptic.get()).toBe(tuple);
         });
-        it('compose', () => {
+        it('derive from pureOptic', () => {
             const stateOptic = createState({ obj: { b1: true, b2: false }, a: 42 });
-            const tupleOptic = stateOptic.obj.compose(
-                pureOptic(
-                    ({ b1, b2 }: { b1: boolean; b2: boolean }) => [b1, b2] as const,
-                    ([b1, b2]) => ({ b1, b2 }),
-                ),
+            const tupleOptic = stateOptic.obj.derive(
+                pureOptic<{ b1: boolean; b2: boolean }>().derive({
+                    get: ({ b1, b2 }) => [b1, b2] as const,
+                    set: ([b1, b2]) => ({ b1, b2 }),
+                }),
             );
             const tuple = tupleOptic.get();
 

@@ -1,16 +1,4 @@
-import {
-    OpticScope,
-    PureOptic,
-    mapped,
-    partial,
-    total,
-    ComposeScopes,
-    IsAny,
-    IsNullable,
-    ToPartial,
-    PureReadOptic,
-    DeriveOpticScope,
-} from '@optics/core';
+import { OpticScope, mapped, partial, total, IsAny, IsNullable, ToPartial } from '@optics/core';
 import { AsyncOptic } from './Optics/AsyncOptic';
 import { AsyncReadOptic } from './Optics/AsyncReadOptic';
 import { Optic } from './Optics/Optic';
@@ -19,17 +7,6 @@ import { ReadOptic } from './Optics/ReadOptic';
 export interface BaseCombinators<A, TScope extends OpticScope> {
     refine<B>(refiner: (a: NonNullable<A>) => B | false): B extends false ? never : Resolve<this, B, ToPartial<TScope>>;
     if(predicate: (a: NonNullable<A>) => boolean): Resolve<this, A, ToPartial<TScope>>;
-    compose<B, TScopeB extends OpticScope>(
-        other: PureOptic<B, TScopeB, NonNullable<A>>,
-    ): Resolve<this, B, ComposeScopes<TScope, TScopeB, A>>;
-    compose<B, TScopeB extends OpticScope>(
-        other: PureReadOptic<B, TScopeB, NonNullable<A>>,
-    ): ResolveReadOnly<this, B, ComposeScopes<TScope, TScopeB, A>>;
-    derive<B>(get: (a: NonNullable<A>) => B): ResolveReadOnly<this, B, DeriveOpticScope<A, TScope>>;
-    derive<B>(
-        get: (a: NonNullable<A>) => B,
-        set: (b: B, prev: NonNullable<A>) => NonNullable<A>,
-    ): Resolve<this, B, DeriveOpticScope<A, TScope>>;
 }
 
 export interface TotalCombinators {

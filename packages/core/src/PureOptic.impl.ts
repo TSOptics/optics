@@ -1,10 +1,10 @@
 import CombinatorsImpl from './combinators.impl';
 import { get } from './get';
 import { proxify } from './proxify';
-import { _PureOptic, PureOptic } from './PureOptic';
-import { PureReadOptic, tag } from './PureReadOptic';
+import { _PureOptic } from './PureOptic';
+import { tag } from './PureReadOptic';
 import { set } from './set';
-import { DeriveOpticScope, FocusedValue, Lens, OpticScope } from './types';
+import { FocusedValue, Lens, OpticScope } from './types';
 
 class PureOpticImpl<A, TScope extends OpticScope, S>
     extends CombinatorsImpl<A, TScope, S>
@@ -25,27 +25,30 @@ class PureOpticImpl<A, TScope extends OpticScope, S>
         return set(a, s, this.lenses);
     }
 
-    derive<B>(get: (a: NonNullable<A>) => B): PureReadOptic<B, DeriveOpticScope<A, TScope>, S>;
-    derive<B>(
-        get: (a: NonNullable<A>) => B,
-        set: (b: B, a: NonNullable<A>) => NonNullable<A>,
-    ): PureOptic<B, DeriveOpticScope<A, TScope>, S>;
-    derive(get: any, set?: any): any {
+    derive(other: any): any {
+        if (other instanceof PureOpticImpl) {
+            return this.instantiate([...other.lenses]);
+        }
+        const { get, set, key, type } = other;
         return this.instantiate([
             {
                 get,
                 set: set ?? ((b, a) => a),
-                key: 'derive',
-                type: 'unstable',
+                key: key ?? 'derive',
+                type: type ?? 'unstable',
             },
         ]);
+    }
+
+    pipe(...fns: ((arg: any) => any)[]) {
+        return fns.reduce((acc, cv) => cv(acc), this);
     }
 
     protected instantiate(newLenses: Lens[]): any {
         return new PureOpticImpl([...this.lenses, ...newLenses]);
     }
     private toString(): string {
-        return this.lenses.map((l) => l.key.toString()).toString();
+        return this.lenses.map((l) => l.key ?? 'lens').toString();
     }
 }
 

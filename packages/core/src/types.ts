@@ -13,10 +13,31 @@ export interface mapped {
 export type OpticScope = mapped | partial;
 
 export interface Lens<A = any, S = any> {
-    key: string;
     get: (s: S) => A;
     set: (a: A, s: S) => S;
-    type?: 'fold' | 'foldN' | 'map' | 'nullable' | 'unstable';
+    key?: string;
+    type?: 'fold' | 'foldN' | 'map' | 'partial' | 'unstable';
+}
+
+export type TotalLens<A = any, S = any> = Omit<Lens<A, S>, 'type'>;
+
+export interface PartialLens<A = any, S = any> {
+    get: (s: S) => A | undefined;
+    set: (a: A, s: S) => S;
+    type: 'partial';
+    key?: string;
+}
+
+export interface FoldLens<S = any> {
+    get: (s: S[]) => number;
+    type: 'fold';
+    key?: string;
+}
+
+export interface FoldNLens<S = any> {
+    get: (s: S[]) => number[];
+    type: 'foldN';
+    key?: string;
 }
 
 type StrictMode = null extends string ? false : true;

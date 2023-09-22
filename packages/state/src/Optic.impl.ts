@@ -1,5 +1,5 @@
-import { CombinatorsImpl, get, proxify, set, FocusedValue, Lens, OpticScope, DeriveOpticScope } from '@optics/core';
-import { Resolve, ResolveReadOnly, TotalCombinators } from './combinators';
+import { CombinatorsImpl, get, proxify, set, FocusedValue, Lens, OpticScope } from '@optics/core';
+import { TotalCombinators } from './combinators';
 import { _Optic } from './Optics/Optic';
 import { Denormalized, Dependencies, Dependency, leafSymbol, ResolvedType, tag } from './Optics/ReadOptic';
 import { Store, stores } from './stores';
@@ -108,20 +108,23 @@ class OpticImpl<A, TScope extends OpticScope>
         };
     }
 
-    derive<B>(get: (a: NonNullable<A>) => B): ResolveReadOnly<this, DeriveOpticScope<A, TScope>, TScope>;
-    derive<B>(
-        get: (a: NonNullable<A>) => B,
-        set: (b: B, prev: NonNullable<A>) => NonNullable<A>,
-    ): Resolve<this, DeriveOpticScope<A, TScope>, TScope>;
-    derive(get: any, set?: any): any {
+    derive(other: any): any {
+        if (Array.isArray(other.lenses)) {
+            return this.instantiate([...other.lenses]);
+        }
+        const { get, set, key, type } = other;
         return this.instantiate([
             {
                 get,
                 set: set ?? ((b, a) => a),
-                key: 'derive',
-                type: 'unstable',
+                key: key ?? 'derive',
+                type: type ?? 'unstable',
             },
         ]);
+    }
+
+    pipe(...fns: ((arg: any) => any)[]) {
+        return fns.reduce((acc, cv) => cv(acc), this);
     }
 
     protected override instantiate(newLenses: Lens[]): any {

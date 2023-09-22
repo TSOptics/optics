@@ -16,68 +16,72 @@ describe('Derived types', () => {
         /**
          * total on non nullable + total = total
          */
-        expectTotal(() => pureOptic<{ foo: string }>().foo.compose({} as PureOptic<boolean>));
+        expectTotal(() => pureOptic<{ foo: string }>().foo.derive({} as PureOptic<boolean>));
 
         /**
          * total on nullable + total = partial
          */
         expectPartial(() =>
-            pureOptic<{ foo: string | undefined }>().foo.compose({} as PureOptic<boolean, total, string>),
+            pureOptic<{ foo: string | undefined }>().foo.derive({} as PureOptic<boolean, total, string>),
         );
 
         /**
          * total + partial = partial
          */
-        expectPartial(() => pureOptic<{ foo: string }>().foo.compose({} as PureOptic<boolean, partial>));
+        expectPartial(() => pureOptic<{ foo: string }>().foo.derive({} as PureOptic<boolean, partial, string>));
 
         /**
          * total + mapped = mapped
          */
-        expectMapped(() => pureOptic<{ foo: string[] }>().foo.compose({} as PureOptic<boolean, mapped>));
+        expectMapped(() => pureOptic<{ foo: string[] }>().foo.derive({} as PureOptic<boolean, mapped, string[]>));
 
         /**
          * partial + total = partial
          */
-        expectPartial(() => pureOptic<{ foo?: { bar: string } }>().foo.bar.compose({} as PureOptic<boolean>));
+        expectPartial(() => pureOptic<{ foo?: { bar: string } }>().foo.bar.derive({} as PureOptic<boolean>));
 
         /**
          * partial + partial = partial
          */
-        expectPartial(() => pureOptic<{ foo?: { bar: string } }>().foo.bar.compose({} as PureOptic<boolean, partial>));
+        expectPartial(() =>
+            pureOptic<{ foo?: { bar: string } }>().foo.bar.derive({} as PureOptic<boolean, partial, string>),
+        );
 
         /**
          * partial + mapped = mapped
          */
-        expectMapped(() => pureOptic<{ foo?: { bar: string } }>().foo.bar.compose({} as PureOptic<boolean, mapped>));
+        expectMapped(() =>
+            pureOptic<{ foo?: { bar: string } }>().foo.bar.derive({} as PureOptic<boolean, mapped, string>),
+        );
 
         /**
          * mapped + total = mapped
          */
-        expectMapped(() => (({} as PureOptic<string, mapped>).compose({} as PureOptic<boolean>)));
+        expectMapped(() => (({} as PureOptic<string, mapped>).derive({} as PureOptic<boolean>)));
 
         /**
          * mapped + partial = mapped
          */
-        expectMapped(() => (({} as PureOptic<string, mapped>).compose({} as PureOptic<boolean, partial>)));
+        expectMapped(() => (({} as PureOptic<string, mapped>).derive({} as PureOptic<boolean, partial, string>)));
 
         /**
          * mapped + mapped = mapped
          */
-        expectMapped(() => (({} as PureOptic<string, mapped>).compose({} as PureOptic<boolean, mapped>)));
+        expectMapped(() => (({} as PureOptic<string, mapped>).derive({} as PureOptic<boolean, mapped, string>)));
     });
     describe('Writable status', () => {
         /**
          * PureOptic + PureReadOptic = PureReadOptic
          */
         // @ts-expect-error PureOptic isn't assignable to PureReadOptic
-        expectWritableOptic(() => pureOptic<string>().compose({} as PureReadOptic<string, total, string>));
+        expectWritableOptic(() => pureOptic<string>().derive({} as PureReadOptic<string, total, string>));
 
         /**
          * PureReadOptic + PureOptic = PureReadOptic
          */
         expectWritableOptic(
             // @ts-expect-error PureOptic isn't assignable to PureReadOptic
-            () => (pureOptic<string>() as PureReadOptic<string>).compose({} as PureOptic<string, total, string>),
+            () => (pureOptic<string>() as PureReadOptic<string>).derive({} as PureOptic<string, total, string>),
         );
 
         /**
@@ -85,7 +89,7 @@ describe('Derived types', () => {
          */
         expectWritableOptic(
             // @ts-expect-error PureOptic isn't assignable to PureReadOptic
-            () => (pureOptic<string>() as PureReadOptic<string>).compose({} as PureReadOptic<string, total, string>),
+            () => (pureOptic<string>() as PureReadOptic<string>).derive({} as PureReadOptic<string, total, string>),
         );
 
         /**
@@ -98,32 +102,20 @@ describe('Derived types', () => {
          * PureOptic + get = PureReadOptic
          */
         // @ts-expect-error PureOptic isn't assignable to PureReadOptic
-        expectWritableOptic(() => pureOptic<{ foo: string }>().derive((x) => x.foo));
+        expectWritableOptic(() => pureOptic<{ foo: string }>().derive({ get: (x) => x.foo }));
         /**
          * PureReadOptic + get = PureReadOptic
          */
         expectWritableOptic(() =>
             // @ts-expect-error PureOptic isn't assignable to PureReadOptic
-            (pureOptic<{ foo: string }>() as PureReadOptic<{ foo: string }>).derive((x) => x.foo),
+            (pureOptic<{ foo: string }>() as PureReadOptic<{ foo: string }>).derive({ get: (x) => x.foo }),
         );
 
         /**
          * PureOptic + get & set = PureOptic
          */
         expectWritableOptic(() =>
-            pureOptic<{ foo: string }>().derive(
-                (x) => x.foo,
-                (x, y) => ({ ...y, foo: x }),
-            ),
-        );
-
-        /**
-         * PureReadOptic + get & set = ❌
-         */
-        (pureOptic<{ foo: string }>() as PureReadOptic<{ foo: string }>).derive(
-            (x) => x.foo,
-            // @ts-expect-error Expected 1 arguments, but got 2.
-            (x, y) => ({ ...y, foo: x }),
+            pureOptic<{ foo: string }>().derive({ get: (x) => x.foo, set: (x, y) => ({ ...y, foo: x }) }),
         );
     });
 });
@@ -156,12 +148,10 @@ describe('Type relations', () => {
         });
         it('should return a PureReadOptic when calling combinators', () => {
             const stringReadOptic: PureReadOptic<string> = pureOptic<string>();
-            // @ts-expect-error PureOptic isn't assignable to PureReadOptic
-            const numberOptic: PureOptic<number> = stringReadOptic.derive(parseInt, (n) => `${n}`);
+            const numberOptic: PureReadOptic<number> = stringReadOptic.derive({ get: parseInt, set: (n) => `${n}` });
 
             const numbersReadOptic: PureReadOptic<number[]> = pureOptic<number[]>();
-            // @ts-expect-error PureOptic isn't assignable to PureReadOptic
-            const firstPositiveOptic: PureOptic<number, partial> = numbersReadOptic.findFirst((n) => n > 0);
+            const firstPositiveOptic: PureReadOptic<number, partial> = numbersReadOptic.findFirst((n) => n > 0);
         });
     });
 });

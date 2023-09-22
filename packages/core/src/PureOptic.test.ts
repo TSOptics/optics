@@ -49,37 +49,95 @@ describe('refine', () => {
 });
 describe('derive', () => {
     it('should derive new read optic from get function', () => {
-        const fooOptic = pureOptic<{ foo: string }>().derive((a) => a.foo);
+        const fooOptic = pureOptic<{ foo: string }>().derive({ get: (a) => a.foo });
         expect(fooOptic.get({ foo: 'test' })).toBe('test');
     });
     it('should derive new optic from a get and a set function', () => {
-        const fooOptic = pureOptic<{ foo: string }>().derive(
-            (a) => a.foo,
-            (b, a) => ({ ...a, foo: b }),
-        );
+        const fooOptic = pureOptic<{ foo: string }>().derive({ get: (a) => a.foo, set: (b, a) => ({ ...a, foo: b }) });
         expect(fooOptic.get({ foo: 'test' })).toBe('test');
         expect(fooOptic.set('newFoo', { foo: 'test' })).toEqual({ foo: 'newFoo' });
     });
+    it('should derive new partial optic from partial lens', () => {
+        const evenNumberOptic = pureOptic<number>().derive({
+            type: 'partial',
+            get: (a) => (a % 2 === 0 ? a : undefined),
+            set: (a, s) => (a % 2 === 0 ? a : s),
+        });
+        expect(evenNumberOptic.get(2)).toBe(2);
+        expect(evenNumberOptic.get(3)).toBeUndefined();
+
+        expect(evenNumberOptic.set(4, 3)).toBe(4);
+        expect(evenNumberOptic.set(5, 2)).toBe(2);
+    });
+    it('should derive new partial optic from fold lens and mapped optic', () => {
+        const firstEvenOptic = pureOptic<number[]>()
+            .map()
+            .derive({
+                type: 'fold',
+                get: (s) => s.findIndex((n) => n % 2 === 0),
+            });
+
+        expect(firstEvenOptic.get([1, 3, 2])).toBe(2);
+        expect(firstEvenOptic.get([1, 3, 5])).toBe(undefined);
+
+        expect(firstEvenOptic.set(90, [1, 3, 2])).toEqual([1, 3, 90]);
+    });
+    it('should derive new mapped optic from foldN lens and a mapped optic', () => {
+        const evenNumbersOptic = pureOptic<number[]>()
+            .map()
+            .derive({
+                type: 'foldN',
+                get: (s) => s.map((n, i) => (n % 2 === 0 ? i : undefined)).filter((n): n is number => n !== undefined),
+            });
+
+        expect(evenNumbersOptic.get([1, 2, 3, 4, 5, 6])).toEqual([2, 4, 6]);
+        expect(evenNumbersOptic.get([1, 3, 5])).toEqual([]);
+
+        expect(evenNumbersOptic.set((prev) => prev + 10, [1, 2, 3, 4, 5, 6])).toEqual([1, 12, 3, 14, 5, 16]);
+    });
+    it('should derive a new optic from another optic', () => {
+        const fooOptic = pureOptic<{ foo: { bar: string } }>();
+        const barOptic = pureOptic<{ bar: string }>();
+        const fooBarOptic = fooOptic.foo.derive(barOptic);
+
+        expect(fooBarOptic.get({ foo: { bar: 'test' } })).toEqual({ bar: 'test' });
+        expect(fooBarOptic.bar.set('fooBar', { foo: { bar: 'test' } })).toEqual({ foo: { bar: 'fooBar' } });
+    });
 });
-describe('derive', () => {
-    const objectOptic = pureOptic<[string, number]>().derive(
-        ([name, age]) => ({ name, age }),
-        ({ name, age }) => [name, age],
-    );
+describe('derive isomorphism', () => {
+    const objectOptic = pureOptic<readonly [string, number]>().derive({
+        get: ([name, age]) => ({ name, age }),
+        set: (p) => [p.name, p.age] as const,
+    });
 
     it('should derive from tuple to object', () => {
         expect(objectOptic.get(['Jean', 42])).toStrictEqual({ name: 'Jean', age: 42 });
         expect(objectOptic.set({ name: 'Albert', age: 65 }, ['Jean', 34])).toStrictEqual(['Albert', 65]);
     });
     it('should derive from celcius to fahrenheit', () => {
-        const tempOptic = pureOptic<number>().derive(
-            (celcius) => celcius * (9 / 5) + 32,
-            (fahrenheit) => (fahrenheit - 32) * (5 / 9),
-        );
+        const tempOptic = pureOptic<number>().derive({
+            get: (celcius) => celcius * (9 / 5) + 32,
+            set: (fahrenheit) => (fahrenheit - 32) * (5 / 9),
+        });
 
         expect(tempOptic.get(0)).toBe(32);
         expect(tempOptic.get(100)).toBe(212);
         expect(tempOptic.set(212, 0)).toBe(100);
+    });
+});
+describe('pipe', () => {
+    it('should pipe unary functions and return the last function result', () => {
+        const endResult = pureOptic<{ foo: { bar: number } }>()
+            .pipe((fooOptic) => fooOptic.foo)
+            .pipe((barOptic) => barOptic.bar)
+            .pipe(
+                (optic) => optic.get({ foo: { bar: 42 } }),
+                (n) => n * 2,
+                (n) => n + 10,
+                (n) => n.toString(),
+                (s) => s.split(''),
+            );
+        expect(endResult).toEqual(['9', '4']);
     });
 });
 describe('if', () => {
@@ -295,11 +353,11 @@ describe('entries', () => {
     });
 });
 describe('custom optic', () => {
-    const evenNumsOptic = pureOptic(
-        (s: number[]) => s.filter((n) => n % 2 === 0),
-        (a) => a,
-        'onEven',
-    );
+    const evenNumsOptic = pureOptic<number[]>().derive({
+        get: (s: number[]) => s.filter((n) => n % 2 === 0),
+        set: (a) => a,
+        key: 'evenNums',
+    });
     const nums = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
     it('should work', () => {
         expect(evenNumsOptic.get(nums)).toStrictEqual([0, 2, 4, 6, 8]);
@@ -312,11 +370,11 @@ describe('custom optic', () => {
     };
     it('should work', () => {
         const countryOptic = (country: string) =>
-            pureOptic(
-                (s: typeof countryInfos) => s[country],
-                (a, s) => (s[country] !== undefined ? { ...s, [country]: a } : s),
-                'onCountry ' + country,
-            );
+            pureOptic<typeof countryInfos>().derive({
+                get: (s) => s[country],
+                set: (a, s) => (s[country] !== undefined ? { ...s, [country]: a } : s),
+                key: 'optic on ' + country,
+            });
         const franceOptic = countryOptic('france');
         const spainOptic = countryOptic('spain');
 

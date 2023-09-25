@@ -104,22 +104,6 @@ describe('Optic', () => {
             expect(stateOptic.get()).toEqual({ a: { b: 100 } });
         });
     });
-    describe('pipe', () => {
-        it('should pipe unary functions and return the last function result', () => {
-            const endResult = createState({ foo: { bar: 42 } })
-                .pipe((fooOptic) => fooOptic.foo)
-                .pipe((barOptic) => barOptic.bar)
-                .pipe(
-                    (optic) => optic.get(),
-                    (n) => n * 2,
-                    (n) => n + 10,
-                    (n) => n.toString(),
-                    (s) => s.split(''),
-                );
-            expect(endResult).toEqual(['9', '4']);
-        });
-    });
-
     describe('references', () => {
         const countriesOptic = createState([
             { name: 'Italia', language: 'Italiano' },

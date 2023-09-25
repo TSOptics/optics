@@ -85,68 +85,6 @@ export interface _ReadOptic<A, TScope extends OpticScope> {
         other: PureReadOptic<B, TScopeB, NonNullable<A>>,
     ): ResolveReadOnly<this, B, ComposeScopes<TScope, TScopeB, A>>;
 
-    pipe<B>(fn1: (optic: this) => B): B;
-    pipe<B, C>(fn1: (optic: this) => B, fn2: (b: B) => C): C;
-    pipe<B, C, D>(fn1: (optic: this) => B, fn2: (b: B) => C, fn3: (c: C) => D): D;
-    pipe<B, C, D, E>(fn1: (optic: this) => B, fn2: (b: B) => C, fn3: (c: C) => D, fn4: (d: D) => E): E;
-    pipe<B, C, D, E, F>(
-        fn1: (optic: this) => B,
-        fn2: (b: B) => C,
-        fn3: (c: C) => D,
-        fn4: (d: D) => E,
-        fn5: (e: E) => F,
-    ): F;
-    pipe<B, C, D, E, F, G>(
-        fn1: (optic: this) => B,
-        fn2: (b: B) => C,
-        fn3: (c: C) => D,
-        fn4: (d: D) => E,
-        fn5: (e: E) => F,
-        fn6: (f: F) => G,
-    ): G;
-    pipe<B, C, D, E, F, G, H>(
-        fn1: (optic: this) => B,
-        fn2: (b: B) => C,
-        fn3: (c: C) => D,
-        fn4: (d: D) => E,
-        fn5: (e: E) => F,
-        fn6: (f: F) => G,
-        fn7: (f: G) => H,
-    ): H;
-    pipe<B, C, D, E, F, G, H, I>(
-        fn1: (optic: this) => B,
-        fn2: (b: B) => C,
-        fn3: (c: C) => D,
-        fn4: (d: D) => E,
-        fn5: (e: E) => F,
-        fn6: (f: F) => G,
-        fn7: (f: G) => H,
-        fn8: (f: H) => I,
-    ): I;
-    pipe<B, C, D, E, F, G, H, I, J>(
-        fn1: (optic: this) => B,
-        fn2: (b: B) => C,
-        fn3: (c: C) => D,
-        fn4: (d: D) => E,
-        fn5: (e: E) => F,
-        fn6: (f: F) => G,
-        fn7: (f: G) => H,
-        fn8: (f: H) => I,
-        fn9: (f: I) => J,
-    ): J;
-    pipe<B, C, D, E, F, G, H, I, J, K>(
-        fn1: (optic: this) => B,
-        fn2: (b: B) => C,
-        fn3: (c: C) => D,
-        fn4: (d: D) => E,
-        fn5: (e: E) => F,
-        fn6: (f: F) => G,
-        fn7: (f: G) => H,
-        fn8: (f: H) => I,
-        fn9: (f: I) => J,
-        fn10: (f: J) => K,
-    ): K;
-
     [tag]: [scope: TScope, focus: A, invariance: (a: A) => void];
 }
 

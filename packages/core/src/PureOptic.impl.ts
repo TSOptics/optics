@@ -40,10 +40,6 @@ class PureOpticImpl<A, TScope extends OpticScope, S>
         ]);
     }
 
-    pipe(...fns: ((arg: any) => any)[]) {
-        return fns.reduce((acc, cv) => cv(acc), this);
-    }
-
     protected instantiate(newLenses: Lens[]): any {
         return new PureOpticImpl([...this.lenses, ...newLenses]);
     }

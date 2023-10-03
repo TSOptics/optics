@@ -40,6 +40,8 @@ export interface FoldNLens<S = any> {
     key?: string;
 }
 
+export type MapLens = Omit<Lens, 'type'> & { type: 'map' };
+
 type StrictMode = null extends string ? false : true;
 export type IsNullable<T> = StrictMode extends false
     ? false

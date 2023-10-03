@@ -17,6 +17,7 @@ export {
     PartialLens,
     FoldLens,
     FoldNLens,
+    MapLens,
 } from './types';
 export { default as CombinatorsImpl } from './combinators.impl';
 export { get } from './get';

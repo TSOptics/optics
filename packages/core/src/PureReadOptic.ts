@@ -6,6 +6,7 @@ import {
     FocusedValue,
     FoldLens,
     FoldNLens,
+    MapLens,
     OpticScope,
     PartialLens,
     TotalLens,
@@ -21,7 +22,10 @@ export interface _PureReadOptic<A, TScope extends OpticScope = total, S = any> {
 
     derive<B>(lens: PartialLens<B, NonNullable<A>>): Resolve<this, B, TScope extends partial ? partial : TScope, S>;
     derive<B>(lens: TotalLens<B, NonNullable<A>>): Resolve<this, B, DeriveOpticScope<A, TScope>, S>;
-    derive(lens: TScope extends mapped ? FoldLens<NonNullable<A>> : never): Resolve<this, A, partial, S>;
+    derive(
+        lens: NonNullable<A> extends any[] ? MapLens : never,
+    ): NonNullable<A> extends any[] ? Resolve<this, NonNullable<A>[number], mapped, S> : never;
+    derive(lens: FoldLens<NonNullable<A>>): Resolve<this, A, partial, S>;
     derive(lens: TScope extends mapped ? FoldNLens<NonNullable<A>> : never): Resolve<this, A, mapped, S>;
     derive<B>(lens: { get: (a: NonNullable<A>) => B; key?: string }): PureReadOptic<B, DeriveOpticScope<A, TScope>, S>;
     derive<B, TScopeB extends OpticScope>(

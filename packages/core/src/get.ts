@@ -9,7 +9,7 @@ export const get = <A, TScope extends OpticScope>(
 ): FocusedValue<A, TScope> => {
     const aux = (s: any, lenses: Lens[], isTraversal = false): any => {
         const [lens, ...tailLenses] = lenses;
-        if (!lens || ((s === undefined || s === null) && lens.type !== 'partial')) {
+        if (!lens || s === undefined || s === null) {
             return s;
         }
         const a = earlyReturn?.(s, lens);

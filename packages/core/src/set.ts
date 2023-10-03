@@ -8,7 +8,7 @@ export const set = <A, S>(a: A | ((prev: A) => A), s: S, lenses: Lens[], foldTre
         return set(a, s, tailLenses);
     }
     const slice = lens.get(s);
-    if ((slice === undefined || slice === null) && tailLenses.length > 0 && tailLenses[0].type !== 'partial') return s;
+    if ((slice === undefined || slice === null) && tailLenses.length > 0) return s;
     if (lens.type === 'map') {
         const newSlice = foldTree
             ? (slice as any[]).map((x, index) => (foldTree[index] ? set(a, x, tailLenses, foldTree[index]) : x))

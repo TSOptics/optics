@@ -4,5 +4,4 @@ export { Optic } from './Optics/Optic';
 export { ReadOptic, ResolvedType } from './Optics/ReadOptic';
 export { AsyncOptic } from './Optics/AsyncOptic';
 export { AsyncReadOptic } from './Optics/AsyncReadOptic';
-export { GetStateOptions, SubscribeOptions, GetOpticFocus, GetOpticScope } from './types';
-export { Resolve } from './combinators';
+export { GetStateOptions, SubscribeOptions, GetOpticFocus, GetOpticScope, Resolve } from './types';

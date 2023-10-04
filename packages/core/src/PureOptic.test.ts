@@ -85,23 +85,17 @@ describe('derive', () => {
     it('should derive new partial optic from fold lens and mapped optic', () => {
         const firstEvenOptic = pureOptic<number[]>()
             .map()
-            .derive({
-                type: 'fold',
-                get: (s) => s.findIndex((n) => n % 2 === 0),
-            });
+            .reduce((values) => values.find(({ value }) => value % 2 === 0));
 
         expect(firstEvenOptic.get([1, 3, 2])).toBe(2);
         expect(firstEvenOptic.get([1, 3, 5])).toBe(undefined);
 
         expect(firstEvenOptic.set(90, [1, 3, 2])).toEqual([1, 3, 90]);
     });
-    it('should derive new mapped optic from foldN lens and a mapped optic', () => {
+    it('should derive new mapped optic from a reduce function returning multiple values', () => {
         const evenNumbersOptic = pureOptic<number[]>()
             .map()
-            .derive({
-                type: 'foldN',
-                get: (s) => s.map((n, i) => (n % 2 === 0 ? i : undefined)).filter((n): n is number => n !== undefined),
-            });
+            .reduce((values) => values.filter(({ value }) => value % 2 === 0));
 
         expect(evenNumbersOptic.get([1, 2, 3, 4, 5, 6])).toEqual([2, 4, 6]);
         expect(evenNumbersOptic.get([1, 3, 5])).toEqual([]);
@@ -178,22 +172,24 @@ describe('focus string key', () => {
     });
 });
 describe('toPartial', () => {
-    const onA = pureOptic<{ a?: number }>().a.derive(toPartial());
-    expectPartial(onA, true);
-    expect(onA.get({ a: undefined })).toBe(undefined);
-    expect(onA.set((prev) => prev + 10, { a: undefined })).toEqual({ a: undefined });
-    expect(onA.set((prev) => prev + 10, { a: 42 })).toEqual({ a: 52 });
+    it('should turn a total optic focused on a nullable type to a partial optic focused on the same type but non nullable', () => {
+        const onA = pureOptic<{ a?: number }>().a.derive(toPartial());
+        expectPartial(onA, true);
+        expect(onA.get({ a: undefined })).toBe(undefined);
+        expect(onA.set((prev) => prev + 10, { a: undefined })).toEqual({ a: undefined });
+        expect(onA.set((prev) => prev + 10, { a: 42 })).toEqual({ a: 52 });
 
-    const onB = pureOptic<{ a?: { b?: number } }>().a.b.derive(toPartial());
-    expectPartial(onB, true);
-    expect(onB.get({ a: { b: undefined } })).toBe(undefined);
-    expect(onB.set((prev) => prev + 10, { a: { b: undefined } })).toEqual({ a: { b: undefined } });
-    expect(onB.set((prev) => prev + 10, { a: { b: 42 } })).toEqual({ a: { b: 52 } });
+        const onB = pureOptic<{ a?: { b?: number } }>().a.b.derive(toPartial());
+        expectPartial(onB, true);
+        expect(onB.get({ a: { b: undefined } })).toBe(undefined);
+        expect(onB.set((prev) => prev + 10, { a: { b: undefined } })).toEqual({ a: { b: undefined } });
+        expect(onB.set((prev) => prev + 10, { a: { b: 42 } })).toEqual({ a: { b: 52 } });
 
-    const asOptic = pureOptic<{ a?: number }[]>().map().a.derive(toPartial());
-    expectMapped(asOptic);
-    expect(asOptic.get([{ a: undefined }, { a: 42 }])).toEqual([42]);
-    expect(asOptic.set((prev) => prev + 10, [{ a: undefined }, { a: 42 }])).toEqual([{ a: undefined }, { a: 52 }]);
+        const asOptic = pureOptic<{ a?: number }[]>().map().a.derive(toPartial());
+        expectMapped(asOptic);
+        expect(asOptic.get([{ a: undefined }, { a: 42 }])).toEqual([42]);
+        expect(asOptic.set((prev) => prev + 10, [{ a: undefined }, { a: 42 }])).toEqual([{ a: undefined }, { a: 52 }]);
+    });
 });
 describe('array methods', () => {
     describe('at', () => {

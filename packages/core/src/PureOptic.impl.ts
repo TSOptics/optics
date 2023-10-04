@@ -1,18 +1,16 @@
-import CombinatorsImpl from './combinators.impl';
+import { ArrayOptic, MappedOptic, Resolve } from './ContextualMethods';
 import { get } from './get';
 import { proxify } from './proxify';
 import { _PureOptic } from './PureOptic';
 import { tag } from './PureReadOptic';
-import { set } from './set';
-import { FocusedValue, Lens, OpticScope } from './types';
+import { ReduceValue, set } from './set';
+import { FocusedValue, Lens, mapped, OpticScope, partial } from './types';
 
 class PureOpticImpl<A, TScope extends OpticScope, S>
-    extends CombinatorsImpl<A, TScope, S>
-    implements Omit<_PureOptic<A, TScope, S>, typeof tag>
+    implements Omit<_PureOptic<A, TScope, S>, typeof tag>, MappedOptic<A, S>, ArrayOptic<any, S>
 {
     protected lenses: Lens[];
     constructor(lenses: Lens[]) {
-        super();
         this.lenses = lenses;
         return proxify(this);
     }
@@ -40,6 +38,16 @@ class PureOpticImpl<A, TScope extends OpticScope, S>
         ]);
     }
 
+    map<Elem = A extends (infer R)[] ? R : never>(): Resolve<this, Elem, mapped, S> {
+        return this.instantiate([{ get: (s) => s, set: (a) => a, key: 'map', type: 'map' }]);
+    }
+
+    reduce(reducer: (values: ReduceValue<A>[]) => ReduceValue<A>[]): Resolve<this, A, mapped, S>;
+    reduce(reducer: (values: ReduceValue<A>[]) => ReduceValue<A>): Resolve<this, A, partial, S>;
+    reduce(reducer: any): Resolve<this, A, partial, S> | Resolve<this, A, mapped, S> {
+        return this.instantiate([{ get: reducer, set: noop, key: 'reduce', type: 'fold' }]);
+    }
+
     protected instantiate(newLenses: Lens[]): any {
         return new PureOpticImpl([...this.lenses, ...newLenses]);
     }
@@ -47,5 +55,7 @@ class PureOpticImpl<A, TScope extends OpticScope, S>
         return this.lenses.map((l) => l.key ?? 'lens').toString();
     }
 }
+
+const noop = () => {};
 
 export default PureOpticImpl;

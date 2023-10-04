@@ -6,15 +6,12 @@ import {
     PartialLens,
     TotalLens,
     partial,
-    mapped,
-    FoldLens,
-    FoldNLens,
     ComposeScopes,
     PureOptic,
     PureReadOptic,
 } from '@optics/core';
-import { CombinatorsForOptic } from '../combinators';
 import { GetStateOptions, Resolve, ResolveReadOnly, SubscribeOptions } from '../types';
+import { ContextualMethods } from '../ContextualMethods';
 
 export const tag: unique symbol = Symbol('tag');
 
@@ -72,8 +69,6 @@ export interface _ReadOptic<A, TScope extends OpticScope> {
 
     derive<B>(lens: PartialLens<B, NonNullable<A>>): Resolve<this, B, TScope extends partial ? partial : TScope>;
     derive<B>(lens: TotalLens<B, NonNullable<A>>): Resolve<this, B, DeriveOpticScope<A, TScope>>;
-    derive(lens: TScope extends mapped ? FoldLens<NonNullable<A>> : never): Resolve<this, A, partial>;
-    derive(lens: TScope extends mapped ? FoldNLens<NonNullable<A>> : never): Resolve<this, A, mapped>;
     derive<B>(lens: {
         get: (a: NonNullable<A>) => B;
         key?: string;
@@ -84,10 +79,10 @@ export interface _ReadOptic<A, TScope extends OpticScope> {
     derive<B, TScopeB extends OpticScope>(
         other: PureReadOptic<B, TScopeB, NonNullable<A>>,
     ): ResolveReadOnly<this, B, ComposeScopes<TScope, TScopeB, A>>;
-
-    [tag]: [scope: TScope, focus: A, invariance: (a: A) => void];
 }
+
+export type Tag<A, TScope extends OpticScope> = { [tag]: [scope: TScope, focus: A, invariance: (a: A) => void] };
 
 export type ReadOptic<A, TScope extends OpticScope = total> = _ReadOptic<A, TScope> &
     ReadOpticDeriveFromProps<A, TScope> &
-    CombinatorsForOptic<A, TScope>;
+    ContextualMethods<A, TScope> & {} & Tag<A, TScope>;

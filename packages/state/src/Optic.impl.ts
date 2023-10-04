@@ -1,13 +1,12 @@
-import { CombinatorsImpl, get, proxify, set, FocusedValue, Lens, OpticScope } from '@optics/core';
-import { TotalCombinators } from './combinators';
+import { get, proxify, set, FocusedValue, Lens, OpticScope, ReduceValue, partial, mapped } from '@optics/core';
 import { _Optic } from './Optics/Optic';
 import { Denormalized, Dependencies, Dependency, leafSymbol, ResolvedType, tag } from './Optics/ReadOptic';
 import { Store, stores } from './stores';
-import { GetStateOptions, SubscribeOptions } from './types';
+import { GetStateOptions, Resolve, SubscribeOptions } from './types';
+import { ArrayOptic, MappedOptic } from './ContextualMethods';
 
 class OpticImpl<A, TScope extends OpticScope>
-    extends CombinatorsImpl<A, TScope, any>
-    implements Omit<_Optic<A, TScope>, typeof tag>, TotalCombinators
+    implements ArrayOptic<A>, MappedOptic<A>, Omit<_Optic<A, TScope>, typeof tag>
 {
     protected lenses: Lens<any, any>[];
     private storeId: OpticImpl<any, OpticScope>;
@@ -22,7 +21,6 @@ class OpticImpl<A, TScope extends OpticScope>
     }
 
     constructor(lenses: Lens[], private initialValue: any, _storeId?: OpticImpl<any, OpticScope>) {
-        super();
         this.lenses = lenses;
         this.storeId = _storeId ?? (this as any);
         return proxify(this);
@@ -66,10 +64,6 @@ class OpticImpl<A, TScope extends OpticScope>
         const store = this.getStore();
         store.state = set(a, store.state, this.lenses);
         store.listeners.forEach((listener) => listener(store.state));
-    }
-
-    reset(): void {
-        this.set(get(this.initialValue, this.lenses) as any);
     }
 
     subscribe<TOptions extends SubscribeOptions | undefined>(
@@ -123,7 +117,17 @@ class OpticImpl<A, TScope extends OpticScope>
         ]);
     }
 
-    protected override instantiate(newLenses: Lens[]): any {
+    map<Elem = A extends (infer R)[] ? R : never>(): Resolve<this, Elem, mapped> {
+        return this.instantiate([{ get: (s) => s, set: (a) => a, key: 'map', type: 'map' }]);
+    }
+
+    reduce(reducer: (values: ReduceValue<A>[]) => ReduceValue<A>[]): Resolve<this, A, mapped>;
+    reduce(reducer: (values: ReduceValue<A>[]) => ReduceValue<A>): Resolve<this, A, partial>;
+    reduce(reducer: any): Resolve<this, A, partial> | Resolve<this, A, mapped> {
+        return this.instantiate([{ get: reducer, set: () => {}, key: 'reduce', type: 'fold' }]);
+    }
+
+    protected instantiate(newLenses: Lens[]): any {
         return new OpticImpl([...this.lenses, ...newLenses], this.initialValue, this.storeId);
     }
 

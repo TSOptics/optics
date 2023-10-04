@@ -1,5 +1,5 @@
-import { _PureReadOptic } from './PureReadOptic';
-import { CombinatorsForOptic } from './combinators.types';
+import { Tag, _PureReadOptic } from './PureReadOptic';
+import { ContextualMethods } from './ContextualMethods';
 import { DeriveOpticScope, OpticScope, total } from './types';
 
 export interface _PureOptic<A, TScope extends OpticScope = total, S = any> extends _PureReadOptic<A, TScope, S> {
@@ -14,4 +14,5 @@ type DeriveFromProps<A, TScope extends OpticScope, S, T = NonNullable<A>> = T ex
 
 export type PureOptic<A, TScope extends OpticScope = total, S = any> = _PureOptic<A, TScope, S> &
     DeriveFromProps<A, TScope, S> &
-    CombinatorsForOptic<A, TScope, S>;
+    ContextualMethods<A, TScope, S> &
+    Tag<A, TScope, S>;

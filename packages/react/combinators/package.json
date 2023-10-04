@@ -1,0 +1,8 @@
+{
+    "name": "@optics/react-combinators",
+    "version": "1.0.0",
+    "description": "",
+    "main": "../dist/combinators/index.js",
+    "types": "../dist/combinators/index.d.ts",
+    "sideEffects": false
+}

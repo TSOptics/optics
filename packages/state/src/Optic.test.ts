@@ -4,6 +4,7 @@ import { AsyncOptic } from './Optics/AsyncOptic';
 import { AsyncReadOptic } from './Optics/AsyncReadOptic';
 import { Optic } from './Optics/Optic';
 import { ReadOptic } from './Optics/ReadOptic';
+import { entries, indexBy, reverse, slice, values } from './combinators';
 
 const expectType = <T extends any>(t: T) => {};
 
@@ -105,22 +106,25 @@ describe('Optic', () => {
         });
     });
     describe('references', () => {
-        const countriesOptic = createState([
+        const countries = [
             { name: 'Italia', language: 'Italiano' },
             { name: 'Österreich', language: 'Deutsch' },
-        ]);
+        ];
+        const countriesOptic = createState(countries);
         const onÖsterreich = countriesOptic[1];
-        const citiesOptic = createState([
-            { name: 'Wien', inhabitants: 1_897_000, country: countriesOptic[1] },
-            { name: 'Milano', inhabitants: 1_352_000, country: countriesOptic[0] },
-        ]);
+        const cities = [
+            { name: 'Wien', inhabitants: 1897000, country: countriesOptic[1] },
+            { name: 'Milano', inhabitants: 1352000, country: countriesOptic[0] },
+        ];
+        const citiesOptic = createState(cities);
         const wienOptic = citiesOptic[0];
         const milanoOptic = citiesOptic[1];
-        const peopleOptic = createState([{ name: 'Franz', age: 25, driver: false, city: wienOptic }]);
+        const people = [{ name: 'Franz', age: 25, driver: false, city: wienOptic }];
+        const peopleOptic = createState(people);
         beforeEach(() => {
-            countriesOptic.reset();
-            citiesOptic.reset();
-            peopleOptic.reset();
+            countriesOptic.set(countries);
+            citiesOptic.set(cities);
+            peopleOptic.set(people);
         });
         it('should return denormalized state', () => {
             citiesOptic.get();
@@ -314,25 +318,25 @@ describe('Optic', () => {
                 expect(value).toBe(numbers.get());
             });
             it('reduceFilter', () => {
-                const evenNumbers = numbers.reduceFilter((x) => x % 2 === 0);
+                const evenNumbers = numbers.reduce((values) => values.filter(({ value }) => value % 2 === 0));
                 const value = evenNumbers.get();
                 n.set((prev) => prev + 1);
                 expect(value).toBe(evenNumbers.get());
             });
             it('reduceFindFirst', () => {
-                const firstEvenNumber = numbers.reduceFindFirst((x) => x % 2 === 0);
+                const firstEvenNumber = numbers.reduce((values) => values.find(({ value }) => value % 2 === 0));
                 const value = firstEvenNumber.get();
                 n.set((prev) => prev + 1);
                 expect(value).toBe(firstEvenNumber.get());
             });
             it('reduceSort', () => {
-                const descNumbers = numbers.reduceSort((a, b) => b - a);
+                const descNumbers = numbers.reduce((values) => values.sort((a, b) => b.value - a.value));
                 const value = descNumbers.get();
                 n.set((prev) => prev + 1);
                 expect(value).toBe(descNumbers.get());
             });
             it('reduceSlice', () => {
-                const firstTwoNumbers = numbers.reduceSlice(0, 2);
+                const firstTwoNumbers = numbers.reduce((values) => values.slice(0, 2));
                 const value = firstTwoNumbers.get();
                 n.set((prev) => prev + 1);
                 expect(value).toBe(firstTwoNumbers.get());
@@ -340,19 +344,19 @@ describe('Optic', () => {
         });
         describe('array combinators', () => {
             it('slice', () => {
-                const firstTwoNumbers = array.slice(0, 2);
+                const firstTwoNumbers = array.derive(slice(0, 2));
                 const value = firstTwoNumbers.get();
                 n.set((prev) => prev + 1);
                 expect(value).toBe(firstTwoNumbers.get());
             });
             it('reverse', () => {
-                const reversedArray = array.reverse();
+                const reversedArray = array.derive(reverse());
                 const value = reversedArray.get();
                 n.set((prev) => prev + 1);
                 expect(value).toBe(reversedArray.get());
             });
             it('indexBy', () => {
-                const indexed = array.indexBy((x) => `${x}`);
+                const indexed = array.derive(indexBy((x) => `${x}`));
                 const value = indexed.get();
                 n.set((prev) => prev + 1);
                 expect(value).toBe(indexed.get());
@@ -361,18 +365,18 @@ describe('Optic', () => {
         describe('record combinators', () => {
             const state = createState({ obj: { b1: true, b2: false } as Record<string, boolean>, a: 42 });
             it('values', () => {
-                const values = state.obj.values();
-                const value = values.get();
+                const valuesOptic = state.obj.derive(values());
+                const value = valuesOptic.get();
 
                 state.a.set((prev) => prev + 1);
-                expect(values.get()).toBe(value);
+                expect(valuesOptic.get()).toBe(value);
             });
             it('entries', () => {
-                const entries = state.obj.entries();
-                const value = entries.get();
+                const entriesOptic = state.obj.derive(entries());
+                const value = entriesOptic.get();
 
                 state.a.set((prev) => prev + 1);
-                expect(entries.get()).toBe(value);
+                expect(entriesOptic.get()).toBe(value);
             });
         });
         it('derive', () => {

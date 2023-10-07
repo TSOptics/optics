@@ -1,7 +1,6 @@
 {
     "name": "@optics/state",
     "version": "0.2.0",
-    "packageManager": "yarn@3.3.1",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
     "files": [
@@ -9,7 +8,11 @@
         "combinators"
     ],
     "scripts": {
-        "build": "yarn g:build"
+        "test": "jest",
+        "type-check": "tsc --skipLibCheck --noEmit",
+        "build": "tsc --skipLibCheck",
+        "clean": "rm -rf dist && rm tsconfig.tsbuildinfo",
+        "rebuild": "pnpm clean; pnpm build"
     },
     "dependencies": {
         "@optics/core": "workspace:*"

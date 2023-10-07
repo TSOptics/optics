@@ -9,7 +9,7 @@ const focusIndex = (index: number): Lens<any, any[]> => ({
 });
 
 export function useDeriveOptics<
-    TOptic extends ReadOptic<any[], any>,
+    TOptic extends ReadOptic<T, TScope>,
     T extends any[] = GetOpticFocus<TOptic>,
     TScope extends OpticScope = GetOpticScope<TOptic>,
 >(arrayOptic: TOptic, getKey: (t: T[number]) => string): [key: string, optic: Resolve<TOptic, T[number], TScope>][] {

@@ -15,10 +15,7 @@ export {
     DeriveOpticScope,
     TotalLens,
     PartialLens,
-    FoldLens,
-    FoldNLens,
 } from './types';
-export { default as CombinatorsImpl } from './combinators.impl';
 export { get } from './get';
-export { set } from './set';
+export { set, type ReduceValue } from './set';
 export { proxify } from './proxify';

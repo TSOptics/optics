@@ -1,6 +1,6 @@
 import { OpticScope, total, DeriveOpticScope } from '@optics/core';
-import { CombinatorsForOptic } from '../combinators';
-import { _ReadOptic } from './ReadOptic';
+import { Tag, _ReadOptic } from './ReadOptic';
+import { ContextualMethods } from '../ContextualMethods';
 
 export type AsyncReadOpticDeriveFromProps<A, TScope extends OpticScope, T = NonNullable<A>> = T extends Record<any, any>
     ? {
@@ -14,4 +14,5 @@ export type _AsyncReadOptic<A, TScope extends OpticScope> = _ReadOptic<A, TScope
 };
 export type AsyncReadOptic<A, TScope extends OpticScope = total> = _AsyncReadOptic<A, TScope> &
     AsyncReadOpticDeriveFromProps<A, TScope> &
-    CombinatorsForOptic<A, TScope>;
+    ContextualMethods<A, TScope> &
+    Tag<A, TScope>;

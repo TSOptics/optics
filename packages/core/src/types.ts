@@ -16,7 +16,7 @@ export interface Lens<A = any, S = any> {
     get: (s: S) => A;
     set: (a: A, s: S) => S;
     key?: string;
-    type?: 'fold' | 'foldN' | 'map' | 'partial' | 'unstable';
+    type?: 'fold' | 'map' | 'partial' | 'unstable';
 }
 
 export type TotalLens<A = any, S = any> = Omit<Lens<A, S>, 'type'>;
@@ -25,18 +25,6 @@ export interface PartialLens<A = any, S = any> {
     get: (s: S) => A | undefined;
     set: (a: A, s: S) => S;
     type: 'partial';
-    key?: string;
-}
-
-export interface FoldLens<S = any> {
-    get: (s: S[]) => number;
-    type: 'fold';
-    key?: string;
-}
-
-export interface FoldNLens<S = any> {
-    get: (s: S[]) => number[];
-    type: 'foldN';
     key?: string;
 }
 

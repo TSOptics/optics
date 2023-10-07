@@ -2,6 +2,8 @@ import { pureOptic } from './pureOpticConstructor';
 import { PureOptic } from './PureOptic';
 import { PureReadOptic } from './PureReadOptic';
 import { total, partial, mapped } from './types';
+import { find } from './combinators/find';
+import { toPartial } from './combinators/toPartial';
 
 const expectTotal: <A = any, S = any>(thunk: () => PureOptic<A, total, S>) => void = () => {};
 const expectPartial: <A = any, T extends partial = partial, S = any>(
@@ -133,7 +135,7 @@ describe('Type relations', () => {
         });
         it('should become a partial focusing on the non-nullable type when called with toPartial', () => {
             const nullableOptic = pureOptic<{ a: string | null | undefined }>().a;
-            expectPartial<string>(() => nullableOptic.toPartial());
+            expectPartial<string>(() => nullableOptic.derive(toPartial()));
         });
     });
     describe('PureReadOptic', () => {
@@ -151,7 +153,7 @@ describe('Type relations', () => {
             const numberOptic: PureReadOptic<number> = stringReadOptic.derive({ get: parseInt, set: (n) => `${n}` });
 
             const numbersReadOptic: PureReadOptic<number[]> = pureOptic<number[]>();
-            const firstPositiveOptic: PureReadOptic<number, partial> = numbersReadOptic.findFirst((n) => n > 0);
+            const firstPositiveOptic: PureReadOptic<number, partial> = numbersReadOptic.derive(find((n) => n > 0));
         });
     });
 });

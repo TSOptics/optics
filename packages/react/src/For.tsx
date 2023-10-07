@@ -6,7 +6,11 @@ import { useDeriveOptics } from './useDeriveOptics';
 
 const typedMemo: <T>(c: T) => T = memo;
 
-type Props<TOptic extends ReadOptic<any[], any>, T extends any[], TScope extends OpticScope> = {
+type Props<
+    TOptic extends ReadOptic<T, TScope>,
+    T extends any[] = GetOpticFocus<TOptic>,
+    TScope extends OpticScope = GetOpticScope<TOptic>,
+> = {
     optic: TOptic;
     getKey: (t: T[number]) => string;
     children: (t: Resolve<TOptic, T[number], TScope>, key: string) => ReactElement;
@@ -14,7 +18,7 @@ type Props<TOptic extends ReadOptic<any[], any>, T extends any[], TScope extends
 
 export const For = typedMemo(
     <
-        TOptic extends ReadOptic<any[], any>,
+        TOptic extends ReadOptic<T, TScope>,
         T extends any[] = GetOpticFocus<TOptic>,
         TScope extends OpticScope = GetOpticScope<TOptic>,
     >({
@@ -22,7 +26,7 @@ export const For = typedMemo(
         getKey,
         children,
     }: Props<TOptic, T, TScope>) => {
-        const optics = useDeriveOptics(optic, getKey);
+        const optics = useDeriveOptics<TOptic, T, TScope>(optic, getKey);
 
         return <>{optics.map(([key, optic]) => cloneElement(children(optic, key), { key }))}</>;
     },

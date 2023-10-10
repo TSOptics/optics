@@ -12,7 +12,7 @@ export const proxify = (target: any) => {
                     key: 'focus ' + prop,
                     get: (s) => s[prop],
                     set: (a, s) =>
-                        Array.isArray(s) ? [...s.slice(0, prop), a, ...s.slice(prop + 1)] : { ...s, [prop]: a },
+                        Array.isArray(s) ? [...s.slice(0, prop), a, ...s.slice(Number(prop) + 1)] : { ...s, [prop]: a },
                 },
             ]);
         },

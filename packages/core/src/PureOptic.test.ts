@@ -26,9 +26,17 @@ const expectMapped = (optic: PureOptic<any, mapped>) => {};
 
 describe('lens', () => {
     const obj = { a: { as: [1, 2, 3] } };
-    const asFirstOptic = pureOptic<typeof obj>().a.as[0];
+    const objOptic = pureOptic<typeof obj>();
 
+    it('should derive from integer when focused on array', () => {
+        const secondElementOptic = objOptic.a.as[1];
+
+        expect(secondElementOptic.get(obj)).toBe(2);
+        expect(secondElementOptic.set(42, obj)).toEqual({ a: { as: [1, 42, 3] } });
+    });
     it('should be referentially stable', () => {
+        const asFirstOptic = objOptic.a.as[0];
+
         expect(asFirstOptic.set(1, obj)).toBe(obj);
         expect(asFirstOptic.set((prev) => prev, obj)).toBe(obj);
     });

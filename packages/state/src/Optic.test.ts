@@ -342,6 +342,27 @@ describe('Optic', () => {
                 expect(value).toBe(firstTwoNumbers.get());
             });
         });
+        describe('reduce', () => {
+            const usersOptic = createState([
+                { contact: { phone: '+33**' } },
+                { contact: { phone: '+44**' } },
+                { contact: { phone: '+33**' } },
+            ]);
+            const frenchPhonesOptic = usersOptic
+                .map()
+                .contact.reduce((values) => values.filter(({ value }) => value.phone.startsWith('+33'))).phone;
+            it('should return the same value if none of the focused values changed', () => {
+                const value = frenchPhonesOptic.get();
+                usersOptic[1].contact.phone.set((prev) => prev + '**');
+                expect(value).toBe(frenchPhonesOptic.get());
+            });
+            it("should return the same value if the only focused value didn't changed", () => {
+                const firstFrenchPhoneOptic = frenchPhonesOptic.reduce((values) => values[0]);
+                const firstFrenchPhone = firstFrenchPhoneOptic.get();
+                usersOptic[2].contact.phone.set((prev) => prev + '**');
+                expect(firstFrenchPhone).toBe(firstFrenchPhoneOptic.get());
+            });
+        });
         describe('array combinators', () => {
             it('slice', () => {
                 const firstTwoNumbers = array.derive(slice(0, 2));

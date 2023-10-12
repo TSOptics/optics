@@ -26,9 +26,9 @@ class OpticImpl<A, TScope extends OpticScope>
         return proxify(this);
     }
 
-    private cacheByLenses = new Map<Lens, any>();
+    private lensesCache = new Map<Lens, any>();
     private cache: {
-        a?: FocusedValue<A, TScope>;
+        result?: FocusedValue<A, TScope>;
         normalized?: FocusedValue<A, TScope>;
         denormalized?: Denormalized<FocusedValue<A, TScope>>;
     } = {};
@@ -38,26 +38,21 @@ class OpticImpl<A, TScope extends OpticScope>
     ): ResolvedType<A, TScope, TOptions, FocusedValue<A, TScope>, Denormalized<FocusedValue<A, TScope>>> {
         const denormalize = options?.denormalize === false ? false : !!this.dependencies;
         const store = this.getStore();
-        const a = get<A, TScope>(store.state, this.lenses, (s, lens) => {
-            if (lens.type === 'unstable' || lens.type === 'map') {
-                if (this.cacheByLenses.get(lens) === s && this.cache.a !== undefined) {
-                    return this.cache.a;
-                }
-                this.cacheByLenses.set(lens, s);
-            }
-            return undefined;
+        const result = get<A, TScope>(store.state, this.lenses, {
+            lenses: this.lensesCache,
+            result: this.cache.result,
         });
         if (!denormalize || !this.dependencies) {
-            this.cache.a = a;
-            return a as any;
+            this.cache.result = result;
+            return result as any;
         }
-        const dependenciesChanged = this.updateDependenciesStates(this.dependencies, a);
-        if (!dependenciesChanged && this.cache.normalized === a && this.cache.denormalized !== undefined) {
+        const dependenciesChanged = this.updateDependenciesStates(this.dependencies, result);
+        if (!dependenciesChanged && this.cache.normalized === result && this.cache.denormalized !== undefined) {
             return this.cache.denormalized as any;
         }
-        const denormalizedA = this.denormalizeState(a, this.dependencies);
-        this.cache = { normalized: a, denormalized: denormalizedA };
-        return denormalizedA;
+        const denormalizedResult = this.denormalizeState(result, this.dependencies);
+        this.cache = { normalized: result, denormalized: denormalizedResult };
+        return denormalizedResult;
     }
 
     set(a: A | ((prev: A) => A)) {

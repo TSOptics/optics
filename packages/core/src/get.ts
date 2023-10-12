@@ -1,9 +1,10 @@
+import { ReduceValue } from './set';
 import { FocusedValue, Lens, OpticScope } from './types';
 
 export const get = <A, TScope extends OpticScope>(
     s: any,
     lenses: Lens[],
-    earlyReturn?: (s: any, lens: Lens) => any | undefined,
+    cache?: { lenses: Map<Lens, any>; result?: FocusedValue<A, TScope> },
 ): FocusedValue<A, TScope> => {
     const rec = (s: any, lenses: Lens[], isTraversal = false): any => {
         const [lens, ...tailLenses] = lenses;
@@ -14,14 +15,23 @@ export const get = <A, TScope extends OpticScope>(
             const lensesFromMap = getLensesFromMap(lenses);
             return lensesFromMap ? rec([], lensesFromMap) : s;
         }
-        const a = earlyReturn?.(s, lens);
-        if (a !== undefined) {
-            return a;
+        if (cache && (lens.type === 'map' || lens.type === 'unstable')) {
+            if (cache.result && cache.lenses.get(lens) === s) {
+                return cache.result;
+            }
+            cache.lenses.set(lens, s);
         }
         if (lens.type === 'fold') {
-            const reduced = lens.get((s as any[]).map((x) => ({ value: x })));
-            const isArray = Array.isArray(reduced);
-            return rec(isArray ? reduced.map(({ value }) => value) : reduced?.value, tailLenses, isArray);
+            const fold: (ReduceValue | undefined) | ReduceValue[] = lens.get((s as any[]).map((x) => ({ value: x })));
+            if (cache) {
+                if (cache.result && isFoldEqual(fold, cache.lenses.get(lens))) {
+                    return cache.result;
+                }
+                cache.lenses.set(lens, fold);
+            }
+            const isArray = Array.isArray(fold);
+
+            return rec(isArray ? fold.map(({ value }) => value) : fold?.value, tailLenses, isArray);
         }
         if (lens.type === 'map') {
             const slice = lens.get(s) as any[];
@@ -40,6 +50,18 @@ export const get = <A, TScope extends OpticScope>(
     return rec(s, lenses);
 };
 
+const isFoldEqual = (fold: any, previousFold: any) => {
+    if (!previousFold) {
+        return false;
+    }
+    if (Array.isArray(fold)) {
+        return (
+            fold.length === previousFold.length &&
+            fold.every((x: ReduceValue, i: number) => x.value === previousFold[i].value)
+        );
+    }
+    return fold?.value === previousFold?.value;
+};
 const getLensesFromMap = (lenses: Lens[]): Lens[] | undefined => {
     const index = lenses.findIndex((lens) => lens.type === 'map');
     return index !== -1 ? lenses.slice(index) : undefined;

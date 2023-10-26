@@ -4,7 +4,7 @@ import { act } from 'react-test-renderer';
 import { render, fireEvent } from '@testing-library/react';
 import { useOptic } from './useOptic';
 import { useOpticReducer } from './useOpticReducer';
-import { pureOptic, PureOptic, Optic, total, createState, ReadOptic } from '@optics/state';
+import { pureOptic, PureOptic, Optic, total, createState, ReadOptic, partial } from '@optics/state';
 import { For } from './For';
 
 describe('useOptic', () => {
@@ -97,7 +97,7 @@ describe('For', () => {
         );
     });
 
-    const NumbersWithFor = ({ arrayOptic }: { arrayOptic: Optic<number[]> }) => {
+    const NumbersWithFor = ({ arrayOptic }: { arrayOptic: Optic<number[], partial> }) => {
         const prepend = useCallback(() => {
             arrayOptic.set((prev) => [prev[0] - 1, ...prev]);
         }, [arrayOptic]);

@@ -1,15 +1,15 @@
 'use client';
 
-import { GetOpticFocus, GetOpticScope, OpticScope, ReadOptic, Resolve } from '@optics/state';
-import React, { ReactElement, cloneElement, memo } from 'react';
-import { useDeriveOptics } from './useDeriveOptics';
+import { GetOpticFocus, GetOpticScope, ReadOptic, Resolve, deriveOptics, partial } from '@optics/state';
+import React, { ReactElement, cloneElement, memo, useMemo } from 'react';
+import { useOptic } from './useOptic';
 
 const typedMemo: <T>(c: T) => T = memo;
 
 type Props<
-    TOptic extends ReadOptic<T, TScope>,
+    TOptic extends ReadOptic<T, partial>,
     T extends any[] = GetOpticFocus<TOptic>,
-    TScope extends OpticScope = GetOpticScope<TOptic>,
+    TScope extends partial = GetOpticScope<TOptic>,
 > = {
     optic: TOptic;
     getKey: (t: T[number]) => string;
@@ -18,16 +18,18 @@ type Props<
 
 export const For = typedMemo(
     <
-        TOptic extends ReadOptic<T, TScope>,
+        TOptic extends ReadOptic<T, partial>,
         T extends any[] = GetOpticFocus<TOptic>,
-        TScope extends OpticScope = GetOpticScope<TOptic>,
+        TScope extends partial = GetOpticScope<TOptic>,
     >({
         optic,
         getKey,
         children,
     }: Props<TOptic, T, TScope>) => {
-        const optics = useDeriveOptics<TOptic, T, TScope>(optic, getKey);
+        const derivedOpticsOptic = useMemo(() => deriveOptics<TOptic, T>({ optic, getKey }), [optic]);
 
-        return <>{optics.map(([key, optic]) => cloneElement(children(optic, key), { key }))}</>;
+        const [optics = []] = useOptic(derivedOpticsOptic, { denormalize: false });
+
+        return <>{optics.map(([key, optic]) => cloneElement(children(optic as any, key), { key }))}</>;
     },
 );

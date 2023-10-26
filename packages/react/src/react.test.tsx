@@ -5,7 +5,6 @@ import { render, fireEvent } from '@testing-library/react';
 import { useOptic } from './useOptic';
 import { useOpticReducer } from './useOpticReducer';
 import { pureOptic, PureOptic, Optic, total, createState, ReadOptic } from '@optics/state';
-import { useDeriveOptics } from './useDeriveOptics';
 import { For } from './For';
 
 describe('useOptic', () => {
@@ -84,7 +83,7 @@ describe('useOptic', () => {
         const _: [number] = result.current;
     });
 });
-describe('useDeriveOptics', () => {
+describe('For', () => {
     const Number = memo(({ numberOptic }: { numberOptic: Optic<number> }) => {
         const [n] = useOptic(numberOptic);
         const renders = useRef(0);
@@ -98,9 +97,7 @@ describe('useDeriveOptics', () => {
         );
     });
 
-    const Numbers = ({ arrayOptic }: { arrayOptic: Optic<number[]> }) => {
-        const optics = useDeriveOptics(arrayOptic, (n) => n.toString());
-
+    const NumbersWithFor = ({ arrayOptic }: { arrayOptic: Optic<number[]> }) => {
         const prepend = useCallback(() => {
             arrayOptic.set((prev) => [prev[0] - 1, ...prev]);
         }, [arrayOptic]);
@@ -108,66 +105,21 @@ describe('useDeriveOptics', () => {
         return (
             <div>
                 <button onClick={prepend}>prepend</button>
-                {optics.map(([key, optic]) => {
-                    return <Number numberOptic={optic} key={key} />;
-                })}
+                <For optic={arrayOptic} getKey={(n) => n.toString()}>
+                    {(optic) => <Number numberOptic={optic} />}
+                </For>
             </div>
         );
     };
-    const arrayOptic = createState([1, 2, 3, 4, 5]);
 
-    it('should not rerender the cells when prepending', () => {
-        const { getAllByTestId, getByText } = render(<Numbers arrayOptic={arrayOptic} />);
+    it('should not rerender the existing cells when prepending', () => {
+        const { getAllByTestId, getByText } = render(<NumbersWithFor arrayOptic={createState([1, 2, 3, 4, 5])} />);
         const prepend = getByText('prepend');
         fireEvent.click(prepend);
         const elems = getAllByTestId('display');
         const renders = getAllByTestId('renders');
         expect(elems.map((x) => x.textContent)).toStrictEqual(['0', '1', '2', '3', '4', '5']);
         expect(renders.map((x) => x.textContent)).toEqual(['1', '1', '1', '1', '1', '1']);
-    });
-    it('should update if the optic changes', () => {
-        const evensOptic = createState([0, 2, 4, 6]);
-        const oddsOptic = createState([1, 3, 5, 7]);
-        const { result, rerender } = renderHook(
-            ({ optic }: { optic: typeof evensOptic }) => useDeriveOptics(optic, (n) => n.toString()),
-            {
-                initialProps: { optic: evensOptic },
-            },
-        );
-
-        const evenKeys = ['0', '2', '4', '6'];
-        expect(evenKeys).toEqual(result.current.map(([key]) => key));
-
-        rerender({ optic: oddsOptic });
-
-        const oddKeys = ['1', '3', '5', '7'];
-        expect(oddKeys).toEqual(result.current.map(([key]) => key));
-    });
-    describe('For component', () => {
-        const NumbersWithFor = ({ arrayOptic }: { arrayOptic: Optic<number[]> }) => {
-            const prepend = useCallback(() => {
-                arrayOptic.set((prev) => [prev[0] - 1, ...prev]);
-            }, [arrayOptic]);
-
-            return (
-                <div>
-                    <button onClick={prepend}>prepend</button>
-                    <For optic={arrayOptic} getKey={(n) => n.toString()}>
-                        {(optic) => <Number numberOptic={optic} />}
-                    </For>
-                </div>
-            );
-        };
-
-        it('should not rerender the existing cells when prepending', () => {
-            const { getAllByTestId, getByText } = render(<NumbersWithFor arrayOptic={createState([1, 2, 3, 4, 5])} />);
-            const prepend = getByText('prepend');
-            fireEvent.click(prepend);
-            const elems = getAllByTestId('display');
-            const renders = getAllByTestId('renders');
-            expect(elems.map((x) => x.textContent)).toStrictEqual(['0', '1', '2', '3', '4', '5']);
-            expect(renders.map((x) => x.textContent)).toEqual(['1', '1', '1', '1', '1', '1']);
-        });
     });
 });
 describe('useOpticReducer', () => {

@@ -1,4 +1,4 @@
-import { Dispatch, SetStateAction, useMemo, useSyncExternalStore } from 'react';
+import { Dispatch, SetStateAction, useCallback, useMemo, useSyncExternalStore } from 'react';
 import { OpticScope, Optic, GetStateOptions, ResolvedType, ReadOptic } from '@optics/state';
 
 export type UseOpticOptions = GetStateOptions;
@@ -15,11 +15,16 @@ export function useOptic<T, TScope extends OpticScope, TOptions extends UseOptic
     optic: Optic<T, TScope> | ReadOptic<T, TScope>,
     options?: TOptions,
 ) {
-    const optionsWithDefault: UseOpticOptions = { denormalize: true, ...(options ?? {}) };
-    const slice = useSyncExternalStore(
-        (listener) => optic.subscribe(listener),
-        () => optic.get(optionsWithDefault as TOptions),
+    const { denormalize }: UseOpticOptions = { denormalize: true, ...(options ?? {}) };
+
+    const subscribe = useCallback(
+        (listener: () => void) => optic.subscribe(listener, { denormalize }),
+        [denormalize, optic],
     );
+
+    const getSnapshot = useCallback(() => optic.get({ denormalize }), [denormalize, optic]);
+
+    const slice = useSyncExternalStore(subscribe, getSnapshot);
 
     const setSlice = useMemo(() => (optic as Optic<T, TScope>)?.set.bind(optic), [optic]);
 

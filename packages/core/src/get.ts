@@ -23,13 +23,13 @@ export const get = <A, TScope extends OpticScope>(
         }
         if (lens.type === 'fold') {
             const fold: (ReduceValue | undefined) | ReduceValue[] = lens.get((s as any[]).map((x) => ({ value: x })));
-            if (cache) {
+            const isArray = Array.isArray(fold);
+            if (cache && isArray) {
                 if (cache.result && isFoldEqual(fold, cache.lenses.get(lens))) {
                     return cache.result;
                 }
                 cache.lenses.set(lens, fold);
             }
-            const isArray = Array.isArray(fold);
 
             return rec(isArray ? fold.map(({ value }) => value) : fold?.value, tailLenses, isArray);
         }
@@ -54,13 +54,10 @@ const isFoldEqual = (fold: any, previousFold: any) => {
     if (!previousFold) {
         return false;
     }
-    if (Array.isArray(fold)) {
-        return (
-            fold.length === previousFold.length &&
-            fold.every((x: ReduceValue, i: number) => x.value === previousFold[i].value)
-        );
-    }
-    return fold?.value === previousFold?.value;
+    return (
+        fold.length === previousFold.length &&
+        fold.every((x: ReduceValue, i: number) => x.value === previousFold[i].value)
+    );
 };
 const getLensesFromMap = (lenses: Lens[]): Lens[] | undefined => {
     const index = lenses.findIndex((lens) => lens.type === 'map');

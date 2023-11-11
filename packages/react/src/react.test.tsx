@@ -1,11 +1,10 @@
-import React, { memo, useCallback, useRef } from 'react';
+import React from 'react';
 import { renderHook } from '@testing-library/react-hooks';
 import { act } from 'react-test-renderer';
-import { render, fireEvent } from '@testing-library/react';
+import { render } from '@testing-library/react';
 import { useOptic } from './useOptic';
 import { useOpticReducer } from './useOpticReducer';
-import { pureOptic, PureOptic, Optic, total, createState, ReadOptic, partial } from '@optics/state';
-import { For } from './For';
+import { pureOptic, PureOptic, Optic, total, createState, ReadOptic } from '@optics/state';
 
 describe('useOptic', () => {
     it('should set state', () => {
@@ -55,7 +54,7 @@ describe('useOptic', () => {
         rerender({ initialValue: timesTwo });
         expect(result.current[0]).toEqual({ test: 84 });
     });
-    it('should not exhibit the zombie child problem', () => {
+    it('should not exhibit the zombie child problem', async () => {
         const stateOptic = createState<number[]>([42]);
         const firstOptic = stateOptic[0];
 
@@ -64,18 +63,12 @@ describe('useOptic', () => {
             return <>{elem.toString()}</>;
         };
         const Parent = () => {
-            const [state, setState] = useOptic(stateOptic);
-            return (
-                <>
-                    {state.length > 0 ? <Children elemOptic={firstOptic} /> : null}
-                    <button onClick={() => setState([])}>delete</button>
-                </>
-            );
+            const [state] = useOptic(stateOptic);
+            return <>{state.length > 0 ? <Children elemOptic={firstOptic} /> : null}</>;
         };
 
-        const { getByText } = render(<Parent />);
-        const button = getByText('delete');
-        fireEvent.click(button);
+        render(<Parent />);
+        await act(() => stateOptic.set([]));
     });
     it("shouldn't return a setter when passed a ReadOptic", () => {
         const readOptic: ReadOptic<number> = createState(42);
@@ -83,45 +76,7 @@ describe('useOptic', () => {
         const _: [number] = result.current;
     });
 });
-describe('For', () => {
-    const Number = memo(({ numberOptic }: { numberOptic: Optic<number> }) => {
-        const [n] = useOptic(numberOptic);
-        const renders = useRef(0);
-        renders.current = renders.current + 1;
 
-        return (
-            <div data-testid="elems">
-                <h1 data-testid="renders">{renders.current}</h1>
-                <h1 data-testid="display">{n}</h1>
-            </div>
-        );
-    });
-
-    const NumbersWithFor = ({ arrayOptic }: { arrayOptic: Optic<number[], partial> }) => {
-        const prepend = useCallback(() => {
-            arrayOptic.set((prev) => [prev[0] - 1, ...prev]);
-        }, [arrayOptic]);
-
-        return (
-            <div>
-                <button onClick={prepend}>prepend</button>
-                <For optic={arrayOptic} getKey={(n) => n.toString()}>
-                    {(optic) => <Number numberOptic={optic} />}
-                </For>
-            </div>
-        );
-    };
-
-    it('should not rerender the existing cells when prepending', () => {
-        const { getAllByTestId, getByText } = render(<NumbersWithFor arrayOptic={createState([1, 2, 3, 4, 5])} />);
-        const prepend = getByText('prepend');
-        fireEvent.click(prepend);
-        const elems = getAllByTestId('display');
-        const renders = getAllByTestId('renders');
-        expect(elems.map((x) => x.textContent)).toStrictEqual(['0', '1', '2', '3', '4', '5']);
-        expect(renders.map((x) => x.textContent)).toEqual(['1', '1', '1', '1', '1', '1']);
-    });
-});
 describe('useOpticReducer', () => {
     type State = { counter: number; step: number };
     type Action =

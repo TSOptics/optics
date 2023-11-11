@@ -307,38 +307,38 @@ describe('Optic', () => {
         });
     });
     describe('Referential stability', () => {
-        const state = createState({ n: 42, array: [1, 2, 3, 4] });
-        const array = state.array;
-        const n = state.n;
+        const stateOptic = createState({ n: 42, array: [1, 2, 3, 4] });
+        const arrayOptic = stateOptic.array;
+        const nOptic = stateOptic.n;
         describe('map reduce', () => {
-            const numbers = array.map();
+            const numbersOptic = arrayOptic.map();
             it('map', () => {
-                const value = numbers.get();
-                n.set((prev) => prev + 1);
-                expect(value).toBe(numbers.get());
+                const value = numbersOptic.get();
+                nOptic.set((prev) => prev + 1);
+                expect(value).toBe(numbersOptic.get());
             });
             it('reduceFilter', () => {
-                const evenNumbers = numbers.reduce((values) => values.filter(({ value }) => value % 2 === 0));
+                const evenNumbers = numbersOptic.reduce((values) => values.filter(({ value }) => value % 2 === 0));
                 const value = evenNumbers.get();
-                n.set((prev) => prev + 1);
+                nOptic.set((prev) => prev + 1);
                 expect(value).toBe(evenNumbers.get());
             });
             it('reduceFindFirst', () => {
-                const firstEvenNumber = numbers.reduce((values) => values.find(({ value }) => value % 2 === 0));
+                const firstEvenNumber = numbersOptic.reduce((values) => values.find(({ value }) => value % 2 === 0));
                 const value = firstEvenNumber.get();
-                n.set((prev) => prev + 1);
+                nOptic.set((prev) => prev + 1);
                 expect(value).toBe(firstEvenNumber.get());
             });
             it('reduceSort', () => {
-                const descNumbers = numbers.reduce((values) => values.sort((a, b) => b.value - a.value));
+                const descNumbers = numbersOptic.reduce((values) => values.sort((a, b) => b.value - a.value));
                 const value = descNumbers.get();
-                n.set((prev) => prev + 1);
+                nOptic.set((prev) => prev + 1);
                 expect(value).toBe(descNumbers.get());
             });
             it('reduceSlice', () => {
-                const firstTwoNumbers = numbers.reduce((values) => values.slice(0, 2));
+                const firstTwoNumbers = numbersOptic.reduce((values) => values.slice(0, 2));
                 const value = firstTwoNumbers.get();
-                n.set((prev) => prev + 1);
+                nOptic.set((prev) => prev + 1);
                 expect(value).toBe(firstTwoNumbers.get());
             });
         });
@@ -365,21 +365,21 @@ describe('Optic', () => {
         });
         describe('array combinators', () => {
             it('slice', () => {
-                const firstTwoNumbers = array.derive(slice(0, 2));
+                const firstTwoNumbers = arrayOptic.derive(slice(0, 2));
                 const value = firstTwoNumbers.get();
-                n.set((prev) => prev + 1);
+                nOptic.set((prev) => prev + 1);
                 expect(value).toBe(firstTwoNumbers.get());
             });
             it('reverse', () => {
-                const reversedArray = array.derive(reverse());
+                const reversedArray = arrayOptic.derive(reverse());
                 const value = reversedArray.get();
-                n.set((prev) => prev + 1);
+                nOptic.set((prev) => prev + 1);
                 expect(value).toBe(reversedArray.get());
             });
             it('indexBy', () => {
-                const indexed = array.derive(indexBy((x) => `${x}`));
+                const indexed = arrayOptic.derive(indexBy((x) => `${x}`));
                 const value = indexed.get();
-                n.set((prev) => prev + 1);
+                nOptic.set((prev) => prev + 1);
                 expect(value).toBe(indexed.get());
             });
         });

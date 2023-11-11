@@ -5,4 +5,4 @@ export { ReadOptic, ResolvedType } from './Optics/ReadOptic';
 export { AsyncOptic } from './Optics/AsyncOptic';
 export { AsyncReadOptic } from './Optics/AsyncReadOptic';
 export { GetStateOptions, SubscribeOptions, GetOpticFocus, GetOpticScope, Resolve } from './types';
-export { deriveOptics, deriveOpticsMapped } from './deriveOptics';
+export { opticsFromKey, opticsFromKeyMapped } from './opticsFromKey';

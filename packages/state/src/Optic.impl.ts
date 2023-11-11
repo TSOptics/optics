@@ -237,6 +237,10 @@ class OpticImpl<A, TScope extends OpticScope>
         aux(dependencies, state);
         return changed;
     };
+
+    private toString(): string {
+        return `${this.lenses.map((l) => l.key ?? 'lens').toString()}`;
+    }
 }
 
 const isLeaf = (dependencies: Dependencies): dependencies is Dependency => dependencies.hasOwnProperty(leafSymbol);

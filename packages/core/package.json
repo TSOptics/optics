@@ -13,5 +13,6 @@
         "build": "tsc --skipLibCheck",
         "clean": "rm -rf dist && rm tsconfig.tsbuildinfo",
         "rebuild": "pnpm clean; pnpm build"
-    }
+    },
+    "gitHead": "96a83144a6f3ba4edc72fe64eb7318ec64aacde5"
 }

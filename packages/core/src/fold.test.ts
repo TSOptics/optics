@@ -74,6 +74,15 @@ describe('reduce', () => {
             nullableArrayOptic.reduce((values) => values.filter(({ value }) => value % 2 === 0)).get(undefined),
         ).toEqual([]);
     });
+    it('should allow consecutive calls to reduce', () => {
+        const secondOver5AndEven = durabilitiesOptic
+            .reduce((values) => values.filter(({ value }) => value > 5))
+            .reduce((values) => values.filter(({ value }) => value % 2 === 0))
+            .reduce((values) => values[1]);
+        expect(secondOver5AndEven.get(state)).toBe(6);
+        const newState = secondOver5AndEven.set((x) => x + 1, state);
+        expect(durabilitiesOptic.get(newState)).toEqual([12, 7, 2, 7]);
+    });
     it('should return empty array or undefined when reducing to nothing', () => {
         // reduce
         expect(durabilitiesOptic.reduce((values) => values.filter(({ value }) => value === 1000)).get(state)).toEqual(

@@ -34,13 +34,12 @@ export type ResolvedType<
     TScope extends OpticScope,
     TOptions extends Pick<GetStateOptions, 'denormalize'> | undefined,
     TFocusedValue = FocusedValue<T, TScope>,
-    TDenormalized = Denormalized<TFocusedValue>,
-> = undefined extends TOptions
-    ? TDenormalized
+> = NonNullable<TOptions>['denormalize'] extends never
+    ? TFocusedValue
     : NonNullable<TOptions>['denormalize'] extends infer denormalize
-    ? denormalize extends false
-        ? TFocusedValue
-        : TDenormalized
+    ? denormalize extends true
+        ? Denormalized<TFocusedValue>
+        : TFocusedValue
     : never;
 
 export const leafSymbol: unique symbol = Symbol('dependency');

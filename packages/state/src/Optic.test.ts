@@ -128,7 +128,7 @@ describe('Optic', () => {
         });
         it('should return denormalized state', () => {
             citiesOptic.get();
-            const people = peopleOptic.get();
+            const people = peopleOptic.get({ denormalize: true });
             expectType<
                 {
                     name: string;
@@ -181,17 +181,17 @@ describe('Optic', () => {
             const franzOptic = peopleOptic[0];
 
             const normalizedFranz = franzOptic.get({ denormalize: false });
-            const denormalizedFranz = franzOptic.get();
+            const denormalizedFranz = franzOptic.get({ denormalize: true });
 
             wienOptic.inhabitants.set((prev) => prev + 1);
             expect(franzOptic.get({ denormalize: false })).toBe(normalizedFranz);
-            expect(franzOptic.get()).not.toBe(denormalizedFranz);
+            expect(franzOptic.get({ denormalize: true })).not.toBe(denormalizedFranz);
         });
         describe('subscribe', () => {
             const franzOptic = peopleOptic[0];
             it('should subscribe to denormalized state', () => {
                 const listener = jest.fn();
-                const unsubscribe = franzOptic.subscribe(listener);
+                const unsubscribe = franzOptic.subscribe(listener, { denormalize: true });
 
                 franzOptic.driver.set(true);
 
@@ -256,7 +256,7 @@ describe('Optic', () => {
             });
             it('should work when changing dependency', () => {
                 const listener = jest.fn();
-                franzOptic.subscribe(listener);
+                franzOptic.subscribe(listener, { denormalize: true });
 
                 franzOptic.city.set(milanoOptic);
                 expect(listener).toHaveBeenCalledWith({
@@ -289,7 +289,7 @@ describe('Optic', () => {
             const franceOptic = createState({ name: 'France', cities: [parisOptic, lyonOptic] });
             it('should denormalize references', () => {
                 const citiesOptic = franceOptic.cities;
-                expect(citiesOptic.get()).toEqual([
+                expect(citiesOptic.get({ denormalize: true })).toEqual([
                     { name: 'Paris', inhabitants: 2_148_000 },
                     { name: 'Lyon', inhabitants: 513_000 },
                 ]);
@@ -297,7 +297,7 @@ describe('Optic', () => {
             it('should subscribe to reference changes', () => {
                 const citiesOptic = franceOptic.cities;
                 const listener = jest.fn();
-                citiesOptic.subscribe(listener);
+                citiesOptic.subscribe(listener, { denormalize: true });
                 parisOptic.inhabitants.set((prev) => prev + 1);
                 expect(listener).toHaveBeenCalledWith([
                     { name: 'Paris', inhabitants: 2_148_001 },

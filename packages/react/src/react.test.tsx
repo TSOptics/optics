@@ -75,6 +75,19 @@ describe('useOptic', () => {
         const { result } = renderHook(() => useOptic(readOptic));
         const _: [number] = result.current;
     });
+    describe('references', () => {
+        const contactOptic = createState({ phone: '+33**', mail: 'foo@bar.com' });
+        const stateOptic = createState({ name: 'foobar', contact: contactOptic });
+
+        it('should denormalize the result with the denormalize option', () => {
+            const { result } = renderHook(() => useOptic(stateOptic, { denormalize: true }));
+            expect(result.current[0]).toEqual({ name: 'foobar', contact: { phone: '+33**', mail: 'foo@bar.com' } });
+        });
+        it("should't denormalize by default", () => {
+            const { result } = renderHook(() => useOptic(stateOptic));
+            expect(result.current[0]).toEqual({ name: 'foobar', contact: contactOptic });
+        });
+    });
 });
 
 describe('useOpticReducer', () => {

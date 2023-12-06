@@ -15,7 +15,7 @@ export function useOptic<T, TScope extends OpticScope, TOptions extends UseOptic
     optic: Optic<T, TScope> | ReadOptic<T, TScope>,
     options?: TOptions,
 ) {
-    const { denormalize }: UseOpticOptions = { denormalize: true, ...(options ?? {}) };
+    const { denormalize }: UseOpticOptions = { denormalize: false, ...(options ?? {}) };
 
     const subscribe = useCallback(
         (listener: () => void) => optic.subscribe(listener, { denormalize }),

@@ -35,8 +35,8 @@ class OpticImpl<A, TScope extends OpticScope>
 
     get<TOptions extends GetStateOptions | undefined>(
         options?: TOptions | undefined,
-    ): ResolvedType<A, TScope, TOptions, FocusedValue<A, TScope>, Denormalized<FocusedValue<A, TScope>>> {
-        const denormalize = options?.denormalize === false ? false : !!this.dependencies;
+    ): ResolvedType<A, TScope, TOptions> {
+        const denormalize = options?.denormalize === true ? !!this.dependencies : false;
         const store = this.getStore();
         const result = get<A, TScope>(store.state, this.lenses, {
             lenses: this.lensesCache,
@@ -65,7 +65,7 @@ class OpticImpl<A, TScope extends OpticScope>
         listener: (a: ResolvedType<A, TScope, TOptions>) => void,
         options?: TOptions,
     ): () => void {
-        const denormalize = options?.denormalize === false ? false : !!this.dependencies;
+        const denormalize = options?.denormalize === true ? !!this.dependencies : false;
         const store = this.getStore();
         let cachedA = this.get({ denormalize });
         const stateListener = () => {
@@ -140,9 +140,12 @@ class OpticImpl<A, TScope extends OpticScope>
         if (state instanceof OpticImpl) {
             const leaf: Dependency = {
                 optic: state as any,
-                unsubscribe: state.subscribe(() => {
-                    this.listenersDenormalized.forEach((listener) => listener());
-                }),
+                unsubscribe: state.subscribe(
+                    () => {
+                        this.listenersDenormalized.forEach((listener) => listener());
+                    },
+                    { denormalize: true },
+                ),
                 [leafSymbol]: 'leaf',
             };
             return leaf;
@@ -195,9 +198,12 @@ class OpticImpl<A, TScope extends OpticScope>
                 if (dependencies.optic === state) return;
                 dependencies.optic = state;
                 dependencies.unsubscribe();
-                dependencies.unsubscribe = dependencies.optic.subscribe(() => {
-                    this.listenersDenormalized.forEach((listener) => listener());
-                });
+                dependencies.unsubscribe = dependencies.optic.subscribe(
+                    () => {
+                        this.listenersDenormalized.forEach((listener) => listener());
+                    },
+                    { denormalize: true },
+                );
             } else if (Array.isArray(dependencies)) {
                 dependencies.forEach((d, i) => {
                     if (d !== undefined) {

@@ -48,13 +48,13 @@ importers:
 
     packages/data:
         specifiers:
-            '@optics/core': workspace:*
+            '@optics/core': ^0.3.4
         dependencies:
             '@optics/core': link:../core
 
     packages/react:
         specifiers:
-            '@optics/state': workspace:*
+            '@optics/state': ^0.3.4
             '@testing-library/react': ^13.4.0
             '@testing-library/react-hooks': ^8.0.1
             '@types/react': ^18.2.25
@@ -77,7 +77,7 @@ importers:
 
     packages/state:
         specifiers:
-            '@optics/core': workspace:*
+            '@optics/core': ^0.3.4
         dependencies:
             '@optics/core': link:../core
 

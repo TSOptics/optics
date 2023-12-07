@@ -33,9 +33,9 @@ class OpticImpl<A, TScope extends OpticScope>
         denormalized?: Denormalized<FocusedValue<A, TScope>>;
     } = {};
 
-    get<TOptions extends GetStateOptions | undefined>(
-        options?: TOptions | undefined,
-    ): ResolvedType<A, TScope, TOptions> {
+    get(): FocusedValue<A, TScope>;
+    get<TOptions extends GetStateOptions>(options: TOptions): ResolvedType<A, TScope, TOptions>;
+    get<TOptions extends GetStateOptions>(options?: TOptions): ResolvedType<A, TScope, TOptions> {
         const denormalize = options?.denormalize === true ? !!this.dependencies : false;
         const store = this.getStore();
         const result = get<A, TScope>(store.state, this.lenses, {
@@ -61,8 +61,13 @@ class OpticImpl<A, TScope extends OpticScope>
         store.listeners.forEach((listener) => listener(store.state));
     }
 
-    subscribe<TOptions extends SubscribeOptions | undefined>(
+    subscribe(listener: (a: FocusedValue<A, TScope>) => void): () => void;
+    subscribe<TOptions extends SubscribeOptions>(
         listener: (a: ResolvedType<A, TScope, TOptions>) => void,
+        options: TOptions,
+    ): () => void;
+    subscribe<TOptions extends SubscribeOptions>(
+        listener: (a: FocusedValue<A, TScope>) => void,
         options?: TOptions,
     ): () => void {
         const denormalize = options?.denormalize === true ? !!this.dependencies : false;

@@ -32,11 +32,9 @@ export type Denormalized<T> = [T] extends [
 export type ResolvedType<
     T,
     TScope extends OpticScope,
-    TOptions extends Pick<GetStateOptions, 'denormalize'> | undefined,
+    TOptions extends Pick<GetStateOptions, 'denormalize'>,
     TFocusedValue = FocusedValue<T, TScope>,
-> = NonNullable<TOptions>['denormalize'] extends never
-    ? TFocusedValue
-    : NonNullable<TOptions>['denormalize'] extends infer denormalize
+> = NonNullable<TOptions>['denormalize'] extends infer denormalize
     ? denormalize extends true
         ? Denormalized<TFocusedValue>
         : TFocusedValue
@@ -60,10 +58,12 @@ export type ReadOpticDeriveFromProps<A, TScope extends OpticScope, T = NonNullab
     : {};
 
 export interface _ReadOptic<A, TScope extends OpticScope> {
-    get<TOptions extends GetStateOptions | undefined>(options?: TOptions): ResolvedType<A, TScope, TOptions>;
-    subscribe<TOptions extends SubscribeOptions | undefined>(
+    get(): FocusedValue<A, TScope>;
+    get<TOptions extends GetStateOptions>(options: TOptions): ResolvedType<A, TScope, TOptions>;
+    subscribe(listener: (a: FocusedValue<A, TScope>) => void): () => void;
+    subscribe<TOptions extends SubscribeOptions>(
         listener: (a: ResolvedType<A, TScope, TOptions>) => void,
-        options?: TOptions,
+        options: TOptions,
     ): () => void;
 
     derive<B>(lens: PartialLens<B, NonNullable<A>>): Resolve<this, B, TScope extends partial ? partial : TScope>;

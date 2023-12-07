@@ -1,4 +1,4 @@
-export { Lens, OpticScope, PureOptic, mapped, partial, pureOptic, total } from '@optics/core';
+export { Lens, OpticScope, PureOptic, mapped, partial, pureOptic, total, FocusedValue } from '@optics/core';
 export { createState } from './createState';
 export { Optic } from './Optics/Optic';
 export { ReadOptic, ResolvedType } from './Optics/ReadOptic';

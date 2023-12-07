@@ -2,7 +2,7 @@ import React from 'react';
 import { renderHook } from '@testing-library/react-hooks';
 import { act } from 'react-test-renderer';
 import { render } from '@testing-library/react';
-import { useOptic } from './useOptic';
+import { useOptic } from '../useOptic';
 import { Optic, createState, ReadOptic } from '@optics/state';
 
 describe('useOptic', () => {

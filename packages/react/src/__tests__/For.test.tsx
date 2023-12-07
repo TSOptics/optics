@@ -1,7 +1,7 @@
 import { Optic, createState, mapped, partial } from '@optics/state';
 import React, { memo, useRef } from 'react';
-import { useOptic } from './useOptic';
-import { For } from './For';
+import { useOptic } from '../useOptic';
+import { For } from '../For';
 import { act, render } from '@testing-library/react';
 
 describe('For', () => {

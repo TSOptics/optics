@@ -1,5 +1,5 @@
-import { createState } from './createState';
-import { opticsFromKey, opticsFromKeyMapped } from './opticsFromKey';
+import { createState } from '../createState';
+import { opticsFromKey, opticsFromKeyMapped } from '../opticsFromKey';
 
 describe('opticsFromKey', () => {
     describe('with optic on array', () => {

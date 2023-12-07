@@ -6,4 +6,5 @@ module.exports = {
             isolatedModules: true,
         },
     },
+    testPathIgnorePatterns: ['.\\.test\\-d\\.ts'],
 };

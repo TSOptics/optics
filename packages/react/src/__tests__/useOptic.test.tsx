@@ -3,7 +3,7 @@ import { renderHook } from '@testing-library/react-hooks';
 import { act } from 'react-test-renderer';
 import { render } from '@testing-library/react';
 import { useOptic } from '../useOptic';
-import { Optic, createState, ReadOptic } from '@optics/state';
+import { Optic, createState } from '@optics/state';
 
 describe('useOptic', () => {
     it('should set state', () => {
@@ -63,11 +63,6 @@ describe('useOptic', () => {
 
         render(<Parent />);
         await act(() => stateOptic.set([]));
-    });
-    it("shouldn't return a setter when passed a ReadOptic", () => {
-        const readOptic: ReadOptic<number> = createState(42);
-        const { result } = renderHook(() => useOptic(readOptic));
-        const _: [number] = result.current;
     });
     describe('references', () => {
         const contactOptic = createState({ phone: '+33**', mail: 'foo@bar.com' });

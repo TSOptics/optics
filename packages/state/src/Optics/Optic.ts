@@ -1,5 +1,5 @@
 import { OpticScope, total, DeriveOpticScope } from '@optics/core';
-import { Tag, _ReadOptic } from './ReadOptic';
+import { Tag, _ReadOptic, tag } from './ReadOptic';
 import { ContextualMethods } from '../ContextualMethods';
 
 type OpticDeriveFromProps<A, TScope extends OpticScope, T = NonNullable<A>> = T extends Record<any, any>
@@ -8,13 +8,13 @@ type OpticDeriveFromProps<A, TScope extends OpticScope, T = NonNullable<A>> = T 
       }
     : {};
 
-export const writeTag: unique symbol = Symbol('writeTag');
 export interface _Optic<A, TScope extends OpticScope> extends _ReadOptic<A, TScope> {
     set(a: A | ((prev: A) => A)): void;
-    [writeTag]: true;
 }
+
+export type TagWriteable<A, Tscope extends OpticScope> = { [tag]: Tag<A, Tscope>[typeof tag] & { writeable: true } };
 
 export type Optic<A, TScope extends OpticScope = total> = _Optic<A, TScope> &
     OpticDeriveFromProps<A, TScope> &
     ContextualMethods<A, TScope> &
-    Tag<A, TScope>;
+    TagWriteable<A, TScope>;

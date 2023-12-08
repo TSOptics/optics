@@ -1,5 +1,5 @@
 import { OpticScope } from '@optics/core';
-import { ReadOptic, tag } from './Optics/ReadOptic';
+import { ReadOptic, Tag } from './Optics/ReadOptic';
 import { AsyncOptic } from './Optics/AsyncOptic';
 import { AsyncReadOptic } from './Optics/AsyncReadOptic';
 import { Optic } from './Optics/Optic';
@@ -12,9 +12,9 @@ export type SubscribeOptions = {
     denormalize?: boolean;
 };
 
-export type GetOpticFocus<TOptic> = TOptic extends { [tag]: [scope: any, focus: infer T, invariance: any] } ? T : never;
+export type GetOpticFocus<TOptic> = TOptic extends Tag<infer Focus, any> ? Focus : never;
 
-export type GetOpticScope<TOptic> = TOptic extends { [tag]: [scope: infer T, focus: any, invariance: any] } ? T : never;
+export type GetOpticScope<TOptic> = TOptic extends Tag<any, infer Scope> ? Scope : never;
 
 export type Resolve<TOptic, A, TScope extends OpticScope> = [TOptic] extends [{ setAsync(a: any): any }]
     ? AsyncOptic<A, TScope>

@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/rules-of-hooks */
-import { AsyncOptic, AsyncReadOptic, Optic, PureOptic, ReadOptic, mapped, partial } from '@optics/state';
+import { AsyncOptic, AsyncReadOptic, Optic, PureOptic, ReadOptic, mapped, partial, total } from '@optics/state';
 import { expectType } from 'tsd';
 import { Dispatch, SetStateAction } from 'react';
 import { useOptic } from '../useOptic';

@@ -13,11 +13,7 @@ import {
 import { GetStateOptions, Resolve, ResolveReadOnly, SubscribeOptions } from '../types';
 import { ContextualMethods } from '../ContextualMethods';
 
-export const tag: unique symbol = Symbol('tag');
-
-export type Denormalized<T> = [T] extends [
-    { [tag]: [scope: infer TScope extends OpticScope, focus: infer R, invariance: any] },
-]
+export type Denormalized<T> = [T] extends [Tag<infer R, infer TScope extends OpticScope>]
     ? Denormalized<FocusedValue<R, TScope>>
     : T extends Date
     ? T
@@ -80,7 +76,9 @@ export interface _ReadOptic<A, TScope extends OpticScope> {
     ): ResolveReadOnly<this, B, ComposeScopes<TScope, TScopeB, A>>;
 }
 
-export type Tag<A, TScope extends OpticScope> = { [tag]: [scope: TScope, focus: A, invariance: (a: A) => void] };
+export const tag: unique symbol = Symbol('tag');
+
+export type Tag<A, TScope extends OpticScope> = { [tag]: { scope: TScope; focus: A; invariance: (a: A) => void } };
 
 export type ReadOptic<A, TScope extends OpticScope = total> = _ReadOptic<A, TScope> &
     ReadOpticDeriveFromProps<A, TScope> &

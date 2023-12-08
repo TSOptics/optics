@@ -19,7 +19,7 @@ describe('optics type relations', () => {
         expectNotAssignable<PureReadOptic<number>>({} as ReadOptic<number>);
     });
     it("AsyncReadOptic shouldn't be a subtype of Optic", () => {
-        // expectNotAssignable<Optic<number>>({} as AsyncReadOptic<number>);
+        expectNotAssignable<Optic<number>>({} as AsyncReadOptic<number>);
     });
 });
 

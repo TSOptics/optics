@@ -1,12 +1,12 @@
 import { get, proxify, set, FocusedValue, Lens, OpticScope, ReduceValue, partial, mapped } from '@optics/core';
-import { _Optic } from './Optics/Optic';
+import { _Optic, writeTag } from './Optics/Optic';
 import { Denormalized, Dependencies, Dependency, leafSymbol, ResolvedType, tag } from './Optics/ReadOptic';
 import { Store, stores } from './stores';
 import { GetStateOptions, Resolve, SubscribeOptions } from './types';
 import { ArrayOptic, MappedOptic } from './ContextualMethods';
 
 class OpticImpl<A, TScope extends OpticScope>
-    implements ArrayOptic<A>, MappedOptic<A>, Omit<_Optic<A, TScope>, typeof tag>
+    implements ArrayOptic<A>, MappedOptic<A>, Omit<_Optic<A, TScope>, typeof writeTag>
 {
     protected lenses: Lens<any, any>[];
     private storeId: OpticImpl<any, OpticScope>;

@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/rules-of-hooks */
-import { AsyncOptic, Optic, PureOptic, ReadOptic, mapped, partial } from '@optics/state';
+import { AsyncOptic, AsyncReadOptic, Optic, PureOptic, ReadOptic, mapped, partial } from '@optics/state';
 import { expectType } from 'tsd';
 import { Dispatch, SetStateAction } from 'react';
 import { useOptic } from '../useOptic';
@@ -11,7 +11,7 @@ describe('optic type', () => {
     });
     it('should return only the value for read optics', () => {
         expectType<[number]>(useOptic({} as ReadOptic<number>));
-        // expectType<[number]>(useOptic({} as AsyncReadOptic<number>));
+        expectType<[number]>(useOptic({} as AsyncReadOptic<number>));
     });
     it("shouldn't accept non stateful optics", () => {
         // @ts-expect-error

@@ -8,8 +8,10 @@ type OpticDeriveFromProps<A, TScope extends OpticScope, T = NonNullable<A>> = T 
       }
     : {};
 
+export const writeTag: unique symbol = Symbol('writeTag');
 export interface _Optic<A, TScope extends OpticScope> extends _ReadOptic<A, TScope> {
     set(a: A | ((prev: A) => A)): void;
+    [writeTag]: true;
 }
 
 export type Optic<A, TScope extends OpticScope = total> = _Optic<A, TScope> &

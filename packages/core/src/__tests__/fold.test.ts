@@ -1,4 +1,4 @@
-import { pureOptic } from './pureOpticConstructor';
+import { pureOptic } from '../pureOpticConstructor';
 
 describe('map', () => {
     it('should handle consecutive calls to map', () => {

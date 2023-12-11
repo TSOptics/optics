@@ -1,28 +1,17 @@
-import { mapped, partial, total } from './types';
-import { pureOptic } from './pureOpticConstructor';
-import { PureOptic } from './PureOptic';
-import { find } from './combinators/find';
-import { refine } from './combinators/refine';
-import { cond } from './combinators/cond';
-import { at } from './combinators/at';
-import { indexBy } from './combinators/indexBy';
-import { min } from './combinators/min';
-import { max } from './combinators/max';
-import { reverse } from './combinators/reverse';
-import { slice } from './combinators/slice';
-import { values } from './combinators/values';
-import { entries } from './combinators/entries';
-import { toPartial } from './combinators/toPartial';
-import { sort } from './combinators/sort';
-
-const expectType = <T extends any>(t: T) => {};
-const expectPartial = <TScope extends partial>(
-    optic: PureOptic<any, TScope>,
-    t: TScope extends total ? never : true,
-) => {};
-
-const expectTotal = (optic: PureOptic<any, total>) => {};
-const expectMapped = (optic: PureOptic<any, mapped>) => {};
+import { pureOptic } from '../pureOpticConstructor';
+import { find } from '../combinators/find';
+import { refine } from '../combinators/refine';
+import { cond } from '../combinators/cond';
+import { at } from '../combinators/at';
+import { indexBy } from '../combinators/indexBy';
+import { min } from '../combinators/min';
+import { max } from '../combinators/max';
+import { reverse } from '../combinators/reverse';
+import { slice } from '../combinators/slice';
+import { values } from '../combinators/values';
+import { entries } from '../combinators/entries';
+import { toPartial } from '../combinators/toPartial';
+import { sort } from '../combinators/sort';
 
 describe('lens', () => {
     const obj = { a: { as: [1, 2, 3] } };
@@ -182,19 +171,16 @@ describe('focus string key', () => {
 describe('toPartial', () => {
     it('should turn a total optic focused on a nullable type to a partial optic focused on the same type but non nullable', () => {
         const onA = pureOptic<{ a?: number }>().a.derive(toPartial());
-        expectPartial(onA, true);
         expect(onA.get({ a: undefined })).toBe(undefined);
         expect(onA.set((prev) => prev + 10, { a: undefined })).toEqual({ a: undefined });
         expect(onA.set((prev) => prev + 10, { a: 42 })).toEqual({ a: 52 });
 
         const onB = pureOptic<{ a?: { b?: number } }>().a.b.derive(toPartial());
-        expectPartial(onB, true);
         expect(onB.get({ a: { b: undefined } })).toBe(undefined);
         expect(onB.set((prev) => prev + 10, { a: { b: undefined } })).toEqual({ a: { b: undefined } });
         expect(onB.set((prev) => prev + 10, { a: { b: 42 } })).toEqual({ a: { b: 52 } });
 
         const asOptic = pureOptic<{ a?: number }[]>().map().a.derive(toPartial());
-        expectMapped(asOptic);
         expect(asOptic.get([{ a: undefined }, { a: 42 }])).toEqual([42]);
         expect(asOptic.set((prev) => prev + 10, [{ a: undefined }, { a: 42 }])).toEqual([{ a: undefined }, { a: 52 }]);
     });

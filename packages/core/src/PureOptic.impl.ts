@@ -2,12 +2,11 @@ import { ArrayOptic, MappedOptic, Resolve } from './ContextualMethods';
 import { get } from './get';
 import { proxify } from './proxify';
 import { _PureOptic } from './PureOptic';
-import { tag } from './PureReadOptic';
 import { ReduceValue, set } from './set';
 import { FocusedValue, Lens, mapped, OpticScope, partial } from './types';
 
 class PureOpticImpl<A, TScope extends OpticScope, S>
-    implements Omit<_PureOptic<A, TScope, S>, typeof tag>, MappedOptic<A, S>, ArrayOptic<any, S>
+    implements _PureOptic<A, TScope, S>, MappedOptic<A, S>, ArrayOptic<any, S>
 {
     protected lenses: Lens[];
     constructor(lenses: Lens[]) {

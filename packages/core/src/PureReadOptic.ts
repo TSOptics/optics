@@ -11,8 +11,6 @@ import {
     total,
 } from './types';
 
-export const tag: unique symbol = Symbol('tag');
-
 export interface _PureReadOptic<A, TScope extends OpticScope = total, S = any> {
     get(s: S): FocusedValue<A, TScope>;
 
@@ -26,6 +24,8 @@ export interface _PureReadOptic<A, TScope extends OpticScope = total, S = any> {
         other: PureReadOptic<B, TScopeB, NonNullable<A>>,
     ): PureReadOptic<B, ComposeScopes<TScope, TScopeB, A>, S>;
 }
+
+export const tag: unique symbol = Symbol('tag');
 
 export type Tag<A, TScope extends OpticScope, S> = {
     [tag]: [scope: TScope, root: S, invariance: (a: A, s: S) => void];

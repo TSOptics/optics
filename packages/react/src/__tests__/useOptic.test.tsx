@@ -77,4 +77,34 @@ describe('useOptic', () => {
             expect(result.current[0]).toEqual({ name: 'foobar', contact: contactOptic });
         });
     });
+    describe('getOptics', () => {
+        it('should return referentially stable optics', () => {
+            const usersOptic = createState([{ name: 'John' }, { name: 'Jeanne' }, { name: 'Vincent' }]);
+
+            const { getOptics } = renderHook(() => useOptic(usersOptic)).result.current[1];
+            const userOptics = getOptics((user) => user.name);
+
+            act(() => usersOptic.set((prev) => [{ name: 'Marie' }, ...prev]));
+
+            const newUserOptics = getOptics((user) => user.name);
+            userOptics.forEach(([, optic], index) => expect(optic).toBe(newUserOptics[index + 1][1]));
+        });
+    });
+    describe('getOpticsFromMapping', () => {
+        it('should return referentially stable optics', () => {
+            const stateOptic = createState([
+                { country: 'USA', users: [{ name: 'John' }] },
+                { country: 'France', users: [{ name: 'Jeanne' }, { name: 'Vincent' }] },
+            ]);
+            const mappedUsersOptic = stateOptic.map().users.map();
+
+            const { getOpticsFromMapping } = renderHook(() => useOptic(mappedUsersOptic)).result.current[1];
+            const userOptics = getOpticsFromMapping((user) => user.name);
+
+            act(() => stateOptic.set((prev) => [{ country: 'España', users: [{ name: 'José' }] }, ...prev]));
+
+            const newUserOptics = getOpticsFromMapping((user) => user.name);
+            userOptics.forEach(([, optic], index) => expect(optic).toBe(newUserOptics[index + 1][1]));
+        });
+    });
 });

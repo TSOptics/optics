@@ -6,10 +6,7 @@ describe('opticsFromKey', () => {
         describe('derive optics with each focused on an element from a key', () => {
             const arrayOptic = createState([1, 2, 3, 4, 5]);
 
-            const derivedOptics = opticsFromKey({
-                optic: arrayOptic,
-                getKey: (n) => n.toString(),
-            })().map(([, optic]) => optic);
+            const derivedOptics = opticsFromKey(arrayOptic)((n) => n.toString()).map(([, optic]) => optic);
 
             const listeners = derivedOptics.map((optic) => {
                 const listener = jest.fn();
@@ -39,16 +36,13 @@ describe('opticsFromKey', () => {
         describe('referential stability for the same key', () => {
             const arrayOptic = createState([1, 2, 3, 4, 5]);
 
-            const deriveOptics = opticsFromKey({
-                optic: arrayOptic,
-                getKey: (n) => n.toString(),
-            });
-            const initialOptics = deriveOptics().map(([, optic]) => optic);
+            const deriveOptics = opticsFromKey(arrayOptic);
+            const initialOptics = deriveOptics((n) => n.toString()).map(([, optic]) => optic);
 
             arrayOptic.set((prev) => [prev[0] - 1, ...prev]);
             arrayOptic.set((prev) => [prev[0] - 1, ...prev]);
 
-            const newOptics = deriveOptics().map(([, optic]) => optic);
+            const newOptics = deriveOptics((n) => n.toString()).map(([, optic]) => optic);
 
             it("should return the same optic for an element even if it's moved", () => {
                 expect(initialOptics.every((optic, i) => optic === newOptics[i + 2])).toBe(true);
@@ -58,13 +52,10 @@ describe('opticsFromKey', () => {
     });
 
     describe('with mapped optic', () => {
-        describe.only('derive optics with each focused on an element from a key', () => {
+        describe('derive optics with each focused on an element from a key', () => {
             const arrayOptic = createState([1, 2, 3, 4, 5]);
             const mappedOptic = arrayOptic.map();
-            const derivedOptics = opticsFromKeyMapped({
-                optic: mappedOptic,
-                getKey: (n) => n.toString(),
-            })().map(([, optic]) => optic);
+            const derivedOptics = opticsFromKeyMapped(mappedOptic)((n) => n.toString()).map(([, optic]) => optic);
             const listeners = derivedOptics.map((optic) => {
                 const listener = jest.fn();
                 optic.subscribe(listener, { denormalize: false });
@@ -93,16 +84,13 @@ describe('opticsFromKey', () => {
             const arrayOptic = createState([1, 2, 3, 4, 5]);
             const mappedOptic = arrayOptic.map();
 
-            const deriveOptics = opticsFromKeyMapped({
-                optic: mappedOptic,
-                getKey: (n) => n.toString(),
-            });
-            const initialOptics = deriveOptics().map(([, optic]) => optic);
+            const deriveOptics = opticsFromKeyMapped(mappedOptic);
+            const initialOptics = deriveOptics((n) => n.toString()).map(([, optic]) => optic);
 
             arrayOptic.set((prev) => [prev[0] - 1, ...prev]);
             arrayOptic.set((prev) => [prev[0] - 1, ...prev]);
 
-            const newOptics = deriveOptics().map(([, optic]) => optic);
+            const newOptics = deriveOptics((n) => n.toString()).map(([, optic]) => optic);
 
             it("should return the same optic for an element even if it's moved", () => {
                 expect(initialOptics.every((optic, i) => optic === newOptics[i + 2])).toBe(true);

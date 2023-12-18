@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 import { AsyncOptic, AsyncReadOptic, Optic, PureOptic, ReadOptic, mapped, partial } from '@optics/state';
-import { expectType } from 'tsd';
+import { expectAssignable, expectNotAssignable, expectType } from 'tsd';
 import { Dispatch, SetStateAction } from 'react';
 import { useOptic } from '../useOptic';
 
@@ -10,8 +10,8 @@ describe('optic type', () => {
         expectType<[number, { setState: Dispatch<SetStateAction<number>> }]>(useOptic({} as AsyncOptic<number>));
     });
     it('should return only the value for read optics', () => {
-        expectType<[number]>(useOptic({} as ReadOptic<number>));
-        expectType<[number]>(useOptic({} as AsyncReadOptic<number>));
+        expectType<[number, {}]>(useOptic({} as ReadOptic<number>));
+        expectType<[number, {}]>(useOptic({} as AsyncReadOptic<number>));
     });
     it("shouldn't accept non stateful optics", () => {
         // @ts-expect-error
@@ -26,7 +26,34 @@ describe('optic scope', () => {
         );
     });
     it('should return an array for mapped optic', () => {
-        expectType<[number[], { setState: Dispatch<SetStateAction<number>> }]>(useOptic({} as Optic<number, mapped>));
+        expectAssignable<[number[], { setState: Dispatch<SetStateAction<number>> }]>(
+            useOptic({} as Optic<number, mapped>),
+        );
+    });
+});
+
+describe('getOptics', () => {
+    it('should return the getOptic function when the focused type is an array', () => {
+        expectAssignable<{ getOptics: (getKey: (t: number) => string) => readonly [string, Optic<number>][] }>(
+            useOptic({} as Optic<number[]>)[1],
+        );
+        expectNotAssignable<{ getOptics: (getKey: (t: number) => string) => readonly [string, Optic<number>][] }>(
+            useOptic({} as Optic<number>)[1],
+        );
+    });
+    it('should return the getOpticFromMapping function when the optic is mapped', () => {
+        expectAssignable<{
+            getOpticsFromMapping: (getKey: (t: number) => string) => readonly [string, Optic<number>][];
+        }>(useOptic({} as Optic<number, mapped>)[1]);
+        expectNotAssignable<{
+            getOpticsFromMapping: (getKey: (t: number) => string) => readonly [string, Optic<number>][];
+        }>(useOptic({} as Optic<number>)[1]);
+    });
+    it('should return both functions when the optic is mapped and the focused type is an array', () => {
+        expectAssignable<{
+            getOptics: (getKey: (t: number) => string) => readonly [string, Optic<number>][];
+            getOpticsFromMapping: (getKey: (t: number[]) => string) => readonly [string, Optic<number[]>][];
+        }>(useOptic({} as Optic<number[], mapped>)[1]);
     });
 });
 

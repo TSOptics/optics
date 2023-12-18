@@ -9,15 +9,15 @@ describe('useOptic', () => {
     it('should set state', () => {
         const rootOptic = createState({ test: 42 });
         const { result } = renderHook(() => useOptic(rootOptic));
-        act(() => result.current[1]((prev) => ({ test: prev.test * 2 })));
+        act(() => result.current[1].setState((prev) => ({ test: prev.test * 2 })));
         expect(result.current[0]).toStrictEqual({ test: 84 });
     });
     it('should return referentially stable state and setter', () => {
         const rootOptic = createState({ test: 42 });
         const { result, rerender } = renderHook(() => useOptic(rootOptic));
-        const [prevState, prevSetState] = result.current;
+        const [prevState, { setState: prevSetState }] = result.current;
         rerender();
-        const [state, setState] = result.current;
+        const [state, { setState }] = result.current;
         expect(prevState).toBe(state);
         expect(prevSetState).toBe(setState);
     });
@@ -25,7 +25,7 @@ describe('useOptic', () => {
         const rootOptic = createState({ test: 42 });
         const { result } = renderHook(() => useOptic(rootOptic));
         const initialResult = result.current;
-        act(() => initialResult[1]((prev) => prev));
+        act(() => initialResult[1].setState((prev) => prev));
         expect(result.current).toBe(initialResult);
     });
 

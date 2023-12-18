@@ -13,12 +13,16 @@ import {
 
 export type UseOpticOptions = GetStateOptions;
 
+export type Setter<T> = {
+    setState: Dispatch<SetStateAction<T>>;
+};
+
 export function useOptic<TOptic extends ReadOptic<any, OpticScope>>(
     optic: TOptic,
 ): [GetOpticFocus<TOptic>, GetOpticScope<TOptic>] extends [infer TFocus, infer TScope extends OpticScope]
     ? AsyncReadOptic<TFocus, TScope> extends TOptic
         ? [FocusedValue<TFocus, TScope>]
-        : [FocusedValue<TFocus, TScope>, Dispatch<SetStateAction<TFocus>>]
+        : [FocusedValue<TFocus, TScope>, Setter<TFocus>]
     : never;
 export function useOptic<TOptic extends ReadOptic<any, OpticScope>, TOptions extends UseOpticOptions>(
     optic: TOptic,
@@ -26,7 +30,7 @@ export function useOptic<TOptic extends ReadOptic<any, OpticScope>, TOptions ext
 ): [GetOpticFocus<TOptic>, GetOpticScope<TOptic>] extends [infer TFocus, infer TScope extends OpticScope]
     ? AsyncReadOptic<TFocus, TScope> extends TOptic
         ? [ResolvedType<TFocus, TScope, TOptions>]
-        : [ResolvedType<TFocus, TScope, TOptions>, Dispatch<SetStateAction<TFocus>>]
+        : [ResolvedType<TFocus, TScope, TOptions>, Setter<TFocus>]
     : never;
 export function useOptic<TOptic extends ReadOptic<any, OpticScope>>(optic: TOptic, options?: UseOpticOptions) {
     const { denormalize } = { denormalize: false, ...(options ?? {}) };
@@ -40,7 +44,7 @@ export function useOptic<TOptic extends ReadOptic<any, OpticScope>>(optic: TOpti
 
     const slice = useSyncExternalStore(subscribe, getSnapshot);
 
-    const setSlice = useMemo(() => (optic as Optic<any, OpticScope>)?.set.bind(optic), [optic]);
+    const setState = useMemo(() => (optic as Optic<any, OpticScope>)?.set.bind(optic), [optic]);
 
-    return [slice, setSlice];
+    return [slice, { setState }];
 }

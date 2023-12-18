@@ -1,16 +1,16 @@
-import { pureOptic } from './pureOpticConstructor';
+import { focusOn } from '../focusOn';
 
 describe('map', () => {
     it('should handle consecutive calls to map', () => {
         type State = (number[] | undefined)[];
         const state: State = [[1, 2, 3], undefined, [4, 5, 6], undefined];
-        const numbersOptic = pureOptic<State>().map().map();
+        const numbersOptic = focusOn<State>().map().map();
         expect(numbersOptic.get(state)).toEqual([1, 2, 3, 4, 5, 6]);
         expect(numbersOptic.set((x) => x * 2, state)).toEqual([[2, 4, 6], undefined, [8, 10, 12], undefined]);
     });
     it('should focus undefined or null values', () => {
         const state = [32, undefined, 89, null, 1000];
-        const stateOptic = pureOptic<typeof state>().map();
+        const stateOptic = focusOn<typeof state>().map();
         expect(stateOptic.get(state)).toBe(state);
     });
 });
@@ -38,7 +38,7 @@ const state: {
         },
     ],
 };
-const stateOptic = pureOptic<typeof state>();
+const stateOptic = focusOn<typeof state>();
 const itemsOptic = stateOptic.playerList.map().inventory.map();
 const durabilitiesOptic = itemsOptic.durability;
 
@@ -67,7 +67,7 @@ describe('reduce', () => {
     });
     it("should return empty array if a partial doesn't resolve", () => {
         // map
-        const nullableArrayOptic = pureOptic<number[] | undefined>().map();
+        const nullableArrayOptic = focusOn<number[] | undefined>().map();
         expect(nullableArrayOptic.get(undefined)).toEqual([]);
         // reduce to multiple
         expect(
@@ -132,7 +132,7 @@ describe('reduce', () => {
             [5, 6, 7, 8],
             [12, 0],
         ];
-        const stateOptic = pureOptic<typeof state>();
+        const stateOptic = focusOn<typeof state>();
         const evensOptic = stateOptic
             .map()
             .map()

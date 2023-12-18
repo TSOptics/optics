@@ -1,6 +1,6 @@
+import { ContextualMethods } from '../ContextualMethods';
+import { DeriveOpticScope, OpticScope, total } from '../types';
 import { Tag, _PureReadOptic } from './PureReadOptic';
-import { ContextualMethods } from './ContextualMethods';
-import { DeriveOpticScope, OpticScope, total } from './types';
 
 export interface _PureOptic<A, TScope extends OpticScope = total, S = any> extends _PureReadOptic<A, TScope, S> {
     set(a: A | ((prev: A) => A), s: S): S;

@@ -1,5 +1,6 @@
-import { PureOptic } from './PureOptic';
-import { PureReadOptic } from './PureReadOptic';
+import { DataOptic, tag as dataOpticTag } from './DataOptic/DataOptic';
+import { PureOptic } from './PureOptic/PureOptic';
+import { PureReadOptic } from './PureOptic/PureReadOptic';
 import { ReduceValue } from './set';
 import { mapped, OpticScope, partial } from './types';
 
@@ -14,6 +15,8 @@ export interface ArrayOptic<A, S> {
 export type ContextualMethods<A, TScope extends OpticScope, S> = (TScope extends mapped ? MappedOptic<A, S> : {}) &
     (NonNullable<A> extends any[] ? ArrayOptic<NonNullable<A>, S> : {});
 
-export type Resolve<TOptic, A, TScope extends OpticScope, S> = [TOptic] extends [{ set(a: any, s: any): any }]
+export type Resolve<TOptic, A, TScope extends OpticScope, S> = [TOptic] extends [{ [dataOpticTag]: any }]
+    ? DataOptic<A, TScope, S>
+    : [TOptic] extends [{ set(a: any, s: any): any }]
     ? PureOptic<A, TScope, S>
     : PureReadOptic<A, TScope, S>;

@@ -1,6 +1,6 @@
-import { pureOptic } from '@optics/core';
 import { createState } from '../createState';
 import { entries, indexBy, reverse, slice, values } from '../combinators';
+import { focusOn } from '@optics/core';
 
 describe('get and set state', () => {
     const stateOptic = createState({ a: 42 });
@@ -19,7 +19,7 @@ describe('get and set state', () => {
 describe('derive', () => {
     it('should compose with PureOptic', () => {
         const stateOptic = createState({ a: { b: 42 } });
-        const numberOptic = pureOptic<{ b: number }>().b;
+        const numberOptic = focusOn<{ b: number }>().b;
         const numberFromStateOptic = stateOptic.a.derive(numberOptic);
         expect(numberFromStateOptic.get()).toBe(42);
         numberFromStateOptic.set(100);
@@ -323,7 +323,7 @@ describe('Referential stability', () => {
     it('derive from pureOptic', () => {
         const stateOptic = createState({ obj: { b1: true, b2: false }, a: 42 });
         const tupleOptic = stateOptic.obj.derive(
-            pureOptic<{ b1: boolean; b2: boolean }>().derive({
+            focusOn<{ b1: boolean; b2: boolean }>().derive({
                 get: ({ b1, b2 }) => [b1, b2] as const,
                 set: ([b1, b2]) => ({ b1, b2 }),
             }),

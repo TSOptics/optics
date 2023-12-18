@@ -1,9 +1,9 @@
-import { ArrayOptic, MappedOptic, Resolve } from './ContextualMethods';
-import { get } from './get';
-import { proxify } from './proxify';
-import { _PureOptic } from './PureOptic';
-import { ReduceValue, set } from './set';
-import { FocusedValue, Lens, mapped, OpticScope, partial } from './types';
+import { ArrayOptic, MappedOptic, Resolve } from '../ContextualMethods';
+import { get } from '../get';
+import { proxify } from '../proxify';
+import { _PureOptic } from '../PureOptic/PureOptic';
+import { ReduceValue, set } from '../set';
+import { FocusedValue, Lens, mapped, OpticScope, partial } from '../types';
 
 class PureOpticImpl<A, TScope extends OpticScope, S>
     implements _PureOptic<A, TScope, S>, MappedOptic<A, S>, ArrayOptic<any, S>

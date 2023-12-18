@@ -1,4 +1,4 @@
-import { PureOptic } from '../PureOptic';
+import { PureOptic } from '../PureOptic/PureOptic';
 import { total, partial, mapped } from '../types';
 import { toPartial } from '../combinators/toPartial';
 import { expectAssignable, expectNotAssignable, expectType } from 'tsd';

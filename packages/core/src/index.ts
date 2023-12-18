@@ -1,7 +1,6 @@
-export { focusOn } from './DataOptic/focusOn';
-export { pureOptic } from './pureOpticConstructor';
-export { PureOptic } from './PureOptic';
-export { PureReadOptic } from './PureReadOptic';
+export { focusOn } from './focusOn';
+export { PureOptic } from './PureOptic/PureOptic';
+export { PureReadOptic } from './PureOptic/PureReadOptic';
 export { DataOptic } from './DataOptic/DataOptic';
 export {
     mapped,

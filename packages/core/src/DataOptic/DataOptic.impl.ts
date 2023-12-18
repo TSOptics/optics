@@ -1,6 +1,6 @@
 import { ArrayOptic, MappedOptic, Resolve } from '../ContextualMethods';
 import { DataOptic, _DataOptic } from './DataOptic';
-import PureOpticImpl from '../PureOptic.impl';
+import PureOpticImpl from '../PureOptic/PureOptic.impl';
 import { get } from '../get';
 import { proxify } from '../proxify';
 import { ReduceValue, set } from '../set';

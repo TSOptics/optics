@@ -4,11 +4,11 @@ export {
     PureOptic,
     mapped,
     partial,
-    pureOptic,
     total,
     FocusedValue,
     focusOn,
     DataOptic,
+    PureReadOptic,
 } from '@optics/core';
 export { createState } from './createState';
 export { Optic } from './Optics/Optic';

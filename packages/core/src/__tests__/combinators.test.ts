@@ -13,13 +13,13 @@ import {
     toPartial,
     values,
 } from '../combinators';
-import { pureOptic } from '../pureOpticConstructor';
+import { focusOn } from '../focusOn';
 
 describe('combinators', () => {
     describe('cond', () => {
-        const evenNumberOptic = pureOptic<number>().derive(cond((n) => n % 2 === 0));
+        const evenNumberOptic = focusOn<number>().derive(cond((n) => n % 2 === 0));
 
-        const majorNameOptic = pureOptic<{ age: number; name: string }>().derive(cond(({ age }) => age >= 18)).name;
+        const majorNameOptic = focusOn<{ age: number; name: string }>().derive(cond(({ age }) => age >= 18)).name;
         const major = { age: 42, name: 'Louis' };
         const minor = { age: 15, name: 'Killian' };
         it('should get result with predicate true', () => {
@@ -41,14 +41,14 @@ describe('combinators', () => {
         type FooBar = { type: 'foo'; foo: string } | { type: 'bar'; bar: number };
         const foo: FooBar = { type: 'foo', foo: 'test' };
         it('should focus on a part of the union', () => {
-            const fooOptic = pureOptic<FooBar>().derive(refine((a) => a.type === 'foo' && a));
+            const fooOptic = focusOn<FooBar>().derive(refine((a) => a.type === 'foo' && a));
             expect(fooOptic.get(foo)?.foo).toBe('test');
 
             const updated = fooOptic.set({ type: 'foo', foo: 'newFoo' }, foo);
             expect(fooOptic.get(updated)?.foo).toBe('newFoo');
         });
         it('should handle the type narrowing failing', () => {
-            const barOptic = pureOptic<FooBar>().derive(refine((a) => a.type === 'bar' && a));
+            const barOptic = focusOn<FooBar>().derive(refine((a) => a.type === 'bar' && a));
             expect(barOptic.get(foo)).toBeUndefined();
             expect(barOptic.set({ type: 'bar', bar: 99 }, foo)).toBe(foo);
         });
@@ -56,17 +56,17 @@ describe('combinators', () => {
 
     describe('toPartial', () => {
         it('should turn a total optic focused on a nullable type to a partial optic focused on the same type but non nullable', () => {
-            const aOptic = pureOptic<{ a?: number }>().a.derive(toPartial());
+            const aOptic = focusOn<{ a?: number }>().a.derive(toPartial());
             expect(aOptic.get({ a: undefined })).toBe(undefined);
             expect(aOptic.set((prev) => prev + 10, { a: undefined })).toEqual({ a: undefined });
             expect(aOptic.set((prev) => prev + 10, { a: 42 })).toEqual({ a: 52 });
 
-            const bOptic = pureOptic<{ a?: { b?: number } }>().a.b.derive(toPartial());
+            const bOptic = focusOn<{ a?: { b?: number } }>().a.b.derive(toPartial());
             expect(bOptic.get({ a: { b: undefined } })).toBe(undefined);
             expect(bOptic.set((prev) => prev + 10, { a: { b: undefined } })).toEqual({ a: { b: undefined } });
             expect(bOptic.set((prev) => prev + 10, { a: { b: 42 } })).toEqual({ a: { b: 52 } });
 
-            const asOptic = pureOptic<{ a?: number }[]>().map().a.derive(toPartial());
+            const asOptic = focusOn<{ a?: number }[]>().map().a.derive(toPartial());
             expect(asOptic.get([{ a: undefined }, { a: 42 }])).toEqual([42]);
             expect(asOptic.set((prev) => prev + 10, [{ a: undefined }, { a: 42 }])).toEqual([
                 { a: undefined },
@@ -77,7 +77,7 @@ describe('combinators', () => {
     describe('array combinators', () => {
         describe('at', () => {
             const state = [0, 1, 2, 3];
-            const stateOptic = pureOptic<typeof state>();
+            const stateOptic = focusOn<typeof state>();
             it('should focus the element at index', () => {
                 expect(stateOptic.derive(at(3)).get(state)).toBe(3);
                 expect(stateOptic.derive(at(3)).set(42, state)).toEqual([0, 1, 2, 42]);
@@ -93,7 +93,7 @@ describe('combinators', () => {
         });
         describe('indexBy', () => {
             const state = ['earth', 'wind', 'fire', 'water'];
-            const stateOptic = pureOptic<typeof state>();
+            const stateOptic = focusOn<typeof state>();
             const indexedStateOptic = stateOptic.derive(indexBy((x) => x[0]));
             it('should take last element in case of collision', () => {
                 expect(indexedStateOptic.get(state)).toEqual({ e: 'earth', f: 'fire', w: 'water' });
@@ -104,7 +104,7 @@ describe('combinators', () => {
         });
         describe('find', () => {
             const state = [0, 1, 2, 3];
-            const stateOptic = pureOptic<typeof state>();
+            const stateOptic = focusOn<typeof state>();
             it('should focus the first element matching predicate', () => {
                 const firstEvenOptic = stateOptic.derive(find((x) => x % 2 === 0));
                 expect(firstEvenOptic.get(state)).toBe(0);
@@ -121,7 +121,7 @@ describe('combinators', () => {
         });
         describe('max', () => {
             const state = [0, 1, 2, 3];
-            const stateOptic = pureOptic<typeof state>();
+            const stateOptic = focusOn<typeof state>();
             it('should focus the maximum element', () => {
                 const maxOptic = stateOptic.derive(max());
                 expect(maxOptic.get(state)).toBe(3);
@@ -137,7 +137,7 @@ describe('combinators', () => {
             });
             it('should use custom number getter if provided', () => {
                 const state = [{ a: 0 }, { a: 1 }, { a: 2 }, { a: 3 }];
-                const stateOptic = pureOptic<typeof state>();
+                const stateOptic = focusOn<typeof state>();
                 const maxOptic = stateOptic.derive(max((x) => x.a));
                 expect(maxOptic.get(state)).toEqual({ a: 3 });
 
@@ -148,7 +148,7 @@ describe('combinators', () => {
         });
         describe('min', () => {
             const state = [0, 1, 2, 3];
-            const stateOptic = pureOptic<typeof state>();
+            const stateOptic = focusOn<typeof state>();
             it('should focus the minimum element', () => {
                 const minOptic = stateOptic.derive(min());
                 expect(minOptic.get(state)).toBe(0);
@@ -164,7 +164,7 @@ describe('combinators', () => {
             });
             it('should use custom number getter if provided', () => {
                 const state = [{ a: 0 }, { a: 1 }, { a: 2 }, { a: 3 }];
-                const stateOptic = pureOptic<typeof state>();
+                const stateOptic = focusOn<typeof state>();
                 const minOptic = stateOptic.derive(min((x) => x.a));
                 expect(minOptic.get(state)).toEqual({ a: 0 });
 
@@ -175,7 +175,7 @@ describe('combinators', () => {
         });
         describe('reverse', () => {
             const state = [0, 1, 2, 3];
-            const stateOptic = pureOptic<typeof state>();
+            const stateOptic = focusOn<typeof state>();
             it('should reverse the array', () => {
                 expect(stateOptic.derive(reverse()).get(state)).toEqual([3, 2, 1, 0]);
                 expect(stateOptic.derive(reverse()).set([3, 2, 1, 0], state)).toEqual(state);
@@ -183,7 +183,7 @@ describe('combinators', () => {
         });
         describe('slice', () => {
             const state = [0, 1, 2, 3];
-            const stateOptic = pureOptic<typeof state>();
+            const stateOptic = focusOn<typeof state>();
             it('should slice the array', () => {
                 expect(stateOptic.derive(slice(1, 3)).get(state)).toEqual([1, 2]);
                 expect(stateOptic.derive(slice(1, 3)).set([42, 43], state)).toEqual([0, 42, 43, 3]);
@@ -199,7 +199,7 @@ describe('combinators', () => {
         });
         describe('sort', () => {
             const state = [31, 122, 241, 4];
-            const stateOptic = pureOptic<typeof state>();
+            const stateOptic = focusOn<typeof state>();
 
             it('should sort by ascii value by default if no compare function is provided', () => {
                 const sortOptic = stateOptic.derive(sort());
@@ -216,7 +216,7 @@ describe('combinators', () => {
     });
     describe('entries', () => {
         const state: Record<string, number> = { a: 42, b: 67, c: 1000, d: 90 };
-        const stateOptic = pureOptic<typeof state>();
+        const stateOptic = focusOn<typeof state>();
         it('should map over object entries', () => {
             const entriesOptic = stateOptic.derive(entries());
             expect(entriesOptic.get(state)).toEqual([

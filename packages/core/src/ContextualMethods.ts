@@ -1,6 +1,6 @@
 import { DataOptic, tag as dataOpticTag } from './DataOptic/DataOptic';
-import { PureOptic } from './PureOptic';
-import { PureReadOptic } from './PureReadOptic';
+import { PureOptic } from './PureOptic/PureOptic';
+import { PureReadOptic } from './PureOptic/PureReadOptic';
 import { ReduceValue } from './set';
 import { mapped, OpticScope, partial } from './types';
 

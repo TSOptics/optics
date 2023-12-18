@@ -1,8 +1,8 @@
-import { pureOptic } from '../pureOpticConstructor';
+import { focusOn } from '../focusOn';
 
 describe('lens', () => {
     const obj = { a: { as: [1, 2, 3] } };
-    const objOptic = pureOptic<typeof obj>();
+    const objOptic = focusOn<typeof obj>();
 
     it('should derive from integer when focused on array', () => {
         const secondElementOptic = objOptic.a.as[1];
@@ -19,7 +19,7 @@ describe('lens', () => {
 });
 describe('partial', () => {
     type TestObj = { a: { b?: { c: number } } };
-    const cOptic = pureOptic<TestObj>().a.b.c;
+    const cOptic = focusOn<TestObj>().a.b.c;
     const testObj: TestObj = { a: { b: undefined } };
     it('should return undefined', () => {
         expect(cOptic.get(testObj)).toBeUndefined();
@@ -30,16 +30,16 @@ describe('partial', () => {
 });
 describe('derive', () => {
     it('should derive new read optic from get function', () => {
-        const fooOptic = pureOptic<{ foo: string }>().derive({ get: (a) => a.foo });
+        const fooOptic = focusOn<{ foo: string }>().derive({ get: (a) => a.foo });
         expect(fooOptic.get({ foo: 'test' })).toBe('test');
     });
     it('should derive new optic from a get and a set function', () => {
-        const fooOptic = pureOptic<{ foo: string }>().derive({ get: (a) => a.foo, set: (b, a) => ({ ...a, foo: b }) });
+        const fooOptic = focusOn<{ foo: string }>().derive({ get: (a) => a.foo, set: (b, a) => ({ ...a, foo: b }) });
         expect(fooOptic.get({ foo: 'test' })).toBe('test');
         expect(fooOptic.set('newFoo', { foo: 'test' })).toEqual({ foo: 'newFoo' });
     });
     it('should derive new partial optic from partial lens', () => {
-        const evenNumberOptic = pureOptic<number>().derive({
+        const evenNumberOptic = focusOn<number>().derive({
             type: 'partial',
             get: (a) => (a % 2 === 0 ? a : undefined),
             set: (a, s) => (a % 2 === 0 ? a : s),
@@ -51,7 +51,7 @@ describe('derive', () => {
         expect(evenNumberOptic.set(5, 2)).toBe(2);
     });
     it('should derive new partial optic from fold lens and mapped optic', () => {
-        const firstEvenOptic = pureOptic<number[]>()
+        const firstEvenOptic = focusOn<number[]>()
             .map()
             .reduce((values) => values.find(({ value }) => value % 2 === 0));
 
@@ -61,7 +61,7 @@ describe('derive', () => {
         expect(firstEvenOptic.set(90, [1, 3, 2])).toEqual([1, 3, 90]);
     });
     it('should derive new mapped optic from a reduce function returning multiple values', () => {
-        const evenNumbersOptic = pureOptic<number[]>()
+        const evenNumbersOptic = focusOn<number[]>()
             .map()
             .reduce((values) => values.filter(({ value }) => value % 2 === 0));
 
@@ -71,8 +71,8 @@ describe('derive', () => {
         expect(evenNumbersOptic.set((prev) => prev + 10, [1, 2, 3, 4, 5, 6])).toEqual([1, 12, 3, 14, 5, 16]);
     });
     it('should derive a new optic from another optic', () => {
-        const fooOptic = pureOptic<{ foo: { bar: string } }>();
-        const barOptic = pureOptic<{ bar: string }>();
+        const fooOptic = focusOn<{ foo: { bar: string } }>();
+        const barOptic = focusOn<{ bar: string }>();
         const fooBarOptic = fooOptic.foo.derive(barOptic);
 
         expect(fooBarOptic.get({ foo: { bar: 'test' } })).toEqual({ bar: 'test' });
@@ -80,7 +80,7 @@ describe('derive', () => {
     });
 });
 describe('derive isomorphism', () => {
-    const objectOptic = pureOptic<readonly [string, number]>().derive({
+    const objectOptic = focusOn<readonly [string, number]>().derive({
         get: ([name, age]) => ({ name, age }),
         set: (p) => [p.name, p.age] as const,
     });
@@ -90,7 +90,7 @@ describe('derive isomorphism', () => {
         expect(objectOptic.set({ name: 'Albert', age: 65 }, ['Jean', 34])).toStrictEqual(['Albert', 65]);
     });
     it('should derive from celcius to fahrenheit', () => {
-        const tempOptic = pureOptic<number>().derive({
+        const tempOptic = focusOn<number>().derive({
             get: (celcius) => celcius * (9 / 5) + 32,
             set: (fahrenheit) => (fahrenheit - 32) * (5 / 9),
         });
@@ -102,7 +102,7 @@ describe('derive isomorphism', () => {
 });
 describe('focus string key', () => {
     const countryCodes: Record<string, number> = { france: 33, germany: 49, italy: 39 };
-    const countryCodesOptic = pureOptic<typeof countryCodes>();
+    const countryCodesOptic = focusOn<typeof countryCodes>();
 
     it('should focus on the value indexed by the key', () => {
         const franceOptic = countryCodesOptic['france'];
@@ -119,7 +119,7 @@ describe('focus string key', () => {
     });
 });
 describe('custom optic', () => {
-    const evenNumsOptic = pureOptic<number[]>().derive({
+    const evenNumsOptic = focusOn<number[]>().derive({
         get: (s: number[]) => s.filter((n) => n % 2 === 0),
         set: (a) => a,
         key: 'evenNums',
@@ -136,7 +136,7 @@ describe('custom optic', () => {
     };
     it('should work', () => {
         const countryOptic = (country: string) =>
-            pureOptic<typeof countryInfos>().derive({
+            focusOn<typeof countryInfos>().derive({
                 get: (s) => s[country],
                 set: (a, s) => (s[country] !== undefined ? { ...s, [country]: a } : s),
                 key: 'optic on ' + country,

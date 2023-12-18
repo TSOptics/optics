@@ -1,5 +1,4 @@
-import { focusOn } from '../DataOptic/focusOn';
-import { pureOptic } from '../pureOpticConstructor';
+import { focusOn } from '../focusOn';
 
 describe('DataOptic', () => {
     it('should chain set', () => {
@@ -60,7 +59,7 @@ describe('DataOptic', () => {
         });
         it('should derive a new optic from another optic', () => {
             const fooOptic = focusOn({ foo: { bar: 'test' } });
-            const barOptic = pureOptic<{ bar: string }>().bar;
+            const barOptic = focusOn<{ bar: string }>().bar;
             const fooBarOptic = fooOptic.foo.derive(barOptic);
 
             expect(fooBarOptic.get()).toEqual('test');

@@ -1,5 +1,5 @@
 import { PureOptic } from './PureOptic';
-import { ContextualMethods, Resolve } from './ContextualMethods';
+import { ContextualMethods, Resolve } from '../ContextualMethods';
 import {
     ComposeScopes,
     DeriveOpticScope,
@@ -9,7 +9,7 @@ import {
     TotalLens,
     partial,
     total,
-} from './types';
+} from '../types';
 
 export interface _PureReadOptic<A, TScope extends OpticScope = total, S = any> {
     get(s: S): FocusedValue<A, TScope>;

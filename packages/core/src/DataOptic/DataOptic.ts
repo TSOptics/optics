@@ -1,5 +1,5 @@
 import { ContextualMethods } from '../ContextualMethods';
-import { PureOptic } from '../PureOptic';
+import { PureOptic } from '../PureOptic/PureOptic';
 import {
     ComposeScopes,
     DeriveOpticScope,

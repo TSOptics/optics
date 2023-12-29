@@ -14,6 +14,7 @@ import {
     mapped,
     opticsFromKey,
     opticsFromKeyMapped,
+    partial,
 } from '@optics/state';
 
 export type UseOpticOptions = GetStateOptions;
@@ -22,26 +23,35 @@ export type Setter<T> = {
     setState: Dispatch<SetStateAction<T>>;
 };
 
-type GetOptics<TOptic extends ReadOptic<any, OpticScope>> = GetOpticFocus<TOptic> extends infer T extends any[]
-    ? {
-          getOptics: (
-              getKey: (t: T[number]) => string,
-          ) => readonly [key: string, optic: Resolve<TOptic, T[number], total>][];
-      }
-    : {};
-
-type GetOpticsFromMapping<TOptic extends ReadOptic<any, OpticScope>> = [
+type SubscriptionResults<TOptic extends ReadOptic<any, OpticScope>> = [
     GetOpticFocus<TOptic>,
     GetOpticScope<TOptic>,
-] extends [infer T, mapped]
+] extends [infer Focus, infer Scope extends OpticScope]
     ? {
-          getOpticsFromMapping: (
-              getKey: (t: T) => string,
-          ) => readonly [key: string, optic: Resolve<TOptic, T, total>][];
-      }
+          hasValue: <T>(
+              success: (optic: Resolve<TOptic, NonNullable<Focus>, Scope extends partial ? total : mapped>) => T,
+          ) => T | null;
+          guard<T extends FocusedValue<Focus, Scope>>(
+              refine: (value: FocusedValue<Focus, Scope>) => false | T,
+          ): <U>(success: (optic: Resolve<TOptic, T, Scope extends partial ? total : mapped>) => U) => U | null;
+          guard<T extends FocusedValue<Focus, Scope>>(
+              typeGuard: (value: FocusedValue<Focus, Scope>) => value is T,
+          ): <U>(success: (optic: Resolve<TOptic, T, Scope extends partial ? total : mapped>) => U) => U | null;
+      } & (Scope extends mapped
+          ? {
+                getOpticsFromMapping: (
+                    getKey: (t: Focus) => string,
+                ) => readonly [key: string, optic: Resolve<TOptic, Focus, total>][];
+            }
+          : {}) &
+          (Focus extends any[]
+              ? {
+                    getOptics: (
+                        getKey: (t: Focus[number]) => string,
+                    ) => readonly [key: string, optic: Resolve<TOptic, Focus[number], total>][];
+                }
+              : {})
     : {};
-
-type SubscriptionResults<TOptic extends ReadOptic<any, OpticScope>> = GetOptics<TOptic> & GetOpticsFromMapping<TOptic>;
 
 export function useOptic<TOptic extends ReadOptic<any, OpticScope>>(
     optic: TOptic,
@@ -76,5 +86,13 @@ export function useOptic<TOptic extends ReadOptic<any, OpticScope>>(optic: TOpti
 
     const getOpticsFromMapping = useMemo(() => opticsFromKeyMapped(optic as any), [optic]);
 
-    return [slice, { setState, getOptics, getOpticsFromMapping }];
+    const hasValue = useCallback(
+        (success: (optic: TOptic) => unknown) => (optic.get() !== undefined ? success(optic) : null),
+        [optic],
+    );
+
+    const guard = (predicate: (value: any) => boolean) => (success: (narrowedOptic: TOptic) => any) =>
+        predicate(optic.get()) === false ? null : success(optic);
+
+    return [slice, { setState, getOptics, getOpticsFromMapping, hasValue, guard }];
 }

@@ -1,6 +1,6 @@
 {
     "name": "@optics/data",
-    "version": "0.3.4",
+    "version": "0.4.0",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
     "files": [
@@ -12,7 +12,7 @@
         "rebuild": "pnpm clean; pnpm build"
     },
     "dependencies": {
-        "@optics/core": "^0.3.4"
+        "@optics/core": "^0.4.0"
     },
     "gitHead": "96a83144a6f3ba4edc72fe64eb7318ec64aacde5"
 }

@@ -1,18 +1,7 @@
 'use client';
 
-import {
-    GetOpticFocus,
-    GetOpticScope,
-    OpticScope,
-    ReadOptic,
-    Resolve,
-    opticsFromKey,
-    opticsFromKeyMapped,
-    mapped,
-    partial,
-    total,
-} from '@optics/state';
-import React, { ReactElement, cloneElement, memo, useMemo } from 'react';
+import { GetOpticFocus, GetOpticScope, OpticScope, ReadOptic, Resolve, mapped, partial, total } from '@optics/state';
+import React, { ReactElement, cloneElement, memo } from 'react';
 import { useOptic } from './useOptic';
 
 const typedMemo: <T>(c: T) => T = memo;
@@ -41,19 +30,13 @@ function _For<
 ): JSX.Element {
     const { optic, mappedOptic, getKey, children } = params as any;
 
-    const deriveOptics = useMemo(
-        () =>
-            mappedOptic
-                ? opticsFromKeyMapped<ReadOptic<any, mapped>>({ optic: mappedOptic, getKey: getKey })
-                : opticsFromKey<ReadOptic<any[], partial>>({ optic, getKey: getKey }),
-        [mappedOptic, optic],
-    );
+    const [, { getOptics, getOpticsFromMapping }] = useOptic((mappedOptic ?? optic) as ReadOptic<any[], mapped>, {
+        denormalize: false,
+    });
 
-    useOptic(mappedOptic ?? optic, { denormalize: false });
+    const deriveOptics = getOptics ?? getOpticsFromMapping;
 
-    const derivedOptics = deriveOptics();
-
-    return <>{derivedOptics.map(([key, optic]) => cloneElement(children(optic, key), { key }))}</>;
+    return <>{deriveOptics(getKey).map(([key, optic]) => cloneElement(children(optic, key), { key }))}</>;
 }
 
 export const For = typedMemo(_For);

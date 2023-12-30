@@ -115,15 +115,15 @@ describe('useOptic', () => {
         });
     });
 
-    describe('hasValue', () => {
+    describe('whenFocused', () => {
         const stateOptic = createState<{ name: string; contact?: { mail: string | undefined } }>({
             name: 'foobar',
             contact: { mail: 'foo@bar.com' },
         });
         const mailOptic = stateOptic.contact.mail;
-        const useHasValue = () => {
-            const [, { hasValue }] = useOptic(mailOptic);
-            return hasValue((optic) => optic);
+        const useWhenFocused = () => {
+            const [, { whenFocused }] = useOptic(mailOptic);
+            return whenFocused((optic) => optic);
         };
 
         beforeEach(() => {
@@ -134,25 +134,25 @@ describe('useOptic', () => {
         });
 
         it('should provide to the callback the same optic as the one passed to useOptic', () => {
-            const { result } = renderHook(() => useHasValue());
+            const { result } = renderHook(() => useWhenFocused());
             expect(result.current).toBe(mailOptic);
         });
 
         it('should return null if the optic has no value', () => {
-            const { result } = renderHook(() => useHasValue());
+            const { result } = renderHook(() => useWhenFocused());
             expect(result.current).not.toBe(null);
             act(() => stateOptic.set({ name: 'foobar' }));
             expect(result.current).toBe(null);
         });
 
         it('should return null if the focused value is undefined', () => {
-            const { result } = renderHook(() => useHasValue());
+            const { result } = renderHook(() => useWhenFocused());
             expect(result.current).not.toBe(null);
             act(() => mailOptic.set(undefined));
             expect(result.current).toBe(null);
         });
     });
-    describe('guard', () => {
+    describe('whenType', () => {
         type A = {
             type: 'a';
             a: number;
@@ -170,13 +170,13 @@ describe('useOptic', () => {
         });
 
         it('should provide to the callback the same optic as the one passed to useOptic', () => {
-            const { guard } = renderHook(() => useOptic(unionOptic)).result.current[1];
-            guard((union) => union.type === 'a' && union)((optic) => expect(optic).toBe(unionOptic));
+            const { whenType } = renderHook(() => useOptic(unionOptic)).result.current[1];
+            whenType((union) => union.type === 'a' && union)((optic) => expect(optic).toBe(unionOptic));
         });
 
-        it('should return null if the guard is not satisfied', () => {
-            const { guard } = renderHook(() => useOptic(unionOptic)).result.current[1];
-            expect(guard((union) => union.type === 'b' && union)(() => 'success')).toBeNull();
+        it('should return null if the predicate is not satisfied', () => {
+            const { whenType } = renderHook(() => useOptic(unionOptic)).result.current[1];
+            expect(whenType((union) => union.type === 'b' && union)(() => 'success')).toBeNull();
         });
     });
 });

@@ -28,15 +28,15 @@ type SubscriptionResults<TOptic extends ReadOptic<any, OpticScope>> = [
     GetOpticScope<TOptic>,
 ] extends [infer Focus, infer Scope extends OpticScope]
     ? {
-          hasValue: <T>(
-              success: (optic: Resolve<TOptic, NonNullable<Focus>, Scope extends partial ? total : mapped>) => T,
+          whenFocused: <T>(
+              then: (optic: Resolve<TOptic, NonNullable<Focus>, Scope extends partial ? total : mapped>) => T,
           ) => T | null;
-          guard<T extends FocusedValue<Focus, Scope>>(
+          whenType<T extends FocusedValue<Focus, Scope>>(
               refine: (value: FocusedValue<Focus, Scope>) => false | T,
-          ): <U>(success: (optic: Resolve<TOptic, T, Scope extends partial ? total : mapped>) => U) => U | null;
-          guard<T extends FocusedValue<Focus, Scope>>(
+          ): <U>(then: (optic: Resolve<TOptic, T, Scope extends partial ? total : mapped>) => U) => U | null;
+          whenType<T extends FocusedValue<Focus, Scope>>(
               typeGuard: (value: FocusedValue<Focus, Scope>) => value is T,
-          ): <U>(success: (optic: Resolve<TOptic, T, Scope extends partial ? total : mapped>) => U) => U | null;
+          ): <U>(then: (optic: Resolve<TOptic, T, Scope extends partial ? total : mapped>) => U) => U | null;
       } & (Scope extends mapped
           ? {
                 getOpticsFromMapping: (
@@ -86,13 +86,13 @@ export function useOptic<TOptic extends ReadOptic<any, OpticScope>>(optic: TOpti
 
     const getOpticsFromMapping = useMemo(() => opticsFromKeyMapped(optic as any), [optic]);
 
-    const hasValue = useCallback(
+    const whenFocused = useCallback(
         (success: (optic: TOptic) => unknown) => (optic.get() !== undefined ? success(optic) : null),
         [optic],
     );
 
-    const guard = (predicate: (value: any) => boolean) => (success: (narrowedOptic: TOptic) => any) =>
-        predicate(optic.get()) === false ? null : success(optic);
+    const whenType = (predicate: (value: any) => boolean) => (then: (narrowedOptic: TOptic) => any) =>
+        predicate(optic.get()) === false ? null : then(optic);
 
-    return [slice, { setState, getOptics, getOpticsFromMapping, hasValue, guard }];
+    return [slice, { setState, getOptics, getOpticsFromMapping, whenFocused, whenType }];
 }

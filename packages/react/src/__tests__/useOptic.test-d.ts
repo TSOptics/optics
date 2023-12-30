@@ -81,20 +81,20 @@ describe('references', () => {
     });
 });
 
-describe('hasValue', () => {
+describe('whenFocused', () => {
     const optic = {} as Optic<number | undefined, partial>;
-    const [, { hasValue }] = useOptic(optic);
+    const [, { whenFocused }] = useOptic(optic);
 
     it('should narrow a partial to a non-nullable total if predicate is true', () => {
-        hasValue((totalOptic) => expectType<Optic<number, total>>(totalOptic));
+        whenFocused((totalOptic) => expectType<Optic<number, total>>(totalOptic));
     });
 
     it('should return the union of null and the type returned by the function', () => {
-        expectType<number | null>(hasValue(() => 42));
+        expectType<number | null>(whenFocused(() => 42));
     });
 });
 
-describe('guard', () => {
+describe('whenType', () => {
     type A = {
         type: 'a';
         a: number;
@@ -106,17 +106,17 @@ describe('guard', () => {
     type Union = A | B;
 
     const unionOptic = createState<Union>({ type: 'a', a: 42 });
-    const [, { guard }] = useOptic(unionOptic);
+    const [, { whenType }] = useOptic(unionOptic);
 
     it('should narrow the union to the type returned by the predicate', () => {
-        guard((union) => union.type === 'a' && union)((optic) => expectType<Optic<A, total>>(optic));
+        whenType((union) => union.type === 'a' && union)((optic) => expectType<Optic<A, total>>(optic));
     });
 
     it('should narrow the union to the type specified by the type guard', () => {
-        guard((union): union is A => union.type === 'a')((optic) => expectType<Optic<A, total>>(optic));
+        whenType((union): union is A => union.type === 'a')((optic) => expectType<Optic<A, total>>(optic));
     });
 
     it('should return the union of null and the type returned by the function', () => {
-        expectType<number | null>(guard((union) => union.type === 'a' && union)(() => 42));
+        expectType<number | null>(whenType((union) => union.type === 'a' && union)(() => 42));
     });
 });

@@ -50,13 +50,13 @@ importers:
 
     packages/data:
         specifiers:
-            '@optics/core': ^0.3.4
+            '@optics/core': ^0.4.1
         dependencies:
             '@optics/core': link:../core
 
     packages/react:
         specifiers:
-            '@optics/state': ^0.3.6
+            '@optics/state': ^0.4.1
             '@testing-library/react': ^13.4.0
             '@testing-library/react-hooks': ^8.0.1
             '@types/react': ^18.2.25
@@ -79,7 +79,7 @@ importers:
 
     packages/state:
         specifiers:
-            '@optics/core': ^0.3.4
+            '@optics/core': ^0.4.1
         dependencies:
             '@optics/core': link:../core
 

@@ -1,6 +1,6 @@
 {
     "name": "@optics/react",
-    "version": "0.3.6",
+    "version": "0.4.2",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
     "files": [
@@ -16,7 +16,7 @@
         "test-types": "tsd"
     },
     "dependencies": {
-        "@optics/state": "^0.3.6"
+        "@optics/state": "^0.4.1"
     },
     "devDependencies": {
         "@testing-library/react": "^13.4.0",

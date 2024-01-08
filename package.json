@@ -29,7 +29,8 @@
         "g:test": "cd $INIT_CWD && jest",
         "g:type-check": "cd $INIT_CWD && tsc --skipLibCheck --noEmit",
         "g:build": "cd $INIT_CWD && tsc",
-        "g:clean": "cd $INIT_CWD && rm -rf dist && rm tsconfig.tsbuildinfo"
+        "g:clean": "cd $INIT_CWD && rm -rf dist && rm tsconfig.tsbuildinfo",
+        "prepublishOnly": "pnpm run -r --parallel test && pnpm run -r --parallel test-types && pnpm run -r rebuild"
     },
     "repository": {
         "type": "git",

@@ -1,11 +1,10 @@
 import { PureOptic } from '../PureOptic/PureOptic';
-import { PureReadOptic } from '../PureOptic/PureReadOptic';
-import { total, partial, mapped } from '../types';
+import { partial, mapped, readOnly } from '../types';
 import { toPartial } from '../combinators/toPartial';
 import { expectAssignable, expectNotAssignable, expectType } from 'tsd';
 
-declare const totalOptic: PureOptic<string, total, string>;
-declare const totalOnNullableOptic: PureOptic<string | null | undefined, total, string>;
+declare const totalOptic: PureOptic<string, {}, string>;
+declare const totalOnNullableOptic: PureOptic<string | null | undefined, {}, string>;
 declare const partialOptic: PureOptic<string, partial, string>;
 declare const mappedOptic: PureOptic<string, mapped, string>;
 
@@ -23,37 +22,39 @@ describe('OpticScope', () => {
 
     it('partial + partial = partial', () => expectType<typeof partialOptic>(partialOptic.derive(partialOptic)));
 
-    it('partial + mapped = mapped', () => expectType<typeof mappedOptic>(partialOptic.derive(mappedOptic)));
+    it('partial + mapped = mapped & partial', () =>
+        expectAssignable<typeof mappedOptic>(partialOptic.derive(mappedOptic)));
 
     it('mapped + total = mapped', () => expectType<typeof mappedOptic>(mappedOptic.derive(totalOptic)));
 
-    it('mapped + partial = mapped', () => expectType<typeof mappedOptic>(mappedOptic.derive(partialOptic)));
+    it('mapped + partial = mapped & partial', () =>
+        expectAssignable<typeof mappedOptic>(mappedOptic.derive(partialOptic)));
 
     it('mapped + mapped = mapped', () => expectType<typeof mappedOptic>(mappedOptic.derive(mappedOptic)));
 });
 
-declare const pureOptic: PureOptic<string>;
-declare const pureReadOptic: PureReadOptic<string>;
+declare const optic: PureOptic<string>;
+declare const readonlyOptic: PureOptic<string, readOnly>;
 
 describe('Writable status', () => {
     it('PureOptic + PureReadOptic = PureReadOptic', () =>
-        expectType<typeof pureReadOptic>(pureOptic.derive(pureReadOptic)));
+        expectType<typeof readonlyOptic>(optic.derive(readonlyOptic)));
 
     it('PureReadOptic + PureOptic = PureReadOptic', () =>
-        expectType<typeof pureReadOptic>(pureReadOptic.derive(pureOptic)));
+        expectType<typeof readonlyOptic>(readonlyOptic.derive(optic)));
 
     it('PureReadOptic + PureReadOptic = PureReadOptic', () =>
-        expectType<typeof pureReadOptic>(pureReadOptic.derive(pureReadOptic)));
+        expectType<typeof readonlyOptic>(readonlyOptic.derive(readonlyOptic)));
 
-    it('PureOptic + PureOptic = PureOptic', () => expectType<typeof pureOptic>(pureOptic.derive(pureOptic)));
+    it('PureOptic + PureOptic = PureOptic', () => expectType<typeof optic>(optic.derive(optic)));
 
-    it('PureOptic + get = PureReadOptic', () => expectType<typeof pureReadOptic>(pureOptic.derive({ get: (x) => x })));
+    it('PureOptic + get = PureReadOptic', () => expectType<typeof readonlyOptic>(optic.derive({ get: (x) => x })));
 
     it('PureOptic + get & set = PureOptic', () =>
-        expectType<typeof pureOptic>(pureOptic.derive({ get: (x) => x, set: (x) => x })));
+        expectType<typeof optic>(optic.derive({ get: (x) => x, set: (x) => x })));
 
     it('PureReadOptic + get & set = PureReadOptic', () =>
-        expectType<typeof pureReadOptic>(pureReadOptic.derive({ get: (x) => x, set: (x) => x })));
+        expectType<typeof readonlyOptic>(readonlyOptic.derive({ get: (x) => x, set: (x) => x })));
 });
 
 describe('Type relations', () => {
@@ -65,7 +66,7 @@ describe('Type relations', () => {
         expectType<typeof partialOptic>(totalOnNullableOptic.derive(toPartial()));
     });
     it('should be subtype of PureReadOptic', () => {
-        expectAssignable<typeof pureReadOptic>(totalOptic);
-        expectNotAssignable<typeof pureOptic>(pureReadOptic);
+        expectAssignable<typeof readonlyOptic>(totalOptic);
+        expectNotAssignable<typeof optic>(readonlyOptic);
     });
 });

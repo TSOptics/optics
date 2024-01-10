@@ -1,11 +1,11 @@
 import { ReduceValue } from './set';
-import { FocusedValue, Lens, OpticScope } from './types';
+import { FocusedValue, Lens, Modifiers } from './types';
 
-export const get = <A, TScope extends OpticScope>(
+export const get = <A, TModifiers extends Modifiers>(
     s: any,
     lenses: Lens[],
-    cache?: { lenses: Map<Lens, any>; result?: FocusedValue<A, TScope> },
-): FocusedValue<A, TScope> => {
+    cache?: { lenses: Map<Lens, any>; result?: FocusedValue<A, TModifiers> },
+): FocusedValue<A, TModifiers> => {
     const rec = (s: any, lenses: Lens[], isTraversal = false): any => {
         const [lens, ...tailLenses] = lenses;
         if (!lens) {

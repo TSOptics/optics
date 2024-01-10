@@ -2,15 +2,15 @@ export interface partial {
     partial: 'partial';
 }
 
-export interface total extends partial {
-    total: 'total';
-}
-
 export interface mapped {
     map: 'map';
 }
 
-export type OpticScope = mapped | partial;
+export type readOnly = {
+    readOnly: true;
+};
+
+export type Modifiers = Partial<readOnly & partial & mapped>;
 
 export interface Lens<A = any, S = any> {
     get: (s: S) => A;
@@ -37,27 +37,18 @@ export type IsNullable<T> = StrictMode extends false
     ? true
     : false;
 
-export type ComposeScopes<TScopeA extends OpticScope, TScopeB extends OpticScope, A> = mapped extends TScopeA | TScopeB
-    ? mapped
-    : partial extends TScopeA | TScopeB
-    ? partial
-    : IsNullable<A> extends true
-    ? partial
-    : total;
+export type ComposeModifiers<TModifiersA extends Modifiers, TModifiersB extends Modifiers, A> = TModifiersA &
+    TModifiersB &
+    (IsNullable<A> extends true ? partial : {}) extends infer Final extends Modifiers
+    ? Final
+    : never;
 
-export type FocusedValue<T, TScope extends OpticScope> = TScope extends mapped
+export type Prettify<T> = {
+    [K in keyof T]: T[K];
+} & {};
+
+export type FocusedValue<T, TModifiers extends Modifiers> = Pick<TModifiers, 'map'> extends mapped
     ? T[]
-    : TScope extends total
-    ? T
-    : T | undefined;
-
-export type ToPartial<TScope extends OpticScope> = TScope extends total ? partial : TScope;
-export type FocusToPartial<TScope extends OpticScope, T> = TScope extends total ? T : TScope;
-
-export type IsAny<T> = boolean extends (T extends never ? true : false) ? true : false;
-
-export type DeriveOpticScope<T, TScope extends OpticScope> = IsNullable<T> extends true
-    ? TScope extends partial
-        ? partial
-        : TScope
-    : TScope;
+    : Pick<TModifiers, 'partial'> extends partial
+    ? T | undefined
+    : T;

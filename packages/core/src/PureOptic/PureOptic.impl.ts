@@ -1,12 +1,16 @@
-import { ArrayOptic, MappedOptic, Resolve } from '../ContextualMethods';
+import { ArrayOptic, MappedOptic, Resolve, WriteOptic } from '../ContextualMethods';
 import { get } from '../get';
 import { proxify } from '../proxify';
 import { _PureOptic } from '../PureOptic/PureOptic';
 import { ReduceValue, set } from '../set';
-import { FocusedValue, Lens, mapped, OpticScope, partial } from '../types';
+import { FocusedValue, Lens, mapped, Modifiers, partial } from '../types';
 
-class PureOpticImpl<A, TScope extends OpticScope, S>
-    implements _PureOptic<A, TScope, S>, MappedOptic<A, S>, ArrayOptic<any, S>
+class PureOpticImpl<A, TModifiers extends Modifiers, S>
+    implements
+        _PureOptic<A, TModifiers, S>,
+        MappedOptic<A, TModifiers, S>,
+        ArrayOptic<any, TModifiers, S>,
+        WriteOptic<A, S>
 {
     protected lenses: Lens[];
     constructor(lenses: Lens[]) {
@@ -14,7 +18,7 @@ class PureOpticImpl<A, TScope extends OpticScope, S>
         return proxify(this);
     }
 
-    get(s: S): FocusedValue<A, TScope> {
+    get(s: S): FocusedValue<A, TModifiers> {
         return get(s, this.lenses);
     }
 
@@ -37,13 +41,17 @@ class PureOpticImpl<A, TScope extends OpticScope, S>
         ]);
     }
 
-    map<Elem = A extends (infer R)[] ? R : never>(): Resolve<this, Elem, mapped, S> {
+    map<Elem = A extends (infer R)[] ? R : never>(): Resolve<this, Elem, TModifiers & mapped, S> {
         return this.instantiate([{ get: (s) => s, set: (a) => a, key: 'map', type: 'map' }]);
     }
 
-    reduce(reducer: (values: ReduceValue<A>[]) => ReduceValue<A>[]): Resolve<this, A, mapped, S>;
-    reduce(reducer: (values: ReduceValue<A>[]) => ReduceValue<A>): Resolve<this, A, partial, S>;
-    reduce(reducer: any): Resolve<this, A, partial, S> | Resolve<this, A, mapped, S> {
+    reduce(reducer: (values: ReduceValue<A>[]) => ReduceValue<A>[]): Resolve<this, A, TModifiers & mapped, S>;
+    reduce(
+        reducer: (values: ReduceValue<A>[]) => ReduceValue<A>,
+    ): Resolve<this, A, Omit<TModifiers, 'mapped'> & partial, S>;
+    reduce(
+        reducer: any,
+    ): Resolve<this, A, TModifiers & mapped, S> | Resolve<this, A, Omit<TModifiers, 'mapped'> & partial, S> {
         return this.instantiate([{ get: reducer, set: noop, key: 'reduce', type: 'fold' }]);
     }
 

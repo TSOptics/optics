@@ -4,10 +4,10 @@ import PureOpticImpl from '../PureOptic/PureOptic.impl';
 import { get } from '../get';
 import { proxify } from '../proxify';
 import { ReduceValue, set } from '../set';
-import { FocusedValue, Lens, OpticScope, mapped, partial, total } from '../types';
+import { FocusedValue, Lens, Modifiers, mapped, partial } from '../types';
 
-class DataOpticImpl<A, TScope extends OpticScope, S>
-    implements _DataOptic<A, TScope, S>, ArrayOptic<A, S>, MappedOptic<A, S>
+class DataOpticImpl<A, TModifiers extends Modifiers, S>
+    implements _DataOptic<A, TModifiers, S>, ArrayOptic<A, TModifiers, S>, MappedOptic<A, TModifiers, S>
 {
     protected lenses: Lens[];
     constructor(lenses: Lens[], private value: S) {
@@ -15,11 +15,11 @@ class DataOpticImpl<A, TScope extends OpticScope, S>
         return proxify(this);
     }
 
-    get(): FocusedValue<A, TScope> {
+    get(): FocusedValue<A, TModifiers> {
         return get(this.value, this.lenses);
     }
 
-    set(a: A | ((prev: A) => A)): DataOptic<S, total, S> {
+    set(a: A | ((prev: A) => A)): DataOptic<S, {}, S> {
         const newValue = set(a, this.value, this.lenses);
         return new DataOpticImpl([this.lenses[0]], newValue) as any;
     }

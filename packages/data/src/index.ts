@@ -1,1 +1,1 @@
-export { Lens, OpticScope, PureOptic, mapped, partial, total, focusOn, DataOptic, PureReadOptic } from '@optics/core';
+export { Lens, PureOptic, mapped, partial, readOnly, focusOn, DataOptic } from '@optics/core';

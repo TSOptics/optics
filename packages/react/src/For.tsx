@@ -1,42 +1,31 @@
 'use client';
 
-import { GetOpticFocus, GetOpticScope, OpticScope, ReadOptic, Resolve, mapped, partial, total } from '@optics/state';
-import React, { ReactElement, cloneElement, memo } from 'react';
+import { Modifiers, Optic, mapped } from '@optics/state';
+import React, { ReactElement, ReactNode, cloneElement, memo } from 'react';
 import { useOptic } from './useOptic';
 
 const typedMemo: <T>(c: T) => T = memo;
 
-function _For<
-    TOptic extends ReadOptic<TOpticFocus, OpticScope>,
-    TMappedOptic extends ReadOptic<TMappedOpticFocus, mapped>,
-    TOpticFocus extends any[] = GetOpticFocus<TOptic>,
-    TMappedOpticFocus = GetOpticFocus<TMappedOptic>,
-    TResolvedFocus = [TMappedOptic] extends [never] ? TOpticFocus[number] : TMappedOpticFocus,
-    TResolvedOptic = [TMappedOptic] extends [never]
-        ? Resolve<TOptic, TResolvedFocus, GetOpticScope<TOptic> extends partial ? total : mapped>
-        : Resolve<TMappedOptic, TResolvedFocus, total>,
->(
-    params: (
-        | {
-              optic: TOptic;
-          }
-        | {
-              mappedOptic: TMappedOptic;
-          }
-    ) & {
-        getKey: (t: TResolvedFocus) => string;
-        children: (t: TResolvedOptic, key: string) => ReactElement;
-    },
-): JSX.Element {
-    const { optic, mappedOptic, getKey, children } = params as any;
+function _For<TFocus extends any[], TModifiers extends Modifiers>(props: {
+    optic: Optic<TFocus, TModifiers>;
+    getKey: (value: TFocus[number]) => string;
+    children: (optic: Optic<TFocus[number], Omit<TModifiers, 'partial'>>, key: string) => ReactElement;
+}): ReactNode;
+function _For<TFocus, TModifiers extends Modifiers & mapped>(props: {
+    mappedOptic: Optic<TFocus, TModifiers>;
+    getKey: (value: TFocus) => string;
+    children: (optic: Optic<TFocus, Omit<TModifiers, 'map' | 'partial'>>, key: string) => ReactElement;
+}): ReactNode;
+function _For(params: any): ReactNode {
+    const { optic, mappedOptic, getKey, children } = params;
 
-    const [, { getOptics, getOpticsFromMapping }] = useOptic((mappedOptic ?? optic) as ReadOptic<any[], mapped>, {
+    const [, { getOptics, getOpticsFromMapping }] = useOptic((mappedOptic ?? optic) as Optic<any[], mapped>, {
         denormalize: false,
     });
 
     const deriveOptics = getOptics ?? getOpticsFromMapping;
 
-    return <>{deriveOptics(getKey).map(([key, optic]) => cloneElement(children(optic, key), { key }))}</>;
+    return deriveOptics(getKey).map(([key, optic]) => cloneElement(children(optic, key), { key }));
 }
 
 export const For = typedMemo(_For);

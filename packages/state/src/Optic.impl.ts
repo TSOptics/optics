@@ -1,13 +1,14 @@
-import { get, proxify, set, FocusedValue, Lens, OpticScope, ReduceValue, partial, mapped } from '@optics/core';
-import { _Optic } from './Optics/Optic';
-import { Denormalized, Dependencies, Dependency, leafSymbol, ResolvedType } from './Optics/ReadOptic';
+import { get, proxify, set, FocusedValue, Lens, ReduceValue, partial, mapped } from '@optics/core';
 import { Store, stores } from './stores';
-import { GetStateOptions, Resolve, SubscribeOptions } from './types';
-import { ArrayOptic, MappedOptic } from './ContextualMethods';
+import { GetStateOptions, Modifiers, SubscribeOptions } from './types';
+import { ArrayOptic, MappedOptic, WriteOptic } from './ContextualMethods';
+import { _Optic, Denormalized, Dependencies, Dependency, leafSymbol, Optic, ResolvedType } from './Optics/Optic';
 
-class OpticImpl<A, TScope extends OpticScope> implements ArrayOptic<A>, MappedOptic<A>, _Optic<A, TScope> {
+class OpticImpl<A, TModifiers extends Modifiers = {}>
+    implements ArrayOptic<A, TModifiers>, MappedOptic<A, TModifiers>, WriteOptic<A>, _Optic<A, TModifiers>
+{
     protected lenses: Lens<any, any>[];
-    private storeId: OpticImpl<any, OpticScope>;
+    private storeId: OpticImpl<any>;
     private listenersDenormalized = new Set<() => void>();
 
     private _dependencies?: Dependencies | null;
@@ -18,7 +19,7 @@ class OpticImpl<A, TScope extends OpticScope> implements ArrayOptic<A>, MappedOp
         return this._dependencies;
     }
 
-    constructor(lenses: Lens[], private initialValue: any, _storeId?: OpticImpl<any, OpticScope>) {
+    constructor(lenses: Lens[], private initialValue: any, _storeId?: OpticImpl<any>) {
         this.lenses = lenses;
         this.storeId = _storeId ?? (this as any);
         return proxify(this);
@@ -26,17 +27,17 @@ class OpticImpl<A, TScope extends OpticScope> implements ArrayOptic<A>, MappedOp
 
     private lensesCache = new Map<Lens, any>();
     private cache: {
-        result?: FocusedValue<A, TScope>;
-        normalized?: FocusedValue<A, TScope>;
-        denormalized?: Denormalized<FocusedValue<A, TScope>>;
+        result?: FocusedValue<A, TModifiers>;
+        normalized?: FocusedValue<A, TModifiers>;
+        denormalized?: Denormalized<FocusedValue<A, TModifiers>>;
     } = {};
 
-    get(): FocusedValue<A, TScope>;
-    get<TOptions extends GetStateOptions>(options: TOptions): ResolvedType<A, TScope, TOptions>;
-    get<TOptions extends GetStateOptions>(options?: TOptions): ResolvedType<A, TScope, TOptions> {
+    get(): FocusedValue<A, TModifiers>;
+    get<TOptions extends GetStateOptions>(options: TOptions): ResolvedType<A, TModifiers, TOptions>;
+    get<TOptions extends GetStateOptions>(options?: TOptions): ResolvedType<A, TModifiers, TOptions> {
         const denormalize = options?.denormalize === true ? !!this.dependencies : false;
         const store = this.getStore();
-        const result = get<A, TScope>(store.state, this.lenses, {
+        const result = get<A, TModifiers>(store.state, this.lenses, {
             lenses: this.lensesCache,
             result: this.cache.result,
         });
@@ -59,13 +60,13 @@ class OpticImpl<A, TScope extends OpticScope> implements ArrayOptic<A>, MappedOp
         store.listeners.forEach((listener) => listener(store.state));
     }
 
-    subscribe(listener: (a: FocusedValue<A, TScope>) => void): () => void;
+    subscribe(listener: (a: FocusedValue<A, TModifiers>) => void): () => void;
     subscribe<TOptions extends SubscribeOptions>(
-        listener: (a: ResolvedType<A, TScope, TOptions>) => void,
+        listener: (a: ResolvedType<A, TModifiers, TOptions>) => void,
         options: TOptions,
     ): () => void;
     subscribe<TOptions extends SubscribeOptions>(
-        listener: (a: FocusedValue<A, TScope>) => void,
+        listener: (a: FocusedValue<A, TModifiers>) => void,
         options?: TOptions,
     ): () => void {
         const denormalize = options?.denormalize === true ? !!this.dependencies : false;
@@ -115,13 +116,13 @@ class OpticImpl<A, TScope extends OpticScope> implements ArrayOptic<A>, MappedOp
         ]);
     }
 
-    map<Elem = A extends (infer R)[] ? R : never>(): Resolve<this, Elem, mapped> {
+    map<Elem = A extends (infer R)[] ? R : never>(): Optic<Elem, TModifiers & mapped> {
         return this.instantiate([{ get: (s) => s, set: (a) => a, key: 'map', type: 'map' }]);
     }
 
-    reduce(reducer: (values: ReduceValue<A>[]) => ReduceValue<A>[]): Resolve<this, A, mapped>;
-    reduce(reducer: (values: ReduceValue<A>[]) => ReduceValue<A>): Resolve<this, A, partial>;
-    reduce(reducer: any): Resolve<this, A, partial> | Resolve<this, A, mapped> {
+    reduce(reducer: (values: ReduceValue<A>[]) => ReduceValue<A>[]): Optic<A, TModifiers & mapped>;
+    reduce(reducer: (values: ReduceValue<A>[]) => ReduceValue<A>): Optic<A, Omit<TModifiers, 'map'> & partial>;
+    reduce(reducer: any): Optic<A, Omit<TModifiers, 'map'> & partial> | Optic<A, TModifiers & mapped> {
         return this.instantiate([{ get: reducer, set: () => {}, key: 'reduce', type: 'fold' }]);
     }
 
@@ -226,7 +227,7 @@ class OpticImpl<A, TScope extends OpticScope> implements ArrayOptic<A>, MappedOp
         let changed = false;
         const aux = (dependencies: Dependencies, state: any) => {
             if (isLeaf(dependencies)) {
-                const newState = (state as _Optic<any, OpticScope>).get({ denormalize: true });
+                const newState = (state as _Optic<any, Modifiers>).get({ denormalize: true });
                 if (newState !== dependencies.state) {
                     changed = true;
                 }

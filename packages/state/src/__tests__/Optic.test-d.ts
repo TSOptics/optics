@@ -1,25 +1,26 @@
-import { PureOptic, PureReadOptic, partial, total } from '@optics/core';
+import { PureOptic, partial, readOnly } from '@optics/core';
 import { expectAssignable, expectNotAssignable, expectType } from 'tsd';
-import { AsyncOptic } from '../Optics/AsyncOptic';
-import { AsyncReadOptic } from '../Optics/AsyncReadOptic';
 import { Optic } from '../Optics/Optic';
-import { ReadOptic } from '../Optics/ReadOptic';
+import { async } from '../types';
 
-describe('optics type relations', () => {
-    it('Optic should be a subtype of Optic', () => {
-        expectAssignable<ReadOptic<number>>({} as Optic<number>);
+describe('optics type relations with modifiers', () => {
+    it('Optic should be a subtype of readonly Optic', () => {
+        expectAssignable<Optic<number, readOnly>>({} as Optic<number>);
     });
-    it('AsyncReadOptic should be a subtype of ReadOptic', () => {
-        expectAssignable<ReadOptic<number>>({} as AsyncReadOptic<number>);
+    it('async & read Optic should be a subtype of readonly Optic', () => {
+        expectAssignable<Optic<number, readOnly>>({} as Optic<number, readOnly & async>);
     });
-    it('AsyncOptic should be a subtype of Optic', () => {
-        expectAssignable<Optic<number>>({} as AsyncOptic<number>);
+    it('async Optic should be a subtype of Optic', () => {
+        expectAssignable<Optic<number>>({} as Optic<number, async>);
     });
     it('Optic should not be a subtype of PureOptic', () => {
-        expectNotAssignable<PureReadOptic<number>>({} as ReadOptic<number>);
+        expectNotAssignable<PureOptic<number>>({} as Optic<number>);
     });
-    it("AsyncReadOptic shouldn't be a subtype of Optic", () => {
-        expectNotAssignable<Optic<number>>({} as AsyncReadOptic<number>);
+    it("async & read Optic shouldn't be a subtype of Optic", () => {
+        expectNotAssignable<Optic<number>>({} as Optic<number, async & readOnly>);
+    });
+    it('Optic should be a subtype of partial Optic', () => {
+        expectAssignable<Optic<number, partial>>({} as Optic<number>);
     });
 });
 
@@ -28,26 +29,22 @@ describe('variance', () => {
         expectNotAssignable<Optic<number | string>>({} as Optic<string>);
         expectNotAssignable<Optic<number>>({} as Optic<string | number>);
     });
-    it('should be covariant on optic scope', () => {
-        expectAssignable<Optic<string, partial>>({} as Optic<string, total>);
-        expectNotAssignable<Optic<string, total>>({} as Optic<string, partial>);
-    });
 });
 
 describe('composition with derive', () => {
     it('should compose with PureOptic if PureOptic.S == Optic.A', () => {
         const optic = {} as Optic<{ a: number }>;
-        const pure = {} as PureOptic<number, total, { a: number }>;
-        expectType<Optic<number, total>>(optic.derive(pure));
+        const pure = {} as PureOptic<number, {}, { a: number }>;
+        expectType<Optic<number>>(optic.derive(pure));
     });
-    it('should return a read only type when composed with PureReadOptic', () => {
+    it('should return a readonly Optic when composed with readonly PureOptic', () => {
         const optic = {} as Optic<{ a: number }>;
-        const pure = {} as PureReadOptic<number, total, { a: number }>;
-        expectType<ReadOptic<number, total>>(optic.derive(pure));
+        const pure = {} as PureOptic<number, readOnly, { a: number }>;
+        expectType<Optic<number, readOnly>>(optic.derive(pure));
     });
-    it('should return a read only optic when derived with get function', () => {
+    it('should return a readonly optic when derived with get function', () => {
         const optic = {} as Optic<{ a: number }>;
-        expectType<ReadOptic<number, total>>(optic.derive({ get: (x) => x.a }));
+        expectType<Optic<number, readOnly>>(optic.derive({ get: (x) => x.a }));
     });
     it('should return an optic when derived with get and set function', () => {
         const optic = {} as Optic<{ a: number }>;

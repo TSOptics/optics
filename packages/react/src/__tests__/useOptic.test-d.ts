@@ -1,15 +1,5 @@
 /* eslint-disable react-hooks/rules-of-hooks */
-import {
-    AsyncOptic,
-    AsyncReadOptic,
-    Optic,
-    PureOptic,
-    ReadOptic,
-    createState,
-    mapped,
-    partial,
-    total,
-} from '@optics/state';
+import { Optic, PureOptic, async, createState, mapped, partial, readOnly } from '@optics/state';
 import { expectAssignable, expectNotAssignable, expectType } from 'tsd';
 import { Dispatch, SetStateAction } from 'react';
 import { useOptic } from '../useOptic';
@@ -17,14 +7,16 @@ import { useOptic } from '../useOptic';
 describe('optic type', () => {
     it('should return the value and a setter for write optics', () => {
         expectAssignable<[number, { setState: Dispatch<SetStateAction<number>> }]>(useOptic({} as Optic<number>));
-        expectAssignable<[number, { setState: Dispatch<SetStateAction<number>> }]>(useOptic({} as AsyncOptic<number>));
+        expectAssignable<[number, { setState: Dispatch<SetStateAction<number>> }]>(
+            useOptic({} as Optic<number, async>),
+        );
     });
     it('should return only the value for read optics', () => {
         expectNotAssignable<[number, { setState: Dispatch<SetStateAction<number>> }]>(
-            useOptic({} as ReadOptic<number>),
+            useOptic({} as Optic<number, readOnly>),
         );
         expectNotAssignable<[number, { setState: Dispatch<SetStateAction<number>> }]>(
-            useOptic({} as AsyncReadOptic<number>),
+            useOptic({} as Optic<number, async & readOnly>),
         );
     });
     it("shouldn't accept non stateful optics", () => {
@@ -63,7 +55,7 @@ describe('getOptics', () => {
     });
     it('should return both functions when the optic is mapped and the focused type is an array', () => {
         expectAssignable<{
-            getOptics: (getKey: (t: number) => string) => readonly [string, Optic<number>][];
+            getOptics: (getKey: (t: number) => string) => readonly [string, Optic<number, mapped>][];
             getOpticsFromMapping: (getKey: (t: number[]) => string) => readonly [string, Optic<number[]>][];
         }>(useOptic({} as Optic<number[], mapped>)[1]);
     });
@@ -77,7 +69,8 @@ describe('references', () => {
         expectType<StateWithRef>(useOptic({} as Optic<StateWithRef>, { denormalize: false })[0]);
     });
     it('should return the denormalized value if denormalized is explicitly set to true', () => {
-        expectType<{ a: { b: number } }>(useOptic({} as Optic<StateWithRef>, { denormalize: true })[0]);
+        const t = useOptic({} as Optic<StateWithRef>, { denormalize: true })[0];
+        expectType<{ a: { b: number } }>(t);
     });
 });
 
@@ -86,7 +79,7 @@ describe('whenFocused', () => {
     const [, { whenFocused }] = useOptic(optic);
 
     it('should narrow a partial to a non-nullable total if predicate is true', () => {
-        whenFocused((totalOptic) => expectType<Optic<number, total>>(totalOptic));
+        whenFocused((totalOptic) => expectType<Optic<number>>(totalOptic));
     });
 
     it('should return the union of null and the type returned by the function', () => {
@@ -109,11 +102,11 @@ describe('whenType', () => {
     const [, { whenType }] = useOptic(unionOptic);
 
     it('should narrow the union to the type returned by the predicate', () => {
-        whenType((union) => union.type === 'a' && union)((optic) => expectType<Optic<A, total>>(optic));
+        whenType((union) => union.type === 'a' && union)((optic) => expectType<Optic<A>>(optic));
     });
 
     it('should narrow the union to the type specified by the type guard', () => {
-        whenType((union): union is A => union.type === 'a')((optic) => expectType<Optic<A, total>>(optic));
+        whenType((union): union is A => union.type === 'a')((optic) => expectType<Optic<A>>(optic));
     });
 
     it('should return the union of null and the type returned by the function', () => {

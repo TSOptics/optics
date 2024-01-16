@@ -48,10 +48,10 @@ class PureOpticImpl<A, TModifiers extends Modifiers, S>
     reduce(reducer: (values: ReduceValue<A>[]) => ReduceValue<A>[]): Resolve<this, A, TModifiers & mapped, S>;
     reduce(
         reducer: (values: ReduceValue<A>[]) => ReduceValue<A>,
-    ): Resolve<this, A, Omit<TModifiers, 'mapped'> & partial, S>;
+    ): Resolve<this, A, Omit<TModifiers, 'map'> & partial, S>;
     reduce(
         reducer: any,
-    ): Resolve<this, A, TModifiers & mapped, S> | Resolve<this, A, Omit<TModifiers, 'mapped'> & partial, S> {
+    ): Resolve<this, A, TModifiers & mapped, S> | Resolve<this, A, Omit<TModifiers, 'map'> & partial, S> {
         return this.instantiate([{ get: reducer, set: noop, key: 'reduce', type: 'fold' }]);
     }
 

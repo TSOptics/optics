@@ -1,8 +1,4 @@
-import { OpticScope } from '@optics/core';
-import { ReadOptic, Tag } from './Optics/ReadOptic';
-import { AsyncOptic } from './Optics/AsyncOptic';
-import { AsyncReadOptic } from './Optics/AsyncReadOptic';
-import { Optic } from './Optics/Optic';
+import { IsNullable, mapped, partial, readOnly } from '@optics/core';
 
 export type GetStateOptions = {
     denormalize?: boolean;
@@ -12,20 +8,14 @@ export type SubscribeOptions = {
     denormalize?: boolean;
 };
 
-export type GetOpticFocus<TOptic> = TOptic extends Tag<infer Focus, any> ? Focus : never;
+export type async = {
+    async: 'async';
+};
 
-export type GetOpticScope<TOptic> = TOptic extends Tag<any, infer Scope> ? Scope : never;
+export type Modifiers = Partial<readOnly & partial & mapped & async>;
 
-export type Resolve<TOptic, A, TScope extends OpticScope> = [TOptic] extends [{ setAsync(a: any): any }]
-    ? AsyncOptic<A, TScope>
-    : [TOptic] extends [{ getAsync(): any }]
-    ? AsyncReadOptic<A, TScope>
-    : [TOptic] extends [{ set(a: any): any }]
-    ? Optic<A, TScope>
-    : ReadOptic<A, TScope>;
-
-export type ResolveReadOnly<TOptic, A, TScope extends OpticScope> = [TOptic] extends [
-    { setAsync(a: any): any } | { getAsync(): any },
-]
-    ? AsyncReadOptic<A, TScope>
-    : ReadOptic<A, TScope>;
+export type ComposeModifiers<TModifiersA extends Modifiers, TModifiersB extends Modifiers, A> = TModifiersA &
+    TModifiersB &
+    (IsNullable<A> extends true ? partial : {}) extends infer Final extends Modifiers
+    ? Final
+    : never;

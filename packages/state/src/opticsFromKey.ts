@@ -1,11 +1,11 @@
 import { ReduceValue, mapped, partial } from '@optics/core';
-import { ReadOptic } from './Optics/ReadOptic';
-import { GetOpticFocus, Resolve } from './types';
+import { Modifiers } from './types';
+import { Optic } from './Optics/Optic';
 
-export const opticsFromKey = <TOptic extends ReadOptic<T, partial>, T extends any[] = GetOpticFocus<TOptic>>(
-    optic: TOptic,
-): ((getKey: (t: T[number]) => string) => readonly [key: string, optic: Resolve<TOptic, T[number], partial>][]) => {
-    let cache: Record<string, ReadOptic<any, partial>> = {};
+export const opticsFromKey = <T extends any[], TModifiers extends Modifiers>(
+    optic: Optic<T, TModifiers>,
+): ((getKey: (t: T[number]) => string) => readonly [key: string, optic: Optic<T[number], TModifiers & partial>][]) => {
+    let cache: Record<string, Optic<any, partial>> = {};
 
     return (getKey) => {
         let previousS: T;
@@ -38,14 +38,14 @@ export const opticsFromKey = <TOptic extends ReadOptic<T, partial>, T extends an
     };
 };
 
-export const opticsFromKeyMapped = <TOptic extends ReadOptic<T, mapped>, T = GetOpticFocus<TOptic>>(
-    optic: TOptic,
-): ((getKey: (t: T) => string) => (readonly [key: string, optic: Resolve<TOptic, T, partial>])[]) => {
-    let cache: Record<string, ReadOptic<T, partial>> = {};
+export const opticsFromKeyMapped = <T, TModifiers extends Modifiers & mapped>(
+    optic: Optic<T, TModifiers>,
+): ((getKey: (t: T) => string) => (readonly [key: string, optic: Optic<T, Omit<TModifiers, 'map'> & partial>])[]) => {
+    let cache: Record<string, Optic<T, partial>> = {};
 
     return (getKey) => {
         let elemByKey: Record<string, ReduceValue<T>>;
-        const mappedOptic = optic.reduce((s) => {
+        const mappedOptic = (optic as Optic<T, mapped>).reduce((s) => {
             elemByKey = Object.fromEntries(s.map((elem) => [getKey(elem.value), elem]));
             return s;
         });

@@ -1,15 +1,15 @@
 import { PureOptic } from '../PureOptic/PureOptic';
-import { total, partial, mapped } from '../types';
+import { partial, mapped } from '../types';
 import { toPartial } from '../combinators/toPartial';
 import { expectAssignable, expectNotAssignable, expectType } from 'tsd';
 import { DataOptic } from '../DataOptic/DataOptic';
 
-declare const dataOpticTotal: DataOptic<string, total, string>;
-declare const dataOpticTotalOnNullable: DataOptic<string | null | undefined, total, string>;
+declare const dataOpticTotal: DataOptic<string, {}, string>;
+declare const dataOpticTotalOnNullable: DataOptic<string | null | undefined, {}, string>;
 declare const dataOpticPartial: DataOptic<string, partial, string>;
 declare const dataOpticMapped: DataOptic<string, mapped, string>;
 
-declare const pureOpticTotal: PureOptic<string, total, string>;
+declare const pureOpticTotal: PureOptic<string, {}, string>;
 declare const pureOpticPartial: PureOptic<string, partial, string>;
 declare const pureOpticMapped: PureOptic<string, mapped, string>;
 
@@ -28,11 +28,13 @@ describe('OpticScope', () => {
     it('partial + partial = partial', () =>
         expectType<typeof dataOpticPartial>(dataOpticPartial.derive(pureOpticPartial)));
 
-    it('partial + mapped = mapped', () => expectType<typeof dataOpticMapped>(dataOpticPartial.derive(pureOpticMapped)));
+    it('partial + mapped = mapped & partial', () =>
+        expectAssignable<typeof dataOpticMapped>(dataOpticPartial.derive(pureOpticMapped)));
 
     it('mapped + total = mapped', () => expectType<typeof dataOpticMapped>(dataOpticMapped.derive(pureOpticTotal)));
 
-    it('mapped + partial = mapped', () => expectType<typeof dataOpticMapped>(dataOpticMapped.derive(pureOpticPartial)));
+    it('mapped + partial = mapped & partial', () =>
+        expectAssignable<typeof dataOpticMapped>(dataOpticMapped.derive(pureOpticPartial)));
 
     it('mapped + mapped = mapped', () => expectType<typeof dataOpticMapped>(dataOpticMapped.derive(pureOpticMapped)));
 });

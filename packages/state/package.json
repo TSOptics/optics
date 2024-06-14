@@ -1,6 +1,6 @@
 {
     "name": "@optics/state",
-    "version": "0.5.0",
+    "version": "0.5.1",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
     "files": [
@@ -16,7 +16,7 @@
         "test-types": "tsd"
     },
     "dependencies": {
-        "@optics/core": "^0.5.0"
+        "@optics/core": "^0.5.1"
     },
     "tsd": {
         "directory": "src/"

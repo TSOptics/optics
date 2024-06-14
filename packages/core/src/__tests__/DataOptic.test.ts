@@ -10,6 +10,12 @@ describe('DataOptic', () => {
         expect(newValue).toEqual({ a: { b: 2 }, aa: false });
     });
 
+    it('should return undefined when the value is undefined', () => {
+        const value = undefined as { a: 'test' } | undefined;
+        const result = focusOn(value).a.get();
+        expect(result).toBe(undefined);
+    });
+
     describe('partial', () => {
         type TestObj = { a: { b?: { c: number } } };
         const testObj: TestObj = { a: {} };
